@@ -37,6 +37,7 @@ function errorLog()
     console.groupEnd();
   }
 }
+
 function docEvaluate(arg_xpath)
 {
   return document.evaluate(arg_xpath,
@@ -64,7 +65,7 @@ function padZeros(_input,_desiredStringLength)
 function Object_merge(arg_oldObj, arg_newObj)
 {
   if('object' !== typeof arg_oldObj) {
-    errorLog("ERROR!\nObject_merge(arg_oldObj, arg_newObj)\n\arg_oldObj is not an Object!", arguments);
+    errorLog("ERROR!\nObject_merge(arg_oldObj, arg_newObj)\n\narg_oldObj is not an Object!", arguments);
     throw Error;
   }
   if('object' !== typeof arg_newObj) {
@@ -75,7 +76,9 @@ function Object_merge(arg_oldObj, arg_newObj)
 
   for (var newVar in arg_newObj)
   {
-    switch(typeof arg_newObj[newVar]){
+    switch(typeof arg_newObj[newVar])
+    {
+      //If data is a value (boolean/string/number/function) then "update" it to the 'new' value (or add if not present) 
       case "boolean":
       //Fall-through
       case "string":
@@ -84,15 +87,19 @@ function Object_merge(arg_oldObj, arg_newObj)
         arg_oldObj[newVar] = arg_newObj[newVar];
         break;
 
-      case "object":
-        arg_oldObj[newVar] = this[newVar] || {};
-        Object_merge(arg_oldObj[newVar], arg_newObj[newVar]);
-        break;
-
       case "function":
+        // stop the 'merge' function being copied
+        // nb, applies when this function is added to object.prototype
         if('merge' !== newVar){
           arg_oldObj[newVar] = arg_newObj[newVar];
         }
+        break;
+
+      //Else if the data is an object, it will have sub-items of its own
+      // run the merge() function on this object to recurse deeper and merge these sub-items.
+      case "object":
+        arg_oldObj[newVar] = arg_oldObj[newVar] || {};
+        Object_merge(arg_oldObj[newVar], arg_newObj[newVar]);
         break;
 
       default:
@@ -101,7 +108,7 @@ function Object_merge(arg_oldObj, arg_newObj)
   }
 
   return arg_oldObj;
-
+  
 }
 
 
@@ -463,6 +470,22 @@ function set(arg_prefName, arg_defaultValue, arg_options)
 }
 
 
+
+function testPageLocation(arg_urlVarTests)
+{
+  var tmpUrlVars = location.href.split('?')[1].split('#')[0].split('&');
+  for(var tmpUrlVarTest in arg_urlVarTests) {
+    if(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
+
+
 /**
  * :Object used for holding information about the account that the current user of the script is logged into
  *
@@ -631,7 +654,7 @@ var chartData = new function ()
 
       currentDataset = tmp_graphData[tmp_currentGraphFriendlyName];
 
-      debugLog('currentDataset', currentDataset);
+//      debugLog('currentDataset', currentDataset);
 
 //      console.info('currentDataset[5].length',currentDataset[5].length);
       for(var i = 0; i < currentDataset[5].length; i++)
@@ -653,7 +676,7 @@ var chartData = new function ()
     }
 
     debugLog('this.storedGraphData()',this.storedGraphData());
-    return set('graphData',Object_merge(this.storedGraphData(), tmp_graphDataObject),{prefType: 'JSON'});
+//    return set('graphData',Object_merge(this.storedGraphData(), tmp_graphDataObject),{prefType: 'JSON'});
 
   };
 
