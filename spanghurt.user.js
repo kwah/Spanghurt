@@ -21,6 +21,24 @@ function debugLog()
   }
 }
 
+
+function pageCodeDebugLog()
+{
+  if (arguments.length >= 2)
+  {
+    console.group();
+  }
+  for (var i = 0; i < arguments.length; i++)
+  {
+    console.info(arguments[i]);
+  }
+  if (arguments.length >= 2)
+  {
+    console.groupEnd();
+  }
+}
+
+
 function errorLog()
 {
   if (arguments.length >= 2)
@@ -471,19 +489,162 @@ function set(arg_prefName, arg_defaultValue, arg_options)
 
 
 
-function testPageLocation(arg_urlVarTests)
+function testAgainstUrlParameters(arg_urlVarTests)
 {
-  var tmpUrlVars = location.href.split('?')[1].split('#')[0].split('&');
+  var tmpUrlVars = location.search.split('?')[1].split('&');
+  console.info(tmpUrlVars);
   for(var tmpUrlVarTest in arg_urlVarTests) {
-    if(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest])) {
-      return true;
+//    console.info('tmpUrlVars.indexOf('+arg_urlVarTests[tmpUrlVarTest]+') = ',tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]));
+    if(!(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]))) {
+      return false;
     }
   }
-  return false;
+
+  console.info('Found the following within the URL:',arg_urlVarTests);
+  return true;
+}
+function testAgainstUrlPath(arg_urlTests)
+{
+  var tmpUrlVars = location.pathname.split('/');
+  console.info(tmpUrlVars);
+  for(var tmpUrlVarTest in arg_urlTests) {
+//    console.info('tmpUrlVars.indexOf('+arg_urlTests[tmpUrlVarTest]+') = ',tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]));
+    if(!(0 <= tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]))) {
+      return false;
+    }
+  }
+
+  console.info('Found the following within the URL:',arg_urlTests);
+  return true;
 }
 
+var currentPage = new function()
+{
+  function detectLanguageCode()
+  {
+    if(document.body.textContent.match(/Change Language To Portuguese/i)) { set('neobuxLanguageCode', 'EN', {prefType: 'string'}); }
+    if(document.body.textContent.match(/Change Language To English/i)) { set('neobuxLanguageCode', 'PT', {prefType: 'string'}); }
+
+    return get('neobuxLanguageCode', 'EN', {prefType: 'string'});
+  };
+  this.languageCode = detectLanguageCode();
+
+  function detectPageCode ()
+  {
+
+    if(testAgainstUrlPath(['v'])) { return 'viewingAdvertisement'; }
+    if(testAgainstUrlPath(['forum'])) { return 'viewingForums'; }
+
+    if(testAgainstUrlParameters(['u=c']))
+    {
+      if(testAgainstUrlParameters(['s=i'])) { return 'accSummary'; }
+      if(testAgainstUrlParameters(['s=b'])) { return 'banners'; }
+      if(testAgainstUrlParameters(['s=d'])) { return 'personalSettings'; }
+      if(testAgainstUrlParameters(['s=a'])) { return 'advertisementSettings'; }
+      if(testAgainstUrlParameters(['s=rq'])) { return 'rentalQueueSettings'; }
+
+      if(testAgainstUrlParameters(['s=rs'])) {
+        if(testAgainstUrlParameters(['ss3=0'])) { return 'referralStatistics'; }
+      }
+
+      if(testAgainstUrlParameters(['s=r']))
+      {
+        if(testAgainstUrlParameters(['ss3=1']))
+        {
+          //WARNING: TODO: NOT TESTED LINKS / ARROW DIRECTIONS FOR DIRECT REFS PAGES
+
+          if(testAgainstUrlParameters(['ss2=1']))
+          {
+            if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Rented_name_Desc'; }
+            if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Rented_refSince_Asc'; }
+            if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Rented_nextPayment_Desc'; }
+            if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Rented_lastClick_Asc'; }
+            if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Rented_totalClicks_Desc'; }
+            if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Rented_clickAverage_Desc'; }
+            return 'referralListings_Rented_UNKNOWNSORT';
+          }
+
+          if(testAgainstUrlParameters(['ss2=2']))
+          {
+            if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Rented_name_Asc'; }
+            if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Rented_refSince_Desc'; }
+            if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Rented_nextPayment_Asc'; }
+            if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Rented_lastClick_Desc'; }
+            if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Rented_totalClicks_Asc'; }
+            if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Rented_clickAverage_Asc'; }
+            return 'referralListings_Rented_UNKNOWNSORT';
+          }
+
+          return 'referralListings_Rented_DEFAULTSORT';
+        }
+        if(testAgainstUrlParameters(['ss3=2']))
+        {
+            /**
+             * Name           &ss1=2 &ss2= (2Asc/1Desc)??
+             * Ref Since      &ss1=1 &ss2= (1Asc/2Desc)
+             * Next Payment   &ss1=5 &ss2= (2Asc/1Desc)
+             * Last Click     &ss1=4 &ss2= (1Asc/2Desc)
+             * Clicks         &ss1=3 &ss2= (2Asc/1Desc)
+             * Average        &ss1=7 &ss2= (2Asc/1Desc)
+             *
+             * &ss1 = column to be sorted by
+             * &ss2 = asc / desc
+             * &ss3 = direct / rented refs
+             *
+             *  vars[1] = [2,2,1,'Sort by Referral ID#'];
+                vars[2] = [1,1,2,'Sort by the total time that the referral has been Owned']; // Does not match existing arrow directions
+                vars[3] = [5,2,1,'Sort by time until Next Payment is Due'];
+                vars[4] = [4,1,2,"Sort by time since the referral's Last Click"];
+                vars[5] = [3,2,1,'Sort by Total Number of Clicks'];
+                vars[6] = [7,2,1,'Sort by Average number of clicks'];
+             */
+
+          if(testAgainstUrlParameters(['ss2=1']))
+          {
+            if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Rented_name_Desc'; }
+            if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Rented_refSince_Asc'; }
+            if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Rented_nextPayment_Desc'; }
+            if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Rented_lastClick_Asc'; }
+            if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Rented_totalClicks_Desc'; }
+            if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Rented_clickAverage_Desc'; }
+            return 'referralListings_Rented_UNKNOWNSORT';
+          }
+
+          if(testAgainstUrlParameters(['ss2=2']))
+          {
+            if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Rented_name_Asc'; }
+            if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Rented_refSince_Desc'; }
+            if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Rented_nextPayment_Asc'; }
+            if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Rented_lastClick_Desc'; }
+            if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Rented_totalClicks_Asc'; }
+            if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Rented_clickAverage_Asc'; }
+            return 'referralListings_Rented_UNKNOWNSORT';
+          }
+
+          return 'referralListings_Rented_DEFAULTSORT';
+        }
+      }
+      if(testAgainstUrlParameters(['s=h'])) { return 'historyLogs'; }
+      if(testAgainstUrlParameters(['s=ll'])) { return 'loginHistory'; }
+      if(testAgainstUrlParameters(['s=rba'])) { return 'rentalBalancePage'; }
+      if(testAgainstUrlParameters(['s=gm'])) { return 'goldenMembershipPage'; }
+      if(testAgainstUrlParameters(['s=gpa'])) { return 'goldenPackBalancePage'; }
+    }
+
+    if(testAgainstUrlParameters(['u=v'])) { return 'viewAdvertisementsPage'; }
+    if(testAgainstUrlParameters(['u=p'])) { return 'neobuxFrontPage'; }
 
 
+
+    return 'unrecognisedUrlParameters';
+  };
+  this.pageCode = detectPageCode();
+
+};
+
+console.group();
+console.info(currentPage.pageCode);
+console.groupEnd();
 
 
 /**
@@ -492,7 +653,11 @@ function testPageLocation(arg_urlVarTests)
  **/
 var currentUser = new function()
 {
-  this.username = (document.getElementById('t_conta').textContent) ? set('username', document.getElementById('t_conta').textContent, {prefType:'string'}) : get('username', document.getElementById('t_conta').textContent, {prefType:'string'});
+  if(document.getElementById('t_conta')) {
+    this.username = set('username', document.getElementById('t_conta').textContent, {prefType:'string'});
+  } else {
+    this.username = get('username', 'unknownUsername', {prefType:'string'});
+  }
 
   this.accountType = new function ()
   {
@@ -542,155 +707,157 @@ var currentUser = new function()
 debugLog('currentUser', currentUser);
 
 
-var chartData = new function ()
+if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/referralStatistics/))
 {
-  this.dataGrabbedFromCurrentPage = function()
+  var chartData = new function ()
   {
-    var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
-
-    // If testing in Firebug, xpathResults_graphData.snapshotLength == 2
-    if (1 == xpathResults_graphData.snapshotLength || 2 == xpathResults_graphData.snapshotLength)
+    this.dataGrabbedFromCurrentPage = function()
     {
-      /**
-       *  If only one matching <script> ... </script> tag found, it is the correct one
-       * NOTE :: If testing in Firebug, xpathResults_graphData.snapshotLength == 2
-       * Now extract data::
-       */
+      var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
 
-      /**
-       * First, remove instances of the word 'eval' and then split it up based on
-       * these rules ::
-       * eval(w('
-       * ')); eval(w('
-       */
+      // If testing in Firebug, xpathResults_graphData.snapshotLength == 2
+      if (1 == xpathResults_graphData.snapshotLength || 2 == xpathResults_graphData.snapshotLength)
+      {
+        /**
+         *  If only one matching <script> ... </script> tag found, it is the correct one
+         * NOTE :: If testing in Firebug, xpathResults_graphData.snapshotLength == 2
+         * Now extract data::
+         */
 
-      var evals = xpathResults_graphData.snapshotItem(0).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
-    }
+        /**
+         * First, remove instances of the word 'eval' and then split it up based on
+         * these rules ::
+         * eval(w('
+         * ')); eval(w('
+         */
 
-    var graphData = new Array();
+        var evals = xpathResults_graphData.snapshotItem(0).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
+      }
 
-    // Cycle through each individual eval (ie, graph / graphNumber)
-    for (var graphNumber = 0, length = evals.length - 1; graphNumber < length; graphNumber++)
-    {
-      // logger('graphNumber = '+graphNumber);
-      var evalString = evals[graphNumber];
+      var graphData = new Array();
+
+      // Cycle through each individual eval (ie, graph / graphNumber)
+      for (var graphNumber = 0, length = evals.length - 1; graphNumber < length; graphNumber++)
+      {
+        // logger('graphNumber = '+graphNumber);
+        var evalString = evals[graphNumber];
+
+        // Decode evalString using the w(i) function from the Neobux page
+        var decodedEvalString = NeobuxDecodeEvalString(evalString);
+
+        // debugLog(decodedEvalString.replace(');',']').replace('mk_ch(','graphData['+graphNumber+']
+        // = ['));
+        eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
+      }
 
       // Decode evalString using the w(i) function from the Neobux page
-      var decodedEvalString = NeobuxDecodeEvalString(evalString);
-
-      // debugLog(decodedEvalString.replace(');',']').replace('mk_ch(','graphData['+graphNumber+']
-      // = ['));
-      eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
-    }
-
-    // Decode evalString using the w(i) function from the Neobux page
-    function U(arg_a)
-    {
-      return arg_a * 10;
-    }
-
-    function u0(arg_a)
-    {
-      return String.fromCharCode(U(arg_a));
-    }
-
-    // function w(_i) {
-    function NeobuxDecodeEvalString(arg_input)
-    {
-      var k = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-      var o = "";
-      var c1, c2, c3, e1, e2, e3, e4;
-      var j = 0;
-      arg_input = arg_input.replace(/[^A-Za-z0-9\+\/=]/g, "");
-      do {
-        e1 = k.indexOf(arg_input.charAt(j++));
-        e2 = k.indexOf(arg_input.charAt(j++));
-        e3 = k.indexOf(arg_input.charAt(j++));
-        e4 = k.indexOf(arg_input.charAt(j++));
-        c1 = e1 << 2 | e2 >> 4;
-        c2 = (e2 & 15) << 4 | e3 >> 2;
-        c3 = (e3 & 3) << 6 | e4;
-        o = o + u0(c1 / 10);
-        if (64 != e3)
-        {
-          o = o + u0(c2 / 10);
-        }
-        if (64 != e4)
-        {
-          o = o + u0(c3 / 10);
-        }
-      } while (j < arg_input.length);
-
-      return o;
-    }
-
-    return graphData;
-  };
-
-  this.storedGraphData = function()
-  {
-    return get('graphData',{},{prefType: 'JSON'});
-  };
-
-
-  this.graphData = function()
-  {
-    var tmp_graphData = new Array();
-    var tmp_graphDataObject = new Object();
-    var tmp_currentGraphFriendlyName;
-    var currentDataset;
-    var tmp_currentDatasetName;
-    var tmp_currentDate;
-
-    for (var _i in this.dataGrabbedFromCurrentPage())
-    {
-      /*debugLog('_i',_i,
-       'this.grabDataFromPage()[_i]',this.grabDataFromPage()[_i],
-       'friendlyNameLookup[this.grabDataFromPage()[_i][0]]',friendlyNameLookup[this.grabDataFromPage()[_i][0]]
-       );*/
-
-      tmp_currentGraphFriendlyName = friendlyNameLookup[this.dataGrabbedFromCurrentPage()[_i][0]];
-      tmp_graphData[tmp_currentGraphFriendlyName] = this.dataGrabbedFromCurrentPage()[_i];
-
-      currentDataset = tmp_graphData[tmp_currentGraphFriendlyName];
-
-//      debugLog('currentDataset', currentDataset);
-
-//      console.info('currentDataset[5].length',currentDataset[5].length);
-      for(var i = 0; i < currentDataset[5].length; i++)
+      function U(arg_a)
       {
-//          console.info('i = ',i);
-        tmp_currentDatasetName = currentDataset[5][i].name;
-        tmp_graphDataObject[tmp_currentGraphFriendlyName] = tmp_graphDataObject[tmp_currentGraphFriendlyName] || {};
-        tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] = tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] || {};
+        return arg_a * 10;
+      }
 
-        for(var j = 0; j < currentDataset[2].length; j++)
+      function u0(arg_a)
+      {
+        return String.fromCharCode(U(arg_a));
+      }
+
+      // function w(_i) {
+      function NeobuxDecodeEvalString(arg_input)
+      {
+        var k = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+        var o = "";
+        var c1, c2, c3, e1, e2, e3, e4;
+        var j = 0;
+        arg_input = arg_input.replace(/[^A-Za-z0-9\+\/=]/g, "");
+        do {
+          e1 = k.indexOf(arg_input.charAt(j++));
+          e2 = k.indexOf(arg_input.charAt(j++));
+          e3 = k.indexOf(arg_input.charAt(j++));
+          e4 = k.indexOf(arg_input.charAt(j++));
+          c1 = e1 << 2 | e2 >> 4;
+          c2 = (e2 & 15) << 4 | e3 >> 2;
+          c3 = (e3 & 3) << 6 | e4;
+          o = o + u0(c1 / 10);
+          if (64 != e3)
+          {
+            o = o + u0(c2 / 10);
+          }
+          if (64 != e4)
+          {
+            o = o + u0(c3 / 10);
+          }
+        } while (j < arg_input.length);
+
+        return o;
+      }
+
+      return graphData;
+    };
+
+    this.storedGraphData = function()
+    {
+      return get('graphData',{},{prefType: 'JSON'});
+    };
+
+
+    this.graphData = function()
+    {
+      var tmp_graphData = new Array();
+      var tmp_graphDataObject = new Object();
+      var tmp_currentGraphFriendlyName;
+      var currentDataset;
+      var tmp_currentDatasetName;
+      var tmp_currentDate;
+
+      for (var _i in this.dataGrabbedFromCurrentPage())
+      {
+        /*debugLog('_i',_i,
+         'this.grabDataFromPage()[_i]',this.grabDataFromPage()[_i],
+         'friendlyNameLookup[this.grabDataFromPage()[_i][0]]',friendlyNameLookup[this.grabDataFromPage()[_i][0]]
+         );*/
+
+        tmp_currentGraphFriendlyName = friendlyNameLookup[this.dataGrabbedFromCurrentPage()[_i][0]];
+        tmp_graphData[tmp_currentGraphFriendlyName] = this.dataGrabbedFromCurrentPage()[_i];
+
+        currentDataset = tmp_graphData[tmp_currentGraphFriendlyName];
+
+  //      debugLog('currentDataset', currentDataset);
+
+  //      console.info('currentDataset[5].length',currentDataset[5].length);
+        for(var i = 0; i < currentDataset[5].length; i++)
         {
-//          console.info('j = ',j);
-//console.info(i,j,currentDataset[5]);
-          tmp_currentDate = currentDataset[2][j].replace(/today/i,TODAY_STRING).replace(/yesterday/i,YESTERDAY_STRING);
-          tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName][tmp_currentDate] = currentDataset[5][i].data[j];
+  //          console.info('i = ',i);
+          tmp_currentDatasetName = currentDataset[5][i].name;
+          tmp_graphDataObject[tmp_currentGraphFriendlyName] = tmp_graphDataObject[tmp_currentGraphFriendlyName] || {};
+          tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] = tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] || {};
 
+          for(var j = 0; j < currentDataset[2].length; j++)
+          {
+  //          console.info('j = ',j);
+  //console.info(i,j,currentDataset[5]);
+            tmp_currentDate = currentDataset[2][j].replace(/today/i,TODAY_STRING).replace(/yesterday/i,YESTERDAY_STRING);
+            tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName][tmp_currentDate] = currentDataset[5][i].data[j];
+
+          }
         }
       }
-    }
 
-    debugLog('this.storedGraphData()',this.storedGraphData());
-//    return set('graphData',Object_merge(this.storedGraphData(), tmp_graphDataObject),{prefType: 'JSON'});
+      debugLog('this.storedGraphData()',this.storedGraphData());
+  //    return set('graphData',Object_merge(this.storedGraphData(), tmp_graphDataObject),{prefType: 'JSON'});
 
+    };
+
+
+    this.mergeGraphDataOnPageWithStoredData = function ()
+    {
+
+    };
   };
 
+  debugLog('chartData.dataGrabbedFromCurrentPage()', chartData.dataGrabbedFromCurrentPage());
+  debugLog('chartData.graphData()', chartData.graphData());
 
-  this.mergeGraphDataOnPageWithStoredData = function ()
-  {
-
-  };
-};
-
-debugLog('chartData.dataGrabbedFromCurrentPage()', chartData.dataGrabbedFromCurrentPage());
-debugLog('chartData.graphData()', chartData.graphData());
-
-
+}
 /*
  function grabChartData(arg_chartData, arg_page, arg_currentUser) {}
 
