@@ -47,7 +47,7 @@ function errorLog()
   }
   for (var i = 0; i < arguments.length; i++)
   {
-    GM_log(arguments[i]);
+    if(GM_log) { GM_log(arguments[i]); }
     console.info(arguments[i]);
   }
   if (arguments.length >= 2)
@@ -492,7 +492,7 @@ function set(arg_prefName, arg_defaultValue, arg_options)
 function testAgainstUrlParameters(arg_urlVarTests)
 {
   var tmpUrlVars = location.search.split('?')[1].split('&');
-  console.info(tmpUrlVars);
+//  console.info(tmpUrlVars);
   for(var tmpUrlVarTest in arg_urlVarTests) {
 //    console.info('tmpUrlVars.indexOf('+arg_urlVarTests[tmpUrlVarTest]+') = ',tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]));
     if(!(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]))) {
@@ -506,7 +506,7 @@ function testAgainstUrlParameters(arg_urlVarTests)
 function testAgainstUrlPath(arg_urlTests)
 {
   var tmpUrlVars = location.pathname.split('/');
-  console.info(tmpUrlVars);
+//  console.info(tmpUrlVars);
   for(var tmpUrlVarTest in arg_urlTests) {
 //    console.info('tmpUrlVars.indexOf('+arg_urlTests[tmpUrlVarTest]+') = ',tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]));
     if(!(0 <= tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]))) {
@@ -629,7 +629,10 @@ var currentPage = new function()
       if(testAgainstUrlParameters(['s=rba'])) { return 'rentalBalancePage'; }
       if(testAgainstUrlParameters(['s=gm'])) { return 'goldenMembershipPage'; }
       if(testAgainstUrlParameters(['s=gpa'])) { return 'goldenPackBalancePage'; }
+
+      return 'accSummary';
     }
+
 
     if(testAgainstUrlParameters(['u=v'])) { return 'viewAdvertisementsPage'; }
     if(testAgainstUrlParameters(['u=p'])) { return 'neobuxFrontPage'; }
@@ -637,7 +640,8 @@ var currentPage = new function()
 
 
     return 'unrecognisedUrlParameters';
-  };
+  }
+
   this.pageCode = detectPageCode();
 
 };
@@ -645,6 +649,7 @@ var currentPage = new function()
 console.group();
 console.info(currentPage.pageCode);
 console.groupEnd();
+
 
 
 /**
@@ -796,7 +801,7 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
 
     this.storedGraphData = function()
     {
-      return get('graphData',{},{prefType: 'JSON'});
+      return get('graphData', {}, {prefType: 'JSON'});
     };
 
 
@@ -843,7 +848,7 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
       }
 
       debugLog('this.storedGraphData()',this.storedGraphData());
-  //    return set('graphData',Object_merge(this.storedGraphData(), tmp_graphDataObject),{prefType: 'JSON'});
+      return set('graphData',Object_merge(this.storedGraphData(), tmp_graphDataObject),{prefType: 'JSON'});
 
     };
 
@@ -870,3 +875,441 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
 
 
 console.info(localStorage);
+
+
+
+
+function insertLocalServerTime()
+{
+
+  function formatTime(arg_time)
+  {
+    var _Hours = arg_time.getHours();
+    var _Minutes = arg_time.getMinutes();
+    var _Seconds = arg_time.getSeconds();
+
+    return padZeros(_Hours,2) + ':' + padZeros(_Minutes,2); //+ ":" + padZeros(_Seconds,2);
+  }
+
+  var localMidnight;
+  var currentLocalTime;
+  var currentServerTime;
+  var neoMidnight;
+  var adResetTime;
+  var AdResetTime_hours
+
+  function setTime(arg_dateTime,arg_Time)
+  {
+    var tmpDateTime = arg_dateTime;
+    tmpDateTime.setHours(arg_Time[0]);
+    tmpDateTime.setMinutes(arg_Time[1]);
+    tmpDateTime.setSeconds(arg_Time[2]);
+
+    return tmpDateTime;
+  }
+
+  // Calculate and return the server time formatted correctly
+  this.GetServerTimeAndOffsetText = function(arg_serverTimeOffset)
+  {
+    var offsetMS = arg_serverTimeOffset * 1000 * 60 * 60;
+
+    currentLocalTime = new Date(dateToday);
+    currentServerTime = new Date(currentLocalTime.getTime() + offsetMS);
+
+
+    localMidnight = setTime(new Date(dateToday),[0,0,0]);
+    set('localMidnight', localMidnight.toString(), {prefType:'string'});
+
+    /* If server time is five hours behind (-5), Neobux's midnight will be five hours AFTER local midnight
+      && vice versa, thus need to minus the offset
+      NB, the offset might move the day to tomorrow/yesterday so will need to reset the date to 'today' */
+    neoMidnight = new Date(new Date(localMidnight).getTime() - offsetMS);
+    neoMidnight = new Date(neoMidnight.setDate(localMidnight.getDate()));
+    set('neoMidnight', neoMidnight.toString(), {prefType:'string'});
+
+
+    AdResetTime_hours = get('AdResetTime_hours',0, {prefType:'string'}) * 1000 * 60 * 60;
+    adResetTime = new Date(new Date(localMidnight).getTime() + AdResetTime_hours);
+    adResetTime = new Date(adResetTime.setDate(localMidnight.getDate()));
+    set('adResetTime', adResetTime.toString(), {prefType:'string'});
+
+
+    var timeOffset_text = '';
+    if (0 < arg_serverTimeOffset) {
+      timeOffset_text = '+' + parseFloat(arg_serverTimeOffset.toFixed(2));
+    }
+    else if (0 > arg_serverTimeOffset) {
+      timeOffset_text = parseFloat(arg_serverTimeOffset.toFixed(2));
+    }
+    else {
+      timeOffset_text = '+-' + arg_serverTimeOffset;
+    }
+
+    // Return the time in the format HH:MM(:SS optional)
+
+    return formatTime(currentServerTime) + ' (' + timeOffset_text + 'hrs)';
+
+  };
+
+
+  // Calculate and return the size of the time difference/offset
+  this.FetchAndSetTimeOffset = function()
+  {
+    // Hunt for the current server time string
+    var locationOfTimeString = docEvaluate('//td[@class="f_r"]/span');
+
+    if(2 == locationOfTimeString.snapshotLength)
+    {
+      // var dateTimeString = '2009/06/07 20:46';
+      var dateTimeString = locationOfTimeString.snapshotItem(1).textContent;
+
+      // Grab necessary info from the dateTime string (assuming format yyyy/mm/dd hh:dd )
+      dateTimeString = dateTimeString.match(/([\d]{4})\/([\d]{2})\/([\d]{2}) ([\d]{2}):([\d]{2})/);
+
+
+      // NB: parseInt("08") == 0 so must definition of base 10 required
+      // CST = Current Server Time
+      var tmp_CST = {
+        year: parseInt(dateTimeString[1], 10),
+        month: parseInt(dateTimeString[2], 10),
+        day: parseInt(dateTimeString[3], 10),
+
+        hour: parseInt(dateTimeString[4], 10),
+        minute: parseInt(dateTimeString[5], 10)
+      };
+
+//      debugLog(tmp_CST);
+
+      var ServerDateTime = new Date(dateToday);
+      ServerDateTime.setFullYear(tmp_CST.year, (tmp_CST.month - 1), tmp_CST.day);
+      ServerDateTime.setHours(tmp_CST.hour, tmp_CST.minute);
+
+      var ServerTime = ServerDateTime.getTime();
+      var LocalTime = dateToday.getTime();
+      var one_hour = 1000 * 60 * 60;
+
+      var serverTimeDifference = (ServerTime - LocalTime) / (one_hour);
+      serverTimeDifference = Math.floor(serverTimeDifference * 1000) / 1000;
+      set('serverTimeOffset', serverTimeDifference, {prefType:'string'});
+
+
+      var adResetTimeString = locationOfTimeString.snapshotItem(0).textContent;
+      adResetTimeString = adResetTimeString.match(/([\d]{2})\:([\d]{2})/);
+
+      // ART = Ad Reset Time
+      var tmp_ART = {
+        hour: parseInt(adResetTimeString[1], 10),
+        minute: parseInt(adResetTimeString[2], 10)
+      };
+
+//      debugLog(tmp_ART);
+
+      var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
+      set('AdResetTime_hours', AdResetTimeDifference, {prefType:'string'});
+
+    }
+  };
+
+
+  this.GetServerTimeOffset = function()
+  {
+    /*
+      Check whether the page being loaded is the 'View Advertisements' page
+      If it is, call this.GetServerTimeOffset() to calculate & store the offset amount [if autodetecting the offset is enabled]
+    */
+
+    // Check whether current page is the "View Advertisements" page
+    var CurrentUrl = document.location.href;
+
+    var RegExp_AdPage = /^http[s]?:\/\/www\.neobux\.com\/\?u\=v/;
+    var IsMatch = RegExp_AdPage.test(CurrentUrl);
+
+    // If it is the ads page AND the script should automatically detect the offset,
+    if (IsMatch && get("AutoDetectTimeOffset", true, {prefType:'string'})) {
+      this.FetchAndSetTimeOffset();
+    }
+
+    var serverTimeOffset = get('serverTimeOffset', 0, {prefType:'float'});
+    set('serverTimeOffset', serverTimeOffset, {prefType:'string'});
+
+    return serverTimeOffset;
+  };
+
+
+  var xpathResults_timeLocation;
+
+  this.insertClock = function(_timeOffset,_adResetOffset)
+  {
+    /*
+     * TODO: simplify *VERY* ugly xpath, whilst maintaining robustness..
+     * Cannot search for td that only has &nbsp; as it's contents
+     * Cannot search for td@align=left because returns multiple results
+     * NOTE:: Avoiding any search term / method that returns multiple results or that depends on a value that is likely to change
+    */
+
+//  var xpath = "//div/descendant::td[contains(.,'$')]/ancestor::tr/child::td[@align='left']";
+    var xpath = "//div[contains(@style,'width: 902px') or contains(@style,'width:902px')]/descendant::td[contains(.,'$')]/ancestor::tr/child::td[@align='left']";
+    xpathResults_timeLocation = docEvaluate(xpath);
+
+    var localTime = formatTime(dateToday);
+    var serverTime = (!!this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
+
+//  debugLog('Local: ' + localTime + ' Server: ' + serverTime);
+
+    if(document.getElementById('containerDiv_timer')) {
+      //document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
+    } else {
+      xpathResults_timeLocation.snapshotItem(0).innerHTML = '<div id="localServerTimeText" style="font-family:mono,monospace; font-size:x-small; margin-bottom:-15px; padding-top:0.7em;">&nbsp; Local time: ' + localTime + '  --  Server time: ' + serverTime + '</div>' + xpathResults_timeLocation.snapshotItem(0).innerHTML;
+      xpathResults_timeLocation.snapshotItem(0).setAttribute('valign', '');
+    }
+
+    var containerDiv_timer = document.createElement('div');
+    containerDiv_timer.innerHTML = '<div style="width: 750px; height: 450px; display:none; position:absolute; top:100px; left:100px;" id="containerDiv_timer"></div>';
+
+    // Used mostly during testing - if the container div is already present update it rather than add another
+    if(document.getElementById('containerDiv_timer')) {
+      document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
+    } else {
+      document.body.appendChild(containerDiv_timer);
+    }
+
+
+//    debugLog('Local Midnight ',padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2),
+//        'Server Midnight ',padZeros(neoMidnight.getHours(),2)+':'+padZeros(neoMidnight.getMinutes(),2),
+//        'Ad Reset Time ',padZeros(adResetTime.getHours(),2)+':'+padZeros(adResetTime.getMinutes(),2));
+//
+//    debugLog(localMidnight,neoMidnight,adResetTime);
+
+  };
+
+
+  this.insertClickGuide = function()
+  {
+
+    var localMidnightToAdResetTime = (adResetTime - localMidnight) / (1000 * 60 * 60);
+    var localMidnightToNeobuxMidnight = (neoMidnight - localMidnight) / (1000 * 60 * 60);
+
+    //    debugLog(localMidnightToAdResetTime);
+    //    debugLog(localMidnightToNeobuxMidnight);
+
+
+    var _timePeriods = [];
+    var localMidnightToFirstEvent;
+    var FirstEventToSecondEvent;
+    var SecondEventToLocalMidnight;
+    var FirstTP;
+    var SecondTP;
+    var ThirdTP;
+
+    /*
+     * Test the a = (local midnight to ad reset) time & b = (local midnight to neobux midnight) time
+     * If a < b, the order is 1) local midnight 2) neobux midnight 3) ad resets
+     * If a > b, the order is 1) local midnight 2) ad resets 3) neobux midnight
+     * If a == b, the ads reset at the same time as the neobux midnight ticks over,
+     *  .. and the order is 1) local midnight 2) ad reset+neobux midnight
+
+     * Based on this logic, decide which order to display the 'chunks' of the clock
+     */
+
+    var tmp_displayOrder;
+    if(localMidnightToAdResetTime < localMidnightToNeobuxMidnight) { tmp_displayOrder = 1; }
+    if(localMidnightToAdResetTime > localMidnightToNeobuxMidnight) { tmp_displayOrder = 2; }
+    if(localMidnightToAdResetTime == localMidnightToNeobuxMidnight) { tmp_displayOrder = 3; }
+
+    switch(tmp_displayOrder)
+    {
+      case 1:
+  //      debugLog('localMidnightToAdResetTime < localMidnightToNeobuxMidnight');
+
+        localMidnightToFirstEvent = localMidnightToAdResetTime;
+        FirstEventToSecondEvent = localMidnightToNeobuxMidnight - localMidnightToAdResetTime;
+        SecondEventToLocalMidnight = 24 - (localMidnightToFirstEvent + FirstEventToSecondEvent);
+
+        FirstTP = 'Local Midnight to Ad Reset Time';
+        SecondTP = 'Ad Reset Time to Neobux Midnight';
+        ThirdTP = 'Neobux Midnight to Local Midnight';
+
+        _timePeriods.push({
+          name: FirstTP,
+          y: localMidnightToFirstEvent,
+          color: '#AA4643'
+        });
+        _timePeriods.push({
+          name: SecondTP,
+          y: FirstEventToSecondEvent,
+          color: '#4572A7'
+        });
+        _timePeriods.push({
+          name: ThirdTP,
+          y: SecondEventToLocalMidnight,
+          color: '#AA4643'
+        });
+
+      break;
+      case 2:
+
+  //      debugLog('localMidnightToAdResetTime > localMidnightToNeobuxMidnight');
+
+        localMidnightToFirstEvent = localMidnightToNeobuxMidnight;
+        FirstEventToSecondEvent = localMidnightToAdResetTime - localMidnightToNeobuxMidnight;
+        SecondEventToLocalMidnight = 24 - (localMidnightToFirstEvent + FirstEventToSecondEvent);
+
+        FirstTP = 'Local Midnight to Neobux Midnight';
+        SecondTP = 'Neobux Midnight to Ad Reset Time';
+        ThirdTP = 'Ad Reset Time to Local Midnight';
+
+        _timePeriods.push({
+          name: FirstTP,
+          y: localMidnightToFirstEvent,
+          color: '#AA4643'
+        });
+        _timePeriods.push({
+          name: SecondTP,
+          y: FirstEventToSecondEvent,
+          color: '#4572A7'
+        });
+        _timePeriods.push({
+          name: ThirdTP,
+          y: SecondEventToLocalMidnight,
+          color: '#AA4643'
+        });
+
+      break;
+      case 3:
+
+  //      debugLog('localMidnightToAdResetTime == localMidnightToNeobuxMidnight');
+
+        localMidnightToFirstEvent = localMidnightToAdResetTime;
+        FirstEventToSecondEvent = 24 - (localMidnightToFirstEvent);
+
+        FirstTP = 'Local Midnight to Neobux Midnight And Ad Reset Time';
+        SecondTP = 'Neobux Midnight And Ad Reset Time to Local Midnight';
+
+        _timePeriods.push({
+          name: FirstTP,
+          y: localMidnightToFirstEvent,
+          color: '#AA4643'
+        });
+        _timePeriods.push({
+          name: SecondTP,
+          y: FirstEventToSecondEvent,
+          color: '#4572A7'
+        });
+
+      break;
+
+    }
+
+    // Transfer script variables to the window
+    location.href = "javascript:void(window._timePeriods = new Array())";
+    for(var i = 0; i < _timePeriods.length; i++) {
+      location.href = "javascript:void(window._timePeriods["+i+"] = JSON.parse('"+JSON.stringify(_timePeriods[i])+"'))";
+    }
+    location.href = "javascript:void(window.adResetTime = new Date('"+adResetTime.toString()+"'))";
+    location.href = "javascript:void(window.neoMidnight = new Date('"+neoMidnight.toString()+"'))";
+    location.href = "javascript:void(window.localMidnight = new Date('"+localMidnight.toString()+"'))";
+
+    //    debugLog(_timePeriods);
+
+    location.href = "javascript:(" + function () {
+
+      if('undefined' !== typeof Highcharts)
+      {
+        var chart = new Highcharts.Chart({
+          chart: {
+            renderTo: 'containerDiv_timer',
+            margin: [20,20,80,20],
+            backgroundColor: '#eeeeee'
+          },
+          title: {
+            text: ''
+          },
+          plotArea: {
+            shadow: null,
+            borderWidth: null,
+            backgroundColor: null
+          },
+          tooltip: {
+            formatter: function () {
+              function padZeros(_input,_desiredStringLength)
+              {
+                var currentLength = _input.toString().length;
+                var output = _input;
+                for(var i=0; i < (_desiredStringLength - currentLength); i++) {
+                  output = '0' + output;
+                }
+                return output;
+              }
+              var _from = padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2);
+              localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y),localMidnight.getMinutes() + ((this.y - Math.floor(this.y))*60) ));
+              var _to = padZeros(localMidnight.getHours(),2) + ':' + padZeros(localMidnight.getMinutes(),2);
+
+              return '<b>'+ this.point.name +'</b>: ' + (Math.floor(this.y*100) / 100) + 'hours == From: '+_from+' To: '+_to;
+            }
+          },
+          plotOptions: {
+            pie: {
+              allowPointSelect: true,
+              cursor: 'pointer',
+              dataLabels: {
+                enabled: true,
+                formatter: function () {
+                  function padZeros(_input,_desiredStringLength)
+                  {
+                    var currentLength = _input.toString().length;
+                    var output = _input;
+                    for(var i=0; i < (_desiredStringLength - currentLength); i++) {
+                      output = '0' + output;
+                    }
+                    return output;
+                  }
+                  if(0 === this.x){localMidnight.setHours(0,0,0);}
+                  var _from = padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2);
+                  localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y),localMidnight.getMinutes() + ((this.y - Math.floor(this.y))*60) ));
+                  var _to = padZeros(localMidnight.getHours(),2) + ':' + padZeros(localMidnight.getMinutes(),2);
+
+                  return _from+'-'+_to;
+                }
+              }
+            }
+          },
+          legend: {
+            layout: 'vertical'
+          },
+          series: [{
+            type: 'pie',
+            name: 'Time periods',
+            data: _timePeriods
+          }]
+        });
+
+      }
+      else
+      {
+        //move container off screen to stop a transparent div blocking clicks on rest of page
+        //Also colour it so that if it does cause a problem, it isn't invisible
+        //todo: add the event handler before this javascript is called and then remove it here if the timer chart cannot show
+        document.getElementById('containerDiv_timer').style.left = '-1000px';
+        document.getElementById('containerDiv_timer').style.backgroundColor = 'black';
+//        alert("Cannot show the clicking guide graph because graphs are unavailable on this page. Try the account summary page or referral statistics page.");
+      }
+
+
+      //todo: look into passing parameters into the ()
+    } + ")()";
+
+    document.getElementById('localServerTimeText').addEventListener('click',function localServerTime_onClick(){
+      console.info('time clicked');
+      document.getElementById('containerDiv_timer').style.display = ('none' == document.getElementById('containerDiv_timer').style.display) ? '' : 'none' ;
+    },false);
+
+  };
+
+  if(!!this.GetServerTimeOffset()) {
+    this.insertClock(this.GetServerTimeOffset(),get('AdResetTime_hours',0, {prefType:'string'}));
+    this.insertClickGuide();
+  }
+
+}
+
+insertLocalServerTime();
