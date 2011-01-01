@@ -413,7 +413,7 @@ function get(arg_prefName, arg_defaultValue, arg_options)
     arg_options = {};
   }
 
-  var returnType = arg_options.prefType = arg_options.prefType || typeof arg_defaultValue;
+  var returnType = arg_options.prefType || typeof arg_defaultValue;
 
   var tmp = localStorage.getItem(arg_prefName);
   if(!tmp) {
@@ -516,7 +516,7 @@ var currentPage = new function()
     if(document.body.textContent.match(/Change Language To English/i)) { set('neobuxLanguageCode', 'PT', {prefType: 'string'}); }
 
     return get('neobuxLanguageCode', 'EN', {prefType: 'string'});
-  };
+  }
   this.languageCode = detectLanguageCode();
 
   function detectPageCode ()
@@ -703,8 +703,8 @@ function extractNumberOfRefs()
     var tmp_elmAccountInfo = docEvaluate('//td[@class="t_preto_r"]/parent::tr/parent::tbody/descendant::td');
 
     //console.info(tmp_elmAccountInfo);
-    function displayTextContent(arg_Elm){
-      return arg_Elm.textContent.replace(/mk_tt\(.*\)/,'').replace(/[><+=;\s]+/g,'');
+    function displayTextContent(arg_element){
+      return arg_element.textContent.replace(/mk_tt\(.*\)/,'').replace(/[><+=;\s]+/g,'');
     }
 
     var tmp_currentTd;
@@ -897,7 +897,7 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
     };
 
 
-    this.graphData = function()
+    this.reformatGraphData = function()
     {
       var tmp_graphData = new Array();
       var tmp_graphDataObject = new Object();
@@ -908,15 +908,17 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
 
       for (var _i in this.dataGrabbedFromCurrentPage())
       {
-        console.info('_i',_i,
-         'this.grabDataFromPage()[_i]',this.grabDataFromPage()[_i],
-         'friendlyNameLookup[this.grabDataFromPage()[_i][0]]',friendlyNameLookup[this.grabDataFromPage()[_i][0]]
-         );
-
         tmp_currentGraphFriendlyName = friendlyNameLookup[this.dataGrabbedFromCurrentPage()[_i][0]];
         tmp_graphData[tmp_currentGraphFriendlyName] = this.dataGrabbedFromCurrentPage()[_i];
 
         currentDataset = tmp_graphData[tmp_currentGraphFriendlyName];
+
+        console.info('_i',_i,
+         'this.dataGrabbedFromCurrentPage()[_i]',this.dataGrabbedFromCurrentPage()[_i],
+         'friendlyNameLookup[this.dataGrabbedFromCurrentPage()[_i][0]]',friendlyNameLookup[this.dataGrabbedFromCurrentPage()[_i][0]]
+         );
+
+
 
   //      debugLog('currentDataset', currentDataset);
 
@@ -954,7 +956,7 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
   };
 
   debugLog('chartData.dataGrabbedFromCurrentPage()', chartData.dataGrabbedFromCurrentPage());
-  debugLog('chartData.graphData()', chartData.graphData());
+  debugLog('chartData.reformatGraphData()', chartData.reformatGraphData());
 
 }
 /*
@@ -990,16 +992,15 @@ function insertLocalServerTime()
   var currentServerTime;
   var neoMidnight;
   var adResetTime;
-  var AdResetTime_hours
+  var AdResetTime_hours;
 
-  function setTime(arg_dateTime,arg_Time)
+  function setTime(arg_dateTime,arg_time)
   {
-    var tmpDateTime = arg_dateTime;
-    tmpDateTime.setHours(arg_Time[0]);
-    tmpDateTime.setMinutes(arg_Time[1]);
-    tmpDateTime.setSeconds(arg_Time[2]);
+    arg_dateTime.setHours(arg_time[0]);
+    arg_dateTime.setMinutes(arg_time[1]);
+    arg_dateTime.setSeconds(arg_time[2]);
 
-    return tmpDateTime;
+    return arg_dateTime;
   }
 
   // Calculate and return the server time formatted correctly
@@ -1090,7 +1091,7 @@ function insertLocalServerTime()
 
 
         var adResetTimeString = locationOfTimeString.snapshotItem(0).textContent;
-        adResetTimeString = adResetTimeString.match(/([\d]{2})\:([\d]{2})/);
+        adResetTimeString = adResetTimeString.match(/([\d]{2}):([\d]{2})/);
 
         // ART = Ad Reset Time
         var tmp_ART = {
@@ -1142,7 +1143,7 @@ function insertLocalServerTime()
   {
     locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode;
     var localTime = formatTime(dateToday);
-    var serverTime = (!!this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
+    var serverTime = (this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
 
 //  debugLog('Local: ' + localTime + ' Server: ' + serverTime);
 
@@ -1301,9 +1302,19 @@ function insertLocalServerTime()
 
     //    debugLog(_timePeriods);
 
-    location.href = "javascript:(" + function () {
+    location.href = "javascript:(" + padZeros + function () {
 
-      if('undefined' !== typeof Highcharts)
+      if ('undefined' === typeof Highcharts)
+      {
+        //move container off screen to stop a transparent div blocking clicks on rest of page
+        //Also colour it so that if it does cause a problem, it isn't invisible
+        //todo: add the event handler before this javascript is called and then remove it here if the timer chart cannot show
+
+        document.getElementById('containerDiv_timer').style.left = '-1000px';
+        document.getElementById('containerDiv_timer').style.backgroundColor = 'black';
+        alert("Cannot show the clicking guide graph because graphs are unavailable on this page. Try the account summary page or referral statistics page.");
+      }
+      else
       {
         var chart = new Highcharts.Chart({
           chart: {
@@ -1320,21 +1331,13 @@ function insertLocalServerTime()
             backgroundColor: null
           },
           tooltip: {
-            formatter: function () {
-              function padZeros(_input,_desiredStringLength)
-              {
-                var currentLength = _input.toString().length;
-                var output = _input;
-                for(var i=0; i < (_desiredStringLength - currentLength); i++) {
-                  output = '0' + output;
-                }
-                return output;
-              }
-              var _from = padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2);
-              localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y),localMidnight.getMinutes() + ((this.y - Math.floor(this.y))*60) ));
-              var _to = padZeros(localMidnight.getHours(),2) + ':' + padZeros(localMidnight.getMinutes(),2);
+            formatter: function ()
+            {
+              var _from = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
+              localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y), localMidnight.getMinutes() + ((this.y - Math.floor(this.y)) * 60)));
+              var _to = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
 
-              return '<b>'+ this.point.name +'</b>: ' + (Math.floor(this.y*100) / 100) + 'hours == From: '+_from+' To: '+_to;
+              return '<b>' + this.point.name + '</b>: ' + (Math.floor(this.y * 100) / 100) + 'hours == From: ' + _from + ' To: ' + _to;
             }
           },
           plotOptions: {
@@ -1343,22 +1346,16 @@ function insertLocalServerTime()
               cursor: 'pointer',
               dataLabels: {
                 enabled: true,
-                formatter: function () {
-                  function padZeros(_input,_desiredStringLength)
-                  {
-                    var currentLength = _input.toString().length;
-                    var output = _input;
-                    for(var i=0; i < (_desiredStringLength - currentLength); i++) {
-                      output = '0' + output;
-                    }
-                    return output;
+                formatter: function ()
+                {
+                  if (0 === this.x) {
+                    localMidnight.setHours(0, 0, 0);
                   }
-                  if(0 === this.x){localMidnight.setHours(0,0,0);}
-                  var _from = padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2);
-                  localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y),localMidnight.getMinutes() + ((this.y - Math.floor(this.y))*60) ));
-                  var _to = padZeros(localMidnight.getHours(),2) + ':' + padZeros(localMidnight.getMinutes(),2);
+                  var _from = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
+                  localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y), localMidnight.getMinutes() + ((this.y - Math.floor(this.y)) * 60)));
+                  var _to = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
 
-                  return _from+'-'+_to;
+                  return _from + '-' + _to;
                 }
               }
             }
@@ -1366,22 +1363,15 @@ function insertLocalServerTime()
           legend: {
             layout: 'vertical'
           },
-          series: [{
-            type: 'pie',
-            name: 'Time periods',
-            data: _timePeriods
-          }]
+          series: [
+            {
+              type: 'pie',
+              name: 'Time periods',
+              data: _timePeriods
+            }
+          ]
         });
 
-      }
-      else
-      {
-        //move container off screen to stop a transparent div blocking clicks on rest of page
-        //Also colour it so that if it does cause a problem, it isn't invisible
-        //todo: add the event handler before this javascript is called and then remove it here if the timer chart cannot show
-        document.getElementById('containerDiv_timer').style.left = '-1000px';
-        document.getElementById('containerDiv_timer').style.backgroundColor = 'black';
-//        alert("Cannot show the clicking guide graph because graphs are unavailable on this page. Try the account summary page or referral statistics page.");
       }
 
 
@@ -1646,7 +1636,7 @@ var referralListings = new function()
         };
 
         // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
-        cr.minigraph.rawClickData = currentUser.accountType.isUltimate ? referrals[z].minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+        cr.minigraph.rawClickData = currentUser.accountType.isUltimate ? cr.minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
 
         // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
         cr.minigraph.rawClickData =  cr.minigraph.rawClickData.reverse();
@@ -1775,7 +1765,9 @@ var referralListings = new function()
     var storedReferralData = get('referrals',{},{ prefType:'JSON' });
     var referralData;
 
-    var tmp_referralDataFromListingsPage = extractReferralDataFromListingsPage();
+    var tmp_referralDataFromListingsPage = { mtx:'' };
+    tmp_referralDataFromListingsPage = extractReferralDataFromListingsPage();
+    
     if(-1 !== tmp_referralDataFromListingsPage)
     {
       // Restructure the data from the given mtx=[] format into the same structure as our stored info
