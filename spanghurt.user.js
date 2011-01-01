@@ -5,6 +5,23 @@
 // @include        http*://www.neobux.com/*
 // ==/UserScript==
 
+
+if('undefined' === typeof GM_log){
+  function GM_log() {
+
+  }
+}
+
+if('undefined' === typeof console){
+  console = {
+    info: function() {
+      GM_log(arguments);
+    },
+    group: function() {},
+    groupEnd: function() {}
+  }
+}
+
 function debugLog()
 {
   if (2 <= arguments.length) {
@@ -1139,7 +1156,7 @@ function insertLocalServerTime()
 
   var locationToInsertTimeString;
 
-  this.insertClock = function(_timeOffset,_adResetOffset)
+  this.insertClock = function(arg_timeOffset,arg_adResetOffset)
   {
     locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode;
     var localTime = formatTime(dateToday);
