@@ -13,7 +13,7 @@ if('undefined' === typeof GM_log){
 }
 
 if('undefined' === typeof console){
-  console = {
+  var console = {
     info: function() {
       GM_log(arguments);
     },
@@ -1319,8 +1319,19 @@ function insertLocalServerTime()
 
     //    debugLog(_timePeriods);
 
-    location.href = "javascript:(" + padZeros + function () {
+    location.href = "javascript:(" + function () {
 
+      // Append zeros to the _input until the _desiredStringLength is reached
+      function padZeros(arg_input,arg_desiredStringLength)
+      {
+        var currentLength = arg_input.toString().length;
+        var output = arg_input;
+        for(var i=0; i < (arg_desiredStringLength - currentLength); i++) {
+          output = '0' + output;
+        }
+        return output;
+      }
+      
       if ('undefined' === typeof Highcharts)
       {
         //move container off screen to stop a transparent div blocking clicks on rest of page
@@ -1610,19 +1621,12 @@ var referralListings = new function()
         tmp_referrals[cr_ID] = {
           ID: ('0' == cr[1]) ? 'R' + cr[19] : cr[1],
           referralType: 'R',
-          lastSeen: tmp_currentDateTime.toString(),
-          hash: cr[7],
-
-          referralSince: ('9' == cr[2]) ? pr.referralSince : cr[2],
 
           flag: flagLookup[cr[15]],
           locked: (1 === cr[17]) ? 'Y' : 'N',
           recycleable: (1 === cr[16]) ? 'Y' : 'N',
 
-          nextPayment: cr[3],
-          lastClick: ('9' == cr[4]) ? pr.lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? ntl('Yesterday') : ('H' == cr[4]) ? ntl('Today') : cr[4],
-          totalClicks: cr[5],
-          overallAverage: ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6]
+          nextPayment: cr[3]
         };
       }
       else if (0 < location.href.indexOf('ss3=1'))
@@ -1630,18 +1634,18 @@ var referralListings = new function()
         tmp_referrals[cr_ID] = {
           ID: ('0' == cr[1]) ? 'D' + cr[19] : cr[1],
           referralType: 'D',
-          lastSeen: tmp_currentDateTime,
-          hash: cr[7],
-
           cameFrom: cr[2],
-          referralSince: ('9' == cr[3]) ? pr.referralSince : cr[3],
-
-          lastClick: ('9' == cr[4]) ? pr.lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? ntl('Yesterday') : ('H' == cr[4]) ? ntl('Today') : cr[4],
-          totalClicks: cr[5],
-          overallAverage: ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6],
           sellable: (1 === cr[18]) ? 'Y' : 'N'
         };
       }
+
+      tmp_referrals[cr_ID].lastSeen = tmp_currentDateTime;
+      tmp_referrals[cr_ID].hash = cr[7];
+      tmp_referrals[cr_ID].referralSince = ('9' == cr[3]) ? pr.referralSince : cr[3];
+      tmp_referrals[cr_ID].lastClick = ('9' == cr[4]) ? pr.lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4];
+      tmp_referrals[cr_ID].totalClicks = cr[5];
+      tmp_referrals[cr_ID].overallAverage = ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6];
+      
 
       /* Ultimate only stuff, based on the ultimate minigraphs */
       // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
@@ -1784,7 +1788,17 @@ var referralListings = new function()
 
     var tmp_referralDataFromListingsPage = { mtx:'' };
     tmp_referralDataFromListingsPage = extractReferralDataFromListingsPage();
-    
+
+    /**
+     * Check how many referrals are being shown per page
+     * If the user is ultimate and has more than 100 referrals showing, minigraphs
+     * will not be displayed
+     * If the user has fewer than 10 referrals, the option to select the # of
+     * referrals is not present, thus refsPerPage must be set manually
+    */
+    var refsPerPageSelector = document.getElementById('rlpp');
+    var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
+
     if(-1 !== tmp_referralDataFromListingsPage)
     {
       // Restructure the data from the given mtx=[] format into the same structure as our stored info
@@ -1802,42 +1816,95 @@ if(0 < location.href.indexOf('ss3=1') || 0 < location.href.indexOf('ss3=2')) {
   referralListings.init();
 }
 
+var logo =
+{
+  insert: function()
+  {
+    // Inserts the logo for the script into the page
+    
+    // the language icon in upper right of page
+    var xpathResults_logoLocation = docEvaluate('//ul[@id="menu"]/li[@id="menuli"]/parent::ul/parent::td');
+
+    if (1 == xpathResults_logoLocation.snapshotLength)
+    {
+      var logoImage = document.createElement('img');
+      logoImage.id = 'neobux2Logo';
+      logoImage.setAttribute('rel', '#scriptPreferences');
+
+      logoImage.style.cursor = 'pointer';
+      logoImage.border = "0";
+      logoImage.width = '16';
+      logoImage.alt = 'Spanghurt Greasemonkey Script Preferences';
+      logoImage.title = 'Spanghurt Greasemonkey Script Preferences';
+      logoImage.src = 'http://img262.imageshack.us/img262/3654/neobuxv3logolargered2.png';
+      // img.src = 'http://img262.imageshack.us/img262/4965/neobuxv3logolargered3.png';
+
+
+
+      // Container for logo image to allow it to look correct in the page
+      var td = document.createElement('td');
+      td.style.paddingLeft = '8px';
+      td.style.paddingRight = '8px';
+      td.innerHTML = ' &nbsp;|&nbsp; &nbsp;';
+      td.appendChild(logoImage);
+
+      xpathResults_logoLocation.snapshotItem(0).parentNode.appendChild(td);
+
+    }
+  },
+
+  addClickEvent: function()
+  {
+    $(function () {
+        try {
+          $("#neobux2Logo").overlay({mask: '#000', effect: 'apple', closeOnClick: false, fixed: false});
+        } catch(e)
+        {
+          errorLog('Error:\n\n'+e);
+        }
+      });
+  },
+
+  init: function()
+  {
+    this.insert();
+    this.addClickEvent();
+  }
+
+};
+
+logo.init();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 // if(false) allows for easy nesting of the code and allows it to be highlighted without worry about it being executed
 if(false)
 {
-  /*FOLLOWING CODE IS FROM V4, NOT YET REWRITTEN / PORTED / WHATEVER*/
-  function extractReferralListingsData()
-  {
-    // Iterate through mtx data and assign into the referrals object for easier
-    // access later
-    for (var z = 0; z < mtx.length; z++)
-    {
-      // NOTE: mtx.length = # of referrals shown on current page
-      // (not necessarily the same as the [max] number of refs per page - eg, may only be 3 refs on page 2 if only 13 refs)
-
-      var currentRefMTX = mtx[z];
-
-      /*If the referral has not clicked yet, the referral has been inactive for as long as it has been owned
-       Else the referral has been inactive since the date of its last click*/
-      if (cr.lastClick.match(/No clicks yet/))
-      {
-        cr.inactiveDays = NumDaysSince(cr.referralSince, 'days', script.preferences.lastClick_fullerTimers, script.preferences.shortFormatTimer.lastClick, 'lastClick');
-        cr.accurateLastClick = NumDaysSince(cr.referralSince, 'decimal', script.preferences.lastClick_fullerTimers, false, 'lastClick');
-      }
-      else
-      {
-        cr.inactiveDays = NumDaysSince(cr.lastClick, 'days', script.preferences.lastClick_fullerTimers, script.preferences.shortFormatTimer.lastClick, 'lastClick');
-        cr.accurateLastClick = NumDaysSince(cr.lastClick, 'decimal', script.preferences.lastClick_fullerTimers, false, 'lastClick');
-      }
-
-      cr.ownedSince_summarised = NumDaysSince(cr.referralSince, 'mins', script.preferences.referralSince_fullerTimers, script.preferences.shortFormatTimer.referralSince, 'daysOwned');
-
-    }
-  }
-
 
   /*
   * Need to grab the data that is contained within p,
