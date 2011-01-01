@@ -1426,9 +1426,7 @@ function insertLocalServerTime()
       this.FetchAndSetTimeOffset();
     }
 
-    var serverTimeOffset = get('serverTimeOffset', 0, {prefType:'float'});
-
-    return serverTimeOffset;
+    return get('serverTimeOffset', 0, {prefType:'float'});
   };
 
 
@@ -2059,21 +2057,18 @@ var referralListings = new function()
 
   this.init = function ()
   {
+    /**
+     * Check how many referrals are being shown per page:  If the user is ultimate and has more than 100 referrals showing, minigraphs will not be displayed
+     * If the user has fewer than 10 referrals, the option to select the # of referrals is not present, thus refsPerPage must be set manually
+    */
+    var refsPerPageSelector = document.getElementById('rlpp');
+    var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
+
     var storedReferralData = get('referrals',{},{ prefType:'JSON' });
     var referralData;
 
     var tmp_referralDataFromListingsPage = { mtx:'' };
     tmp_referralDataFromListingsPage = extractReferralDataFromListingsPage();
-
-    /**
-     * Check how many referrals are being shown per page
-     * If the user is ultimate and has more than 100 referrals showing, minigraphs
-     * will not be displayed
-     * If the user has fewer than 10 referrals, the option to select the # of
-     * referrals is not present, thus refsPerPage must be set manually
-    */
-    var refsPerPageSelector = document.getElementById('rlpp');
-    var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
 
     if(-1 !== tmp_referralDataFromListingsPage)
     {
