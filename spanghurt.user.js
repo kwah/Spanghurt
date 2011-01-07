@@ -146,20 +146,27 @@ new u(this,this.eq(0).closest("form"),a);return this.data("validator",b)}}})(jQu
 
 if('undefined' === typeof GM_log){
   function GM_log() {
+    //console.info(arguments);
+    //location.href = "javascript:void(console.info('JSON.parse('"+JSON.stringify(arguments)+"')'));";
+
 
   }
 }
 
 if('undefined' === typeof console){
+//  alert('console not defined');
   var console = {
     info: function() {
-      GM_log(arguments);
+      for(var i=0; i<arguments.length; i++){
+        location.href = "javascript:void(console.info('"+arguments[i]+"'));";
+      }
     },
     group: function() {},
     groupEnd: function() {}
   }
 }
 
+console.info('foobar');
 
 if('undefined' === typeof GM_addStyle){
   function GM_addStyle(arg_css) {
@@ -179,8 +186,16 @@ function debugLog()
   if (2 <= arguments.length) {
     console.group();
   }
+//  if('undefined' !== typeof GM_log) {
+//    if (1 == arguments.length) {
+//      GM_log(arguments[0]);
+//    }else {
+//      GM_log(arguments.join('\n----\n'));
+//    }
+//  }
   for (var i = 0; i < arguments.length; i++) {
     console.info(arguments[i]);
+    if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
   }
   if (2 <= arguments.length) {
     console.groupEnd();
@@ -207,8 +222,8 @@ function errorLog()
   if (2 <= arguments.length) {
     console.group();
   }
+  if('undefined' !== typeof GM_log) { GM_log(arguments.join('\n----\n')); }
   for (var i = 0; i < arguments.length; i++) {
-    if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
     console.info(arguments[i]);
   }
   if (2 <= arguments.length) {
@@ -766,9 +781,14 @@ function set(arg_prefName, arg_defaultValue, arg_options)
       break;
   }
 
-//  debugLog('tmp_value', tmp_value);
+  debugLog('arg_prefName = ',arg_prefName,' ; tmp_value = ', JSON.stringify(tmp_value));
 
-  localStorage.setItem(arg_prefName, tmp_value);
+  GM_log('typeof GM_setValue = ' + typeof GM_setValue);
+  /*Having issues with the localStorage being wiped occasionally so storing to GM_log too as a backup*/
+  if("undefined" !== typeof GM_setValue) {
+    GM_setValue(arg_prefName, tmp_value);
+  }
+//  localStorage.setItem(arg_prefName, tmp_value);
   return get(arg_prefName, tmp_value, arg_options);
 }
 
@@ -1434,36 +1454,37 @@ function insertLocalServerTime()
 
   this.insertClock = function(arg_timeOffset,arg_adResetOffset)
   {
-    locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode;
-    var localTime = formatTime(dateToday);
-    var serverTime = (0 <= this.GetServerTimeOffset() || 0 >= this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
+    if(locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode)
+    {
+      var localTime = formatTime(dateToday);
+      var serverTime = (0 <= this.GetServerTimeOffset() || 0 >= this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
 
-//  debugLog('Local: ' + localTime + ' Server: ' + serverTime);
+  //  debugLog('Local: ' + localTime + ' Server: ' + serverTime);
 
-    if(document.getElementById('containerDiv_timer')) {
-      //document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
-    } else {
-      locationToInsertTimeString.innerHTML = '<div id="localServerTimeText" style="font-family:mono,monospace; font-size:x-small; margin-bottom:-15px; padding-top:0.7em;">&nbsp; Local time: ' + localTime + '  --  Server time: ' + serverTime + '</div>' + locationToInsertTimeString.innerHTML;
-      locationToInsertTimeString.setAttribute('valign', '');
-    }
+      if(document.getElementById('containerDiv_timer')) {
+        //document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
+      } else {
+        locationToInsertTimeString.innerHTML = '<div id="localServerTimeText" style="font-family:mono,monospace; font-size:x-small; margin-bottom:-15px; padding-top:0.7em;">&nbsp; Local time: ' + localTime + '  --  Server time: ' + serverTime + '</div>' + locationToInsertTimeString.innerHTML;
+        locationToInsertTimeString.setAttribute('valign', '');
+      }
 
-    var containerDiv_timer = document.createElement('div');
-    containerDiv_timer.innerHTML = '<div style="width: 750px; height: 450px; display:none; position:absolute; top:100px; left:100px;" id="containerDiv_timer"></div>';
+      var containerDiv_timer = document.createElement('div');
+      containerDiv_timer.innerHTML = '<div style="width: 750px; height: 450px; display:none; position:absolute; top:100px; left:100px;" id="containerDiv_timer"></div>';
 
-    // Used mostly during testing - if the container div is already present update it rather than add another
-    if(document.getElementById('containerDiv_timer')) {
-      document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
-    } else {
-      document.body.appendChild(containerDiv_timer);
-    }
+      // Used mostly during testing - if the container div is already present update it rather than add another
+      if(document.getElementById('containerDiv_timer')) {
+        document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
+      } else {
+        document.body.appendChild(containerDiv_timer);
+      }
 
 
-//    debugLog('Local Midnight ',padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2),
-//        'Server Midnight ',padZeros(neoMidnight.getHours(),2)+':'+padZeros(neoMidnight.getMinutes(),2),
-//        'Ad Reset Time ',padZeros(adResetTime.getHours(),2)+':'+padZeros(adResetTime.getMinutes(),2));
+//      debugLog('Local Midnight ',padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2),
+//          'Server Midnight ',padZeros(neoMidnight.getHours(),2)+':'+padZeros(neoMidnight.getMinutes(),2),
+//          'Ad Reset Time ',padZeros(adResetTime.getHours(),2)+':'+padZeros(adResetTime.getMinutes(),2));
 //
-//    debugLog(localMidnight,neoMidnight,adResetTime);
-
+//      debugLog(localMidnight,neoMidnight,adResetTime);
+    }
   };
 
 
@@ -2138,6 +2159,307 @@ var logo =
 };
 
 logo.init();
+
+
+
+
+var chartDataBars = new function()
+{
+  this.maxDataBarWidth = 0;
+
+  var availableGraphs = [
+      'ch_cd',
+      'ch_cr',
+      'ch_recycle',
+      'ch_autopay',
+      'ch_extensions',
+      'ch_trrb',
+      'ch_ext_schedule1',
+      'ch_ext_schedule2',
+      'ch_ext_schedule3',
+      'ch_ext_schedule4',
+      'ch_ext_schedule5',
+      'ch_ext_schedule6',
+      'ch_ext_schedule7',
+      'ch_ext_schedule8',
+      'ch_cliques'
+  ];
+  
+  this.graphsOnCurrentPage = [];
+
+  for(var i=0; i < availableGraphs.length; i++){
+    if(document.getElementById(availableGraphs[i])){
+      this.graphsOnCurrentPage.push(availableGraphs[i]);
+    }
+  }
+
+  
+  function insertUnderGraph(arg_containerID, arg_dataBarTitle, arg_timePeriodPrefix, arg_data, arg_timePeriodSuffix, arg_graphBarId, arg_customDataBarCss)
+  {
+//    debugLog('addDataBarUnderGraph()',arguments);
+
+    var bar = document.createElement("div");
+    bar.setAttribute("id", arg_graphBarId);
+    bar.setAttribute("class", "graphBar");
+    bar.setAttribute("style", arg_customDataBarCss);
+
+    bar.innerHTML = arg_dataBarTitle;
+    for (var z=0; z< arg_data.length; z++) {
+      bar.innerHTML += arg_timePeriodPrefix + arg_data[z][0] + arg_timePeriodSuffix + arg_data[z][1];
+    }
+
+    var chartContainer = document.getElementById(arg_containerID);
+    chartContainer.parentNode.appendChild(bar);
+
+    var currentDataBarWidth = bar.textContent.split('').length;
+    this.maxDataBarWidth = (this.maxDataBarWidth < currentDataBarWidth) ? currentDataBarWidth : this.maxDataBarWidth;
+  }
+
+  function dataBarClickHandler(arg_testing){
+    alert(arg_testing);
+  }
+
+  this.init = function() {
+    var graphBarCSS = ".graphBar { border:1px solid #AAAAAA; color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; margin: -11px auto 10px; max-width: 82%; min-width:75%; padding:1px 2%; text-align:left; vertical-align:middle; white-space:nowrap; width:"+(this.maxDataBarWidth/1.75)+"em; }";
+    GM_addStyle(graphBarCSS);
+    
+    for(var i=0; i < this.graphsOnCurrentPage.length; i++){
+      insertUnderGraph(this.graphsOnCurrentPage[i], 'Sums :', ' (', [[3,1],[5,2],[10,3]], ') ', this.graphsOnCurrentPage[i]+'_'+i, 'margin-top:10px;');
+    }
+
+    var dataBarsOnPage = document.body.g
+    document.getElementById(this.graphsOnCurrentPage[i]+'_'+i).addEventListener('click', function(){ dataBarClickHandler(this.graphsOnCurrentPage[i]+'_'+i); }, false);
+  };
+
+};
+
+chartDataBars.init();
+
+
+function insertChartDataBars()
+{
+  var maxDatabarWidth = 0;
+
+
+
+
+
+
+  debugLog('graphsOnCurrentPage');
+  debugLog(graphsOnCurrentPage);
+  debugLog('graphsOnCurrentPage.length = ' +graphsOnCurrentPage.length);
+
+  console.group();
+  for (var i = 0; i < graphsOnCurrentPage.length; i++)
+  {
+    console.group();
+    debugLog('i = '+i);
+
+    debugLog('graphsOnCurrentPage[i]');
+    debugLog(graphsOnCurrentPage[i]);
+    debugLog('friendlyNameLookup[graphsOnCurrentPage[i]]');
+    debugLog(friendlyNameLookup[graphsOnCurrentPage[i]]);
+
+    var _currentGraph = _graphs[friendlyNameLookup[graphsOnCurrentPage[i]]];
+
+    if(_currentGraph)
+    {
+
+      debugLog('_currentGraph');
+      debugLog(_currentGraph);
+
+      // Get the time periods appropriate for each graph size
+      var graph_timePeriod = [];
+
+      switch (_currentGraph.data.__count__)
+      {
+        case 15:
+          graph_timePeriod = script.preferences.timePeriods.largeGraph;
+          break;
+        case 10:
+          graph_timePeriod = script.preferences.timePeriods.smallGraph;
+          break;
+        case 90:
+          graph_timePeriod = script.preferences.timePeriods.extensionsGraph;
+          break;
+      }
+
+      var sum_Array = new Array();
+      var avg_Array = new Array();
+
+      for (var j = 0; j < graph_timePeriod.length; j++)
+      {
+        if('undefined' !== typeof _currentGraph.sum[graph_timePeriod[j]]) {
+          //GM_log((j+1) + ' /  ' + graph_timePeriod.length+'\n\n'+_currentGraph.containerID);
+          sum_Array.push([graph_timePeriod[j], _currentGraph.sum[graph_timePeriod[j]].toFixed(3)]);
+          avg_Array.push([graph_timePeriod[j], _currentGraph.mean[graph_timePeriod[j]].toFixed(3)]);
+        }
+        else
+        {
+          //GM_log((j+1) + ' /  ' + graph_timePeriod.length+' = '+graph_timePeriod[j]+'\n\n'+_currentGraph.containerID);
+        }
+      }
+
+      debugLog('sum_Array,avg_Array,graph_timePeriod');
+      debugLog(sum_Array,avg_Array,graph_timePeriod);
+
+
+      // Extra processing needed for the extensions graph so process separately..
+      if ('ch_ext_schedule1' === _currentGraph.containerID ||
+            'ch_ext_schedule2' === _currentGraph.containerID ||
+            'ch_ext_schedule3' === _currentGraph.containerID ||
+            'ch_ext_schedule4' === _currentGraph.containerID ||
+            'ch_ext_schedule5' === _currentGraph.containerID ||
+            'ch_ext_schedule6' === _currentGraph.containerID ||
+            'ch_ext_schedule7' === _currentGraph.containerID ||
+            'ch_ext_schedule8' === _currentGraph.containerID)
+      {
+        var extensionsArray = [[],[],[],[],[],[],[],[],[],[]];
+        graph_timePeriod = [7,15,30,60,90,120,150,180,210,240,270,300,330,360,390,410,440,470,500,530,560,590,610,640,670,700];
+        var tmp_extensionsGraphNumber = 1* _currentGraph.containerID.replace(/ch_ext_schedule/,'');
+
+        debugLog('graph_timePeriod.length = '+graph_timePeriod.length);
+
+        var timeAdjustment = 0;
+
+        console.info('graph_timePeriod.length');
+        console.info(graph_timePeriod.length);
+        for (var k = 0; k < graph_timePeriod.length; k++)
+        {
+          if(0 <= graph_timePeriod[k]) { timeAdjustment = 0; }
+          if(90 < graph_timePeriod[k]) { timeAdjustment = 90; }
+          if(180 < graph_timePeriod[k]) { timeAdjustment = 180; }
+          if(270 < graph_timePeriod[k]) { timeAdjustment = 270; }
+          if(360 < graph_timePeriod[k]) { timeAdjustment = 360; }
+          if(450 < graph_timePeriod[k]) { timeAdjustment = 450; }
+          if(540 < graph_timePeriod[k]) { timeAdjustment = 540; }
+          if(630 < graph_timePeriod[k]) { timeAdjustment = 630; }
+          if(720 < graph_timePeriod[k]) { timeAdjustment = 720; }
+
+  //        console.info('graph_timePeriod['+k+'] = ',graph_timePeriod[k]);
+  //        console.info('timeAdjustment',timeAdjustment);
+
+          var tmp_extensionGraphIndex = parseInt((graph_timePeriod[k]-1)/90,10)+1;
+          if(!extensionsArray[tmp_extensionGraphIndex]) {
+            console.info('extensionsArray[tmp_extensionGraphIndex]',extensionsArray[tmp_extensionGraphIndex]);
+            console.info('extensionsArray',extensionsArray);
+            console.info('tmp_extensionGraphIndex',tmp_extensionGraphIndex);
+          }
+
+          var tmp_thisDay = _currentGraph.sum[graph_timePeriod[k]-timeAdjustment];
+          var tmp_previousDay = _currentGraph.sum[graph_timePeriod[k-1]-timeAdjustment];
+
+          if(!tmp_previousDay){
+            tmp_previousDay = _currentGraph.sum[(graph_timePeriod[k-1]-timeAdjustment)+1];
+            console.info('tmp_thisDay', tmp_thisDay);
+            console.info('tmp_previousDay', tmp_previousDay);
+            console.info(graph_timePeriod[k-1],timeAdjustment,_currentGraph.sum);
+          }
+
+          if(0 === k){
+            extensionsArray[tmp_extensionGraphIndex].push([timeAdjustment+'-' + graph_timePeriod[k], tmp_thisDay]);
+          }
+          else
+          {
+            extensionsArray[tmp_extensionGraphIndex].push([(graph_timePeriod[k-1]+1) + '-' + (graph_timePeriod[k]), (tmp_thisDay - tmp_previousDay)]);
+          }
+        }
+
+        extensionsArray[tmp_extensionsGraphNumber].push([
+          'Other',
+          (parseInt(myAccountDetails.numberOfRefs.Rented, 10) - parseInt(_currentGraph.sum[graph_timePeriod[graph_timePeriod.length-1]-timeAdjustment], 10))
+        ]);
+
+  console.info(extensionsArray);
+
+        addDataBarUnderGraph('Extensions due: ', _currentGraph.containerID, ' (', extensionsArray[tmp_extensionsGraphNumber], ') ', 'margin-top:10px;');
+
+      } else
+      {
+
+        /**
+         * Insert data bars below graphs
+         */
+
+
+        console.info('_currentGraph',_currentGraph);
+        document.getElementById(_currentGraph.containerID).parentNode.style.height = '150px';
+
+        // Averages bar goes under all graphs
+        addDataBarUnderGraph('Averages :', _currentGraph.containerID, ' (', avg_Array, ') ', 'margin-top:10px;');
+
+        // Sums bar goes under all graphs
+        addDataBarUnderGraph('Sums :', _currentGraph.containerID, ' (', sum_Array, ') ',null);
+
+        switch (_currentGraph.containerID)
+        {
+          case 'ch_cliques':
+            // Personal clicks in 'Account Summary'
+
+            var personalClicks_Array = new Array();
+            for (var j = 0; j < graph_timePeriod.length; j++)
+            {
+              var tmp = [graph_timePeriod[j], (_currentGraph.sum[graph_timePeriod[j]] * myAccountDetails.ownClickValue).toFixed(3)];
+              personalClicks_Array.push(tmp);
+            }
+
+            addDataBarUnderGraph('Avg. Income :', _currentGraph.containerID, ' (', personalClicks_Array, ') $',null);
+
+            // Need to increase the height of the container to fix issue with the 'Congratulations: You've been active everyday.' message not wrapping correctly
+            document.getElementById(_currentGraph.containerID).parentNode.style.height = "206px";
+
+            break;
+
+          case 'ch_cd':
+          // cd = "Clicks Direct" / Direct clicks graph in 'Referral Statistics' page
+          case 'ch_cr':
+            // cr = "Clicks Rented" / Rented clicks graph in 'Referral Statistics' page
+
+            var rentedClicks_Array = new Array();
+            for (var j = 0; j < graph_timePeriod.length; j++)
+            {
+              var tmp = [graph_timePeriod[j], (_currentGraph.sum[graph_timePeriod[j]] * myAccountDetails.referralClickValue).toFixed(3)];
+              rentedClicks_Array.push(tmp);
+            }
+
+            addDataBarUnderGraph('Avg. Income :', _currentGraph.containerID, ' (', rentedClicks_Array, ') $',null);
+
+            break;
+
+          case 'ch_recycle':
+          // Recycling Expenses graph in 'Referral Statistics' page
+          case 'ch_autopay':
+          // Autopay Expenses graph in 'Referral Statistics' page
+          case 'ch_extensions':
+            // Extensions Expenses graph in 'Referral Statistics' page
+
+            addDataBarUnderGraph('Avg. Expenses :', _currentGraph.containerID, ' (', sum_Array, ') $',null);
+
+            break;
+
+          case 'ch_trrb':
+            // trrb = "Transfers to Rented Balance " / Transfers to Rental Balance graph in 'Referral Statistics' page
+
+            addDataBarUnderGraph('Avg. Transfers :', _currentGraph.containerID, ' (', sum_Array, ') $',null);
+
+            break;
+
+          case 'ch_profit':
+            // Profit graph for Ultimates
+
+            // Need to increase the height of the container to fix issue with the 'Congratulations: You've been active everyday.' message not wrapping correctly
+            //document.getElementById(_currentGraph.containerID).parentNode.style.height = "180px";
+
+            break;
+        }
+      }
+    }
+  console.groupEnd();
+  }
+  console.groupEnd();
+}
+
+
 
 
 
