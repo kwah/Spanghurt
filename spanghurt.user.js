@@ -148,25 +148,24 @@ if('undefined' === typeof GM_log){
   function GM_log() {
     //console.info(arguments);
     //location.href = "javascript:void(console.info('JSON.parse('"+JSON.stringify(arguments)+"')'));";
-
-
   }
 }
 
 if('undefined' === typeof console){
-//  alert('console not defined');
   var console = {
     info: function() {
+      location.href = "javascript:void(console.group());";
       for(var i=0; i<arguments.length; i++){
         location.href = "javascript:void(console.info('"+arguments[i]+"'));";
       }
+      location.href = "javascript:void(console.groupEnd());";
     },
-    group: function() {},
-    groupEnd: function() {}
-  }
+    group: function() { location.href = "javascript:void(console.group());"; },
+    groupEnd: function() { location.href = "javascript:void(console.groupEnd());"; }
+  };
+  console.info('console not defined');
 }
 
-console.info('foobar');
 
 if('undefined' === typeof GM_addStyle){
   function GM_addStyle(arg_css) {
@@ -183,7 +182,43 @@ if('undefined' === typeof GM_addStyle){
 
 function debugLog()
 {
-  if (2 <= arguments.length) {
+  if (2 >= arguments.length) {
+//    console.group();
+  }
+//  if('undefined' !== typeof GM_log) {
+//    if (1 == arguments.length) {
+//      GM_log(arguments[0]);
+//    }else {
+//      GM_log(arguments.join('\n----\n'));
+//    }
+//  }
+  for (var i = 0; i < arguments.length; i++) {
+//    console.info(arguments[i]);
+    if('undefined' !== typeof GM_log) { GM_log(JSON.stringify(arguments[i])); }
+  }
+  if (2 >= arguments.length) {
+//    console.groupEnd();
+  }
+}
+
+
+function pageCodeDebugLog()
+{
+  if (2 >= arguments.length) {
+    console.group();
+  }
+  for (var i = 0; i < arguments.length; i++) {
+    console.info(arguments[i]);
+  }
+  if (2 >= arguments.length) {
+    console.groupEnd();
+  }
+}
+
+
+function errorLog()
+{
+  if (2 >= arguments.length) {
     console.group();
   }
 //  if('undefined' !== typeof GM_log) {
@@ -195,41 +230,13 @@ function debugLog()
 //  }
   for (var i = 0; i < arguments.length; i++) {
     console.info(arguments[i]);
-    if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
+    if('undefined' !== typeof GM_log) { GM_log(JSON.stringify(arguments[i])); }
   }
-  if (2 <= arguments.length) {
+  if (2 >= arguments.length) {
     console.groupEnd();
   }
 }
 
-
-function pageCodeDebugLog()
-{
-  if (2 <= arguments.length) {
-    console.group();
-  }
-  for (var i = 0; i < arguments.length; i++) {
-    console.info(arguments[i]);
-  }
-  if (2 <= arguments.length) {
-    console.groupEnd();
-  }
-}
-
-
-function errorLog()
-{
-  if (2 <= arguments.length) {
-    console.group();
-  }
-  if('undefined' !== typeof GM_log) { GM_log(arguments.join('\n----\n')); }
-  for (var i = 0; i < arguments.length; i++) {
-    console.info(arguments[i]);
-  }
-  if (2 <= arguments.length) {
-    console.groupEnd();
-  }
-}
 
 function docEvaluate(arg_xpath)
 {
@@ -425,7 +432,7 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
 
 
   //stop the remainder of the script
-  return;
+  //return;
 }
 
 
@@ -786,9 +793,9 @@ function set(arg_prefName, arg_defaultValue, arg_options)
   GM_log('typeof GM_setValue = ' + typeof GM_setValue);
   /*Having issues with the localStorage being wiped occasionally so storing to GM_log too as a backup*/
   if("undefined" !== typeof GM_setValue) {
-    GM_setValue(arg_prefName, tmp_value);
+//    GM_setValue(arg_prefName, tmp_value);
   }
-//  localStorage.setItem(arg_prefName, tmp_value);
+  localStorage.setItem(arg_prefName, tmp_value);
   return get(arg_prefName, tmp_value, arg_options);
 }
 
@@ -812,7 +819,7 @@ function testAgainstUrlPath(arg_urlTests)
 {
   var tmpUrlVars = document.location.pathname.substring(1).split('/');
 //  console.info(tmpUrlVars);
-  
+
   for(var tmpUrlVarTest in arg_urlTests) {
 //    console.info('tmpUrlVars.indexOf('+arg_urlTests[tmpUrlVarTest]+') = ',tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]));
     if(!(0 <= tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]))) {
@@ -850,11 +857,11 @@ var currentPage = new function()
         if(testAgainstUrlParameters(['s1=pgt'])) { return 'advertisementSettings_purchasingClickPack'; }
         return 'advertisementSettings';
       }
-      
+
       if(testAgainstUrlPath(['rq'])) { return 'rentalQueueSettings'; }
 
       if(testAgainstUrlPath(['rs'])) {
-        return 'referralStatistics'; 
+        return 'referralStatistics';
       }
 
       if(testAgainstUrlPath(['rl']))
@@ -1628,7 +1635,7 @@ function insertLocalServerTime()
         }
         return output;
       }
-      
+
       if ('undefined' === typeof Highcharts)
       {
         //move container off screen to stop a transparent div blocking clicks on rest of page
@@ -1940,7 +1947,7 @@ var referralListings = new function()
       tmp_referrals[cr_ID].lastClick = ('9' == cr[4]) ? pr.lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4];
       tmp_referrals[cr_ID].totalClicks = cr[5];
       tmp_referrals[cr_ID].overallAverage = ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6];
-      
+
 
       /* Ultimate only stuff, based on the ultimate minigraphs */
       // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
@@ -2068,7 +2075,7 @@ var referralListings = new function()
 
       //console.info(JSON.stringify(tmp_referrals));
       console.groupEnd();
-      
+
     } /* End of for(var i = 0; i < arg_referralListingsData.length; i++) {} loop  */
 
 //    console.info('restructureData:\n\n','tmp_referrals',tmp_referrals);
@@ -2113,34 +2120,47 @@ var logo =
   insert: function()
   {
     // Inserts the logo for the script into the page
-    
+
     // the language icon in upper right of page
     var xpathResults_logoLocation = docEvaluate('//ul[@id="menu"]/li[@id="menuli"]/parent::ul/parent::td');
 
     if (1 == xpathResults_logoLocation.snapshotLength)
     {
-      var logoImage = document.createElement('img');
-      logoImage.id = 'neobux2Logo';
-      logoImage.setAttribute('rel', '#scriptPreferences');
 
-      logoImage.style.cursor = 'pointer';
-      logoImage.border = "0";
-      logoImage.width = '16';
-      logoImage.alt = 'Spanghurt Greasemonkey Script Preferences';
-      logoImage.title = 'Spanghurt Greasemonkey Script Preferences';
-      logoImage.src = 'http://img262.imageshack.us/img262/3654/neobuxv3logolargered2.png';
+      // Container for logo image to allow it to look correct in the page
+      if(document.getElementById('spanghurtLogoContainer')){
+        document.getElementById('spanghurtLogoContainer').parentNode.removeChild(document.getElementById('spanghurtLogoContainer'));
+      }
+      var elmnt_td = document.createElement('td');
+      elmnt_td.id = 'spanghurtLogoContainer';
+
+      elmnt_td.style.paddingLeft = '8px';
+      elmnt_td.style.paddingRight = '8px';
+      elmnt_td.innerHTML = ' &nbsp;|&nbsp; &nbsp;';
+
+
+      if(document.getElementById('spanghurtLogo')){
+        document.getElementById('spanghurtLogo').parentNode.removeChild(document.getElementById('spanghurtLogo'));
+      }
+
+      var elmnt_logoImage = document.createElement('img');
+      elmnt_logoImage.id = 'spanghurtLogo';
+
+      elmnt_logoImage.setAttribute('rel', '#scriptPreferences');
+
+      elmnt_logoImage.style.cursor = 'pointer';
+      elmnt_logoImage.border = "0";
+      elmnt_logoImage.width = '16';
+      elmnt_logoImage.alt = 'Spanghurt Greasemonkey Script Preferences';
+      elmnt_logoImage.title = 'Spanghurt Greasemonkey Script Preferences';
+      elmnt_logoImage.src = 'http://img262.imageshack.us/img262/3654/neobuxv3logolargered2.png';
       // img.src = 'http://img262.imageshack.us/img262/4965/neobuxv3logolargered3.png';
 
 
 
-      // Container for logo image to allow it to look correct in the page
-      var td = document.createElement('td');
-      td.style.paddingLeft = '8px';
-      td.style.paddingRight = '8px';
-      td.innerHTML = ' &nbsp;|&nbsp; &nbsp;';
-      td.appendChild(logoImage);
+      elmnt_td.appendChild(elmnt_logoImage);
 
-      xpathResults_logoLocation.snapshotItem(0).parentNode.appendChild(td);
+      xpathResults_logoLocation.snapshotItem(0).parentNode.appendChild(elmnt_td);
 
     }
   },
@@ -2184,7 +2204,7 @@ var chartDataBars = new function()
       'ch_ext_schedule8',
       'ch_cliques'
   ];
-  
+
   this.graphsOnCurrentPage = [];
 
   for(var i=0; i < availableGraphs.length; i++){
@@ -2193,25 +2213,26 @@ var chartDataBars = new function()
     }
   }
 
-  
-  function insertUnderGraph(arg_containerID, arg_dataBarTitle, arg_timePeriodPrefix, arg_data, arg_timePeriodSuffix, arg_graphBarId, arg_customDataBarCss)
+
+  function insertUnderGraph(arg_containerID, arg_dataBarText, arg_graphBarId, arg_customDataBarCss)
   {
 //    debugLog('addDataBarUnderGraph()',arguments);
 
-    var bar = document.createElement("div");
-    bar.setAttribute("id", arg_graphBarId);
-    bar.setAttribute("class", "graphBar");
-    bar.setAttribute("style", arg_customDataBarCss);
-
-    bar.innerHTML = arg_dataBarTitle;
-    for (var z=0; z< arg_data.length; z++) {
-      bar.innerHTML += arg_timePeriodPrefix + arg_data[z][0] + arg_timePeriodSuffix + arg_data[z][1];
+    if(document.getElementById(arg_graphBarId)) {
+      document.getElementById(arg_graphBarId).parentNode.removeChild(document.getElementById(arg_graphBarId));
     }
 
-    var chartContainer = document.getElementById(arg_containerID);
-    chartContainer.parentNode.appendChild(bar);
+    var elmt_bar = document.createElement("div");
+    elmt_bar.setAttribute("id", arg_graphBarId);
+    elmt_bar.setAttribute("class", "graphBar");
+    elmt_bar.setAttribute("style", arg_customDataBarCss);
 
-    var currentDataBarWidth = bar.textContent.split('').length;
+    elmt_bar.innerHTML = arg_dataBarText;
+    
+    var chartContainer = document.getElementById(arg_containerID);
+    chartContainer.parentNode.appendChild(elmt_bar);
+
+    var currentDataBarWidth = elmt_bar.textContent.split('').length;
     this.maxDataBarWidth = (this.maxDataBarWidth < currentDataBarWidth) ? currentDataBarWidth : this.maxDataBarWidth;
   }
 
@@ -2219,16 +2240,76 @@ var chartDataBars = new function()
     alert(arg_testing);
   }
 
-  this.init = function() {
-    var graphBarCSS = ".graphBar { border:1px solid #AAAAAA; color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; margin: -11px auto 10px; max-width: 82%; min-width:75%; padding:1px 2%; text-align:left; vertical-align:middle; white-space:nowrap; width:"+(this.maxDataBarWidth/1.75)+"em; }";
-    GM_addStyle(graphBarCSS);
-    
-    for(var i=0; i < this.graphsOnCurrentPage.length; i++){
-      insertUnderGraph(this.graphsOnCurrentPage[i], 'Sums :', ' (', [[3,1],[5,2],[10,3]], ') ', this.graphsOnCurrentPage[i]+'_'+i, 'margin-top:10px;');
+  this.databarIntervals = [5,7,10];
+
+  this.getDataBarData = function(arg_graphId)  
+  {
+    var tmp_dataSet = get('graphData',{},{prefType:'JSON'})[friendlyNameLookup[arg_graphId]];
+
+    var tmp_currentDayData;
+
+    var databarData = { 0: {}, 1: {}, 2: {} };
+
+    var tmp_sum = [];
+    var tmp_average = [];
+
+    console.info(tmp_dataSet.__count__);
+    for(var j in tmp_dataSet)
+    {
+      console.info(tmp_dataSet[j]);
+
+      for(var m=0; m<this.databarIntervals[0] || m<this.databarIntervals[1] || m<this.databarIntervals[2]; m++)
+      {
+        tmp_currentDate = dates_array[m];
+        tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
+
+        tmp_sum[m] = tmp_sum[m-1] + tmp_currentValue || tmp_currentValue;
+        tmp_average[m] = tmp_sum[m] / (m+1);
+
+        databarData[tmp_currentDate] = {
+          'value': tmp_currentValue,
+          'sum': tmp_sum[m],
+          'avg': tmp_average[m]
+        }
+      }
     }
 
-    var dataBarsOnPage = document.body.g
-    document.getElementById(this.graphsOnCurrentPage[i]+'_'+i).addEventListener('click', function(){ dataBarClickHandler(this.graphsOnCurrentPage[i]+'_'+i); }, false);
+
+    return databarData;
+    
+  };
+
+  this.init = function() {
+//    alert('foo');
+    var graphBarCSS = ".graphBar { border:1px solid #AAAAAA; color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; margin: -11px auto 10px; max-width: 82%; min-width:75%; padding:1px 2%; text-align:left; vertical-align:middle; white-space:nowrap; width:"+(this.maxDataBarWidth/1.75)+"em; }";
+    GM_addStyle(graphBarCSS);
+
+    var tmp_dataBarText;
+    var tmp_dataSet;
+    var tmp_databarDataToOutput;
+
+    for(var i=0; i < this.graphsOnCurrentPage.length; i++){
+      tmp_dataSet = this.getDataBarData(this.graphsOnCurrentPage[i]);
+
+      // Do the sums bar
+      tmp_databarDataToOutput = [];
+      for(var y=0; y<this.databarIntervals.length; y++){
+        tmp_databarDataToOutput.push(['('+this.databarIntervals[y]+') ' + tmp_dataSet[dates_array[y]]['sum']]);
+      }
+      tmp_dataBarText = 'Sums: '+ tmp_databarDataToOutput.join(' ');
+      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'_sum', 'margin-top:10px;');
+
+      // Now do the averages bar
+      tmp_databarDataToOutput = [];
+      for(var y=0; y<this.databarIntervals.length; y++){
+        tmp_databarDataToOutput.push(['('+this.databarIntervals[y]+') ' + tmp_dataSet[dates_array[y]]['avg']]);
+      }
+      tmp_dataBarText = 'Mean: '+ tmp_databarDataToOutput.join(' ');
+      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'mean', '');
+    }
+
+//    var dataBarsOnPage = document.body.getElementsBy
+//    document.getElementById(this.graphsOnCurrentPage[i]+'_'+i).addEventListener('click', function(){ dataBarClickHandler(this.graphsOnCurrentPage[i]+'_'+i); }, false);
   };
 
 };
@@ -2236,9 +2317,11 @@ var chartDataBars = new function()
 chartDataBars.init();
 
 
+
+if(false){
 function insertChartDataBars()
 {
-  var maxDatabarWidth = 0;
+  var maxDataBarWidth = 0;
 
 
 
@@ -2459,7 +2542,7 @@ function insertChartDataBars()
   console.groupEnd();
 }
 
-
+}
 
 
 
