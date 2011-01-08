@@ -194,7 +194,7 @@ function debugLog()
 //  }
   for (var i = 0; i < arguments.length; i++) {
 //    console.info(arguments[i]);
-    if('undefined' !== typeof GM_log) { GM_log(JSON.stringify(arguments[i])); }
+    if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
   }
   if (2 >= arguments.length) {
 //    console.groupEnd();
@@ -230,7 +230,7 @@ function errorLog()
 //  }
   for (var i = 0; i < arguments.length; i++) {
     console.info(arguments[i]);
-    if('undefined' !== typeof GM_log) { GM_log(JSON.stringify(arguments[i])); }
+    if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
   }
   if (2 >= arguments.length) {
     console.groupEnd();
@@ -2240,7 +2240,7 @@ var chartDataBars = new function()
     alert(arg_testing);
   }
 
-  this.databarIntervals = [5,7,10];
+  this.databarIntervals = [4,6,9];
 
   this.getDataBarData = function(arg_graphId)  
   {
@@ -2253,12 +2253,22 @@ var chartDataBars = new function()
     var tmp_sum = [];
     var tmp_average = [];
 
+    var tmp_maxInterval = 0;
+
+    var tmp_currentDate;
+    var tmp_currentValue;
+
+
     console.info(tmp_dataSet.__count__);
     for(var j in tmp_dataSet)
     {
       console.info(tmp_dataSet[j]);
 
-      for(var m=0; m<this.databarIntervals[0] || m<this.databarIntervals[1] || m<this.databarIntervals[2]; m++)
+      for(var i= 0; i<this.databarIntervals.length; i++){
+        tmp_maxInterval = (this.databarIntervals[i] > tmp_maxInterval) ? this.databarIntervals[i] : tmp_maxInterval;
+      }
+      console.info('max interval = '+tmp_maxInterval);
+      for(var m=0; m<=tmp_maxInterval; m++)
       {
         tmp_currentDate = dates_array[m];
         tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
@@ -2269,7 +2279,7 @@ var chartDataBars = new function()
         databarData[tmp_currentDate] = {
           'value': tmp_currentValue,
           'sum': tmp_sum[m],
-          'avg': tmp_average[m]
+          'avg': tmp_average[m].toFixed(2) *1
         }
       }
     }
@@ -2291,18 +2301,32 @@ var chartDataBars = new function()
     for(var i=0; i < this.graphsOnCurrentPage.length; i++){
       tmp_dataSet = this.getDataBarData(this.graphsOnCurrentPage[i]);
 
+      
       // Do the sums bar
       tmp_databarDataToOutput = [];
       for(var y=0; y<this.databarIntervals.length; y++){
-        tmp_databarDataToOutput.push(['('+this.databarIntervals[y]+') ' + tmp_dataSet[dates_array[y]]['sum']]);
+        console.info('sum_'+this.databarIntervals[y], dates_array[this.databarIntervals[y]], tmp_dataSet[dates_array[this.databarIntervals[y]]]);
+        tmp_databarDataToOutput.push([
+            '('+
+                (this.databarIntervals[y]+1)+
+             ') ' +
+                tmp_dataSet[dates_array[this.databarIntervals[y]]]['sum']
+        ]);
       }
       tmp_dataBarText = 'Sums: '+ tmp_databarDataToOutput.join(' ');
       insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'_sum', 'margin-top:10px;');
 
+
       // Now do the averages bar
       tmp_databarDataToOutput = [];
       for(var y=0; y<this.databarIntervals.length; y++){
-        tmp_databarDataToOutput.push(['('+this.databarIntervals[y]+') ' + tmp_dataSet[dates_array[y]]['avg']]);
+        console.info('sum_'+this.databarIntervals[y], dates_array[this.databarIntervals[y]], tmp_dataSet[dates_array[this.databarIntervals[y]]]);
+        tmp_databarDataToOutput.push([
+            '('+
+                (this.databarIntervals[y]+1)+
+             ') ' +
+                tmp_dataSet[dates_array[this.databarIntervals[y]]]['avg']
+        ]);
       }
       tmp_dataBarText = 'Mean: '+ tmp_databarDataToOutput.join(' ');
       insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'mean', '');
