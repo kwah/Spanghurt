@@ -154,11 +154,11 @@ if('undefined' === typeof GM_log){
 if('undefined' === typeof console){
   var console = {
     info: function() {
-      location.href = "javascript:void(console.group());";
-      for(var i=0; i<arguments.length; i++){
-        location.href = "javascript:void(console.info('"+arguments[i]+"'));";
-      }
-      location.href = "javascript:void(console.groupEnd());";
+//      location.href = "javascript:void(console.group());";
+//      for(var i=0; i<arguments.length; i++){
+//        location.href = "javascript:void(console.info('"+arguments[i]+"'));";
+//      }
+//      location.href = "javascript:void(console.groupEnd());";
     },
     group: function() { location.href = "javascript:void(console.group());"; },
     groupEnd: function() { location.href = "javascript:void(console.groupEnd());"; }
@@ -183,7 +183,7 @@ if('undefined' === typeof GM_addStyle){
 function debugLog()
 {
   if (2 >= arguments.length) {
-//    console.group();
+    console.group();
   }
 //  if('undefined' !== typeof GM_log) {
 //    if (1 == arguments.length) {
@@ -193,11 +193,11 @@ function debugLog()
 //    }
 //  }
   for (var i = 0; i < arguments.length; i++) {
-//    console.info(arguments[i]);
+    console.info(arguments[i]);
     if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
   }
   if (2 >= arguments.length) {
-//    console.groupEnd();
+    console.groupEnd();
   }
 }
 
@@ -665,10 +665,22 @@ var friendlyNameLookup = {
   'ch_recycle': 'recycleCost',
   'ch_extensions': 'renewalCost',
   'ch_autopay': 'autopayCost',
-  'ch_trrb': 'transferAmounts',
+  'ch_trrb': 'transfersToRentalBalance',
   'ch_ext_schedule': 'extensions',
-  'ch_earnings': 'referralEarinings',
-  'ch_profit': 'referralProfit'
+  
+    'ch_ext_schedule1': 'extensions_0To90',
+    'ch_ext_schedule2': 'extensions_91To180',
+    'ch_ext_schedule3': 'extensions_181To270',
+    'ch_ext_schedule4': 'extensions_271To360',
+    'ch_ext_schedule5': 'extensions_361To450',
+    'ch_ext_schedule6': 'extensions_451To540',
+    'ch_ext_schedule7': 'extensions_541To630',
+    'ch_ext_schedule8': 'extensions_631To720',
+
+  'ch_earnings': 'referralEarnings',
+  'ch_profit': 'referralProfit',
+  'ch_trar': 'automaticRecycles',
+  'ch_trpb': 'transferToPackBalance'
 };
 
 
@@ -1126,50 +1138,12 @@ var currentUser = new function()
 
 debugLog('currentUser', currentUser);
 
-
 if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/referralStatistics/))
 {
   var chartData = new function ()
   {
     this.dataGrabbedFromCurrentPage = function()
     {
-      var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
-
-      // If testing in Firebug, xpathResults_graphData.snapshotLength == 2
-      if (1 == xpathResults_graphData.snapshotLength || 2 == xpathResults_graphData.snapshotLength)
-      {
-        /**
-         *  If only one matching <script> ... </script> tag found, it is the correct one
-         * NOTE :: If testing in Firebug, xpathResults_graphData.snapshotLength == 2
-         * Now extract data::
-         */
-
-        /**
-         * First, remove instances of the word 'eval' and then split it up based on
-         * these rules ::
-         * eval(w('
-         * ')); eval(w('
-         */
-
-        var evals = xpathResults_graphData.snapshotItem(0).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
-      }
-
-      var graphData = new Array();
-
-      // Cycle through each individual eval (ie, graph / graphNumber)
-      for (var graphNumber = 0, length = evals.length - 1; graphNumber < length; graphNumber++)
-      {
-        // logger('graphNumber = '+graphNumber);
-        var evalString = evals[graphNumber];
-
-        // Decode evalString using the w(i) function from the Neobux page
-        var decodedEvalString = NeobuxDecodeEvalString(evalString);
-
-        // debugLog(decodedEvalString.replace(');',']').replace('mk_ch(','graphData['+graphNumber+']
-        // = ['));
-        eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
-      }
-
       // Decode evalString using the w(i) function from the Neobux page
       function U(arg_a)
       {
@@ -1209,6 +1183,45 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
         } while (j < arg_input.length);
 
         return o;
+      }
+
+
+      var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
+
+      // If testing in Firebug, xpathResults_graphData.snapshotLength == 2
+      if (1 == xpathResults_graphData.snapshotLength || 2 == xpathResults_graphData.snapshotLength)
+      {
+
+        /**
+         *  If only one matching <script> ... </script> tag found, it is the correct one
+         * NOTE :: If testing in Firebug, xpathResults_graphData.snapshotLength == 2
+         * Now extract data::
+         */
+
+        /**
+         * First, remove instances of the word 'eval' and then split it up based on
+         * these rules ::
+         * eval(w('
+         * ')); eval(w('
+         */
+
+        var evals = xpathResults_graphData.snapshotItem(1).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
+      }
+
+      var graphData = new Array();
+
+      // Cycle through each individual eval (ie, graph / graphNumber)
+      for (var graphNumber = 0, length = evals.length - 1; graphNumber < length; graphNumber++)
+      {
+        // logger('graphNumber = '+graphNumber);
+        var evalString = evals[graphNumber];
+
+        // Decode evalString using the w(i) function from the Neobux page
+        var decodedEvalString = NeobuxDecodeEvalString(evalString);
+
+        // debugLog(decodedEvalString.replace(');',']').replace('mk_ch(','graphData['+graphNumber+']
+        // = ['));
+        eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
       }
 
       return graphData;
@@ -1725,6 +1738,13 @@ function insertLocalServerTime()
 insertLocalServerTime();
 
 
+  var availableGraphs = [];
+
+  for(var graphId in friendlyNameLookup){
+    console.info(graphId);
+    availableGraphs.push(graphId);
+  }
+
 
 // Used for detection on pages
 var langStrings_Neo = {
@@ -2186,25 +2206,6 @@ logo.init();
 var chartDataBars = new function()
 {
   this.maxDataBarWidth = 0;
-
-  var availableGraphs = [
-      'ch_cd',
-      'ch_cr',
-      'ch_recycle',
-      'ch_autopay',
-      'ch_extensions',
-      'ch_trrb',
-      'ch_ext_schedule1',
-      'ch_ext_schedule2',
-      'ch_ext_schedule3',
-      'ch_ext_schedule4',
-      'ch_ext_schedule5',
-      'ch_ext_schedule6',
-      'ch_ext_schedule7',
-      'ch_ext_schedule8',
-      'ch_cliques'
-  ];
-
   this.graphsOnCurrentPage = [];
 
   for(var i=0; i < availableGraphs.length; i++){
@@ -2279,7 +2280,7 @@ var chartDataBars = new function()
         databarData[tmp_currentDate] = {
           'value': tmp_currentValue,
           'sum': tmp_sum[m],
-          'avg': tmp_average[m].toFixed(2) *1
+          'avg': tmp_average[m]
         }
       }
     }
@@ -2301,21 +2302,6 @@ var chartDataBars = new function()
     for(var i=0; i < this.graphsOnCurrentPage.length; i++){
       tmp_dataSet = this.getDataBarData(this.graphsOnCurrentPage[i]);
 
-      
-      // Do the sums bar
-      tmp_databarDataToOutput = [];
-      for(var y=0; y<this.databarIntervals.length; y++){
-        console.info('sum_'+this.databarIntervals[y], dates_array[this.databarIntervals[y]], tmp_dataSet[dates_array[this.databarIntervals[y]]]);
-        tmp_databarDataToOutput.push([
-            '('+
-                (this.databarIntervals[y]+1)+
-             ') ' +
-                tmp_dataSet[dates_array[this.databarIntervals[y]]]['sum']
-        ]);
-      }
-      tmp_dataBarText = 'Sums: '+ tmp_databarDataToOutput.join(' ');
-      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'_sum', 'margin-top:10px;');
-
 
       // Now do the averages bar
       tmp_databarDataToOutput = [];
@@ -2325,11 +2311,44 @@ var chartDataBars = new function()
             '('+
                 (this.databarIntervals[y]+1)+
              ') ' +
-                tmp_dataSet[dates_array[this.databarIntervals[y]]]['avg']
+                tmp_dataSet[dates_array[this.databarIntervals[y]]]['avg'].toFixed(3)
         ]);
       }
-      tmp_dataBarText = 'Mean: '+ tmp_databarDataToOutput.join(' ');
-      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'mean', '');
+      tmp_dataBarText = 'Averages: '+ tmp_databarDataToOutput.join(' ');
+      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'mean', 'margin-top:10px;');
+
+
+
+      // Do the sums bar
+      tmp_databarDataToOutput = [];
+      for(var y=0; y<this.databarIntervals.length; y++){
+        console.info('sum_'+this.databarIntervals[y], dates_array[this.databarIntervals[y]], tmp_dataSet[dates_array[this.databarIntervals[y]]]);
+        tmp_databarDataToOutput.push([
+            '('+
+                (this.databarIntervals[y]+1)+
+             ') ' +
+                tmp_dataSet[dates_array[this.databarIntervals[y]]]['sum'].toFixed(3)
+        ]);
+      }
+      tmp_dataBarText = 'Sums: '+ tmp_databarDataToOutput.join(' ');
+      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'_sum', '');
+
+
+
+      // Do the Avg. Income bar
+      tmp_databarDataToOutput = [];
+      for(var y=0; y<this.databarIntervals.length; y++){
+        console.info('sum_'+this.databarIntervals[y], dates_array[this.databarIntervals[y]], tmp_dataSet[dates_array[this.databarIntervals[y]]]);
+        tmp_databarDataToOutput.push([
+            '('+
+                (this.databarIntervals[y]+1)+
+             ') ' +
+                '$'+(tmp_dataSet[dates_array[this.databarIntervals[y]]]['avg']*0.01).toFixed(3)
+        ]);
+      }
+      tmp_dataBarText = 'Avg. Income: '+ tmp_databarDataToOutput.join(' ');
+      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'_avgIncome', '');
+
     }
 
 //    var dataBarsOnPage = document.body.getElementsBy
