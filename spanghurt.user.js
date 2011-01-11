@@ -154,11 +154,11 @@ if('undefined' === typeof GM_log){
 if('undefined' === typeof console){
   var console = {
     info: function() {
-//      location.href = "javascript:void(console.group());";
-//      for(var i=0; i<arguments.length; i++){
-//        location.href = "javascript:void(console.info('"+arguments[i]+"'));";
-//      }
-//      location.href = "javascript:void(console.groupEnd());";
+      location.href = "javascript:void(console.group());";
+      for(var i=0; i<arguments.length; i++){
+        location.href = "javascript:void(console.info('"+arguments[i]+"'));";
+      }
+      location.href = "javascript:void(console.groupEnd());";
     },
     group: function() { location.href = "javascript:void(console.group());"; },
     groupEnd: function() { location.href = "javascript:void(console.groupEnd());"; }
@@ -443,7 +443,7 @@ dateYesterday.setDate(dateToday.getDate() - 1);
 
 // Date strings for the last 90 days
 var dates_array = [];
-var i=0;
+var i=-720;
 do
 {
   var tmpDate = new Date();
@@ -455,6 +455,7 @@ do
 
 var TODAY_STRING = dates_array[0];
 var YESTERDAY_STRING = dates_array[1];
+var TOMORROW_STRING = dates_array[-1];
 
 
 var Neobux = {};
@@ -666,21 +667,45 @@ var friendlyNameLookup = {
   'ch_extensions': 'renewalCost',
   'ch_autopay': 'autopayCost',
   'ch_trrb': 'transfersToRentalBalance',
-  'ch_ext_schedule': 'extensions',
-  
-    'ch_ext_schedule1': 'extensions_0To90',
-    'ch_ext_schedule2': 'extensions_91To180',
-    'ch_ext_schedule3': 'extensions_181To270',
-    'ch_ext_schedule4': 'extensions_271To360',
-    'ch_ext_schedule5': 'extensions_361To450',
-    'ch_ext_schedule6': 'extensions_451To540',
-    'ch_ext_schedule7': 'extensions_541To630',
-    'ch_ext_schedule8': 'extensions_631To720',
 
   'ch_earnings': 'referralEarnings',
   'ch_profit': 'referralProfit',
   'ch_trar': 'automaticRecycles',
-  'ch_trpb': 'transferToPackBalance'
+  'ch_trpb': 'transferToPackBalance',
+
+  'ch_ext_schedule8': 'extensions_631To720',
+  'ch_ext_schedule7': 'extensions_541To630',
+  'ch_ext_schedule6': 'extensions_451To540',
+  'ch_ext_schedule5': 'extensions_361To450',
+  'ch_ext_schedule4': 'extensions_271To360',
+  'ch_ext_schedule3': 'extensions_181To270',
+  'ch_ext_schedule2': 'extensions_91To180',
+  'ch_ext_schedule1': 'extensions_0To90',
+  'ch_ext_schedule': 'extensions'
+};
+
+var graphLengthLookup = {
+  'ch_cliques': 10,
+  'ch_cr': 10,
+  'ch_cd': 10,
+  'ch_recycle': 15,
+  'ch_extensions': 15,
+  'ch_autopay': 15,
+  'ch_trrb': 15,
+
+  'ch_earnings': 15,
+  'ch_profit': 15,
+  'ch_trar': 15,
+  'ch_trpb': 15,
+
+  'ch_ext_schedule8': 90,
+  'ch_ext_schedule7': 90,
+  'ch_ext_schedule6': 90,
+  'ch_ext_schedule5': 90,
+  'ch_ext_schedule4': 90,
+  'ch_ext_schedule3': 90,
+  'ch_ext_schedule2': 90,
+  'ch_ext_schedule1': 90
 };
 
 
@@ -781,9 +806,6 @@ function set(arg_prefName, arg_defaultValue, arg_options)
   arg_options.prefType = arg_options.prefType || typeof arg_defaultValue;
 
   var tmp_value;
-
-//  debugLog('arg_prefName', arg_prefName, 'arg_defaultValue', arg_defaultValue, 'arg_options', arg_options);
-//  debugLog('arg_options.prefType', arg_options.prefType);
   switch (arg_options.prefType)
   {
     case 'float':
@@ -800,12 +822,9 @@ function set(arg_prefName, arg_defaultValue, arg_options)
       break;
   }
 
-  debugLog('arg_prefName = ',arg_prefName,' ; tmp_value = ', JSON.stringify(tmp_value));
-
-  GM_log('typeof GM_setValue = ' + typeof GM_setValue);
   /*Having issues with the localStorage being wiped occasionally so storing to GM_log too as a backup*/
   if("undefined" !== typeof GM_setValue) {
-//    GM_setValue(arg_prefName, tmp_value);
+    GM_setValue(arg_prefName, tmp_value);
   }
   localStorage.setItem(arg_prefName, tmp_value);
   return get(arg_prefName, tmp_value, arg_options);
@@ -816,30 +835,26 @@ function set(arg_prefName, arg_defaultValue, arg_options)
 function testAgainstUrlParameters(arg_urlVarTests)
 {
   var tmpUrlVars = document.location.search.substring(1).split('&');
-//  console.info(tmpUrlVars);
   for(var tmpUrlVarTest in arg_urlVarTests) {
-//    console.info('tmpUrlVars.indexOf('+arg_urlVarTests[tmpUrlVarTest]+') = ',tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]));
     if(!(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]))) {
       return false;
     }
   }
 
-  console.info('Found the following within the URL:',arg_urlVarTests);
+  // console.info('Found the following within the URL:',arg_urlVarTests);
   return true;
 }
 function testAgainstUrlPath(arg_urlTests)
 {
   var tmpUrlVars = document.location.pathname.substring(1).split('/');
-//  console.info(tmpUrlVars);
 
   for(var tmpUrlVarTest in arg_urlTests) {
-//    console.info('tmpUrlVars.indexOf('+arg_urlTests[tmpUrlVarTest]+') = ',tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]));
     if(!(0 <= tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]))) {
       return false;
     }
   }
 
-  console.info('Found the following within the URL:',arg_urlTests);
+//  console.info('Found the following within the URL:',arg_urlTests);
   return true;
 }
 
@@ -975,12 +990,6 @@ var currentPage = new function()
 
 };
 
-console.group();
-console.info(currentPage.pageCode);
-console.groupEnd();
-
-
-
 
 function extractNumberOfRefs()
 {
@@ -994,8 +1003,6 @@ function extractNumberOfRefs()
     } else {
       _pageRefType = 'Direct';
     }
-
-    debugLog('_pageRefType',_pageRefType);
 
     var tmp_numberOfRefs = null;
     var noOfRefsString = docEvaluate('//td[@class="f_r"]/descendant::span[@class="f_b"]');
@@ -1037,7 +1044,6 @@ function extractNumberOfRefs()
 //    TODO: Extract number of refs from main page
     var tmp_elmAccountInfo = docEvaluate('//td[@class="t_preto_r"]/parent::tr/parent::tbody/descendant::td');
 
-    //console.info(tmp_elmAccountInfo);
     function displayTextContent(arg_element){
       return arg_element.textContent.replace(/mk_tt\(.*\)/,'').replace(/[><+=;\s]+/g,'');
     }
@@ -1068,7 +1074,7 @@ function extractNumberOfRefs()
 
       for(var j=0; j<tmp_lookupArray.length; j++){
         if(tmp_currentTd.textContent.match(tmp_lookupArray[j][0])) {
-          console.info(tmp_lookupArray[j][1].replace(/{value}/, displayTextContent(tmp_nextTd)));
+//          console.info(tmp_lookupArray[j][1].replace(/{value}/, displayTextContent(tmp_nextTd)));
         }
       }
     }
@@ -1187,14 +1193,13 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
 
 
       var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
+      //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snaphshotLength
 
-      // If testing in Firebug, xpathResults_graphData.snapshotLength == 2
-      if (1 == xpathResults_graphData.snapshotLength || 2 == xpathResults_graphData.snapshotLength)
-      {
-
-        /**
+      for(var i=0; i<xpathResults_graphData.snapshotLength; i++){
+        //console.info(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval/g).length);
+        if(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval\(w\('/g)) {
+          /**
          *  If only one matching <script> ... </script> tag found, it is the correct one
-         * NOTE :: If testing in Firebug, xpathResults_graphData.snapshotLength == 2
          * Now extract data::
          */
 
@@ -1204,8 +1209,8 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
          * eval(w('
          * ')); eval(w('
          */
-
-        var evals = xpathResults_graphData.snapshotItem(1).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
+          var evals = xpathResults_graphData.snapshotItem(i).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
+        }
       }
 
       var graphData = new Array();
@@ -1219,8 +1224,8 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
         // Decode evalString using the w(i) function from the Neobux page
         var decodedEvalString = NeobuxDecodeEvalString(evalString);
 
-        // debugLog(decodedEvalString.replace(');',']').replace('mk_ch(','graphData['+graphNumber+']
-        // = ['));
+//        console.info(decodedEvalString);
+
         eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
       }
 
@@ -1242,46 +1247,41 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
       var tmp_currentDatasetName;
       var tmp_currentDate;
 
-      for (var _i in this.dataGrabbedFromCurrentPage())
+//      alert('foo');
+      var tmp_dataGrabbedFromCurrentPage = this.dataGrabbedFromCurrentPage();
+
+      for (var _i in tmp_dataGrabbedFromCurrentPage)
       {
-        tmp_currentGraphFriendlyName = friendlyNameLookup[this.dataGrabbedFromCurrentPage()[_i][0]];
-        tmp_graphData[tmp_currentGraphFriendlyName] = this.dataGrabbedFromCurrentPage()[_i];
+        tmp_currentGraphFriendlyName = friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]];
+        tmp_graphData[tmp_currentGraphFriendlyName] = tmp_dataGrabbedFromCurrentPage[_i];
 
         currentDataset = tmp_graphData[tmp_currentGraphFriendlyName];
 
-        console.info('_i',_i,
-         'this.dataGrabbedFromCurrentPage()[_i]',this.dataGrabbedFromCurrentPage()[_i],
-         'friendlyNameLookup[this.dataGrabbedFromCurrentPage()[_i][0]]',friendlyNameLookup[this.dataGrabbedFromCurrentPage()[_i][0]]
-         );
+          console.info('_i',_i,
+           'tmp_dataGrabbedFromCurrentPage[_i]',tmp_dataGrabbedFromCurrentPage[_i],
+           'friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]]',friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]]
+           );
 
 
 
   //      debugLog('currentDataset', currentDataset);
 
-  //      console.info('currentDataset[5].length',currentDataset[5].length);
         for(var i = 0; i < currentDataset[5].length; i++)
         {
-  //          console.info('i = ',i);
           tmp_currentDatasetName = currentDataset[5][i].name;
           tmp_graphDataObject[tmp_currentGraphFriendlyName] = tmp_graphDataObject[tmp_currentGraphFriendlyName] || {};
           tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] = tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] || {};
 
           for(var j = 0; j < currentDataset[2].length; j++)
           {
-  //          console.info('j = ',j);
-  //console.info(i,j,currentDataset[5]);
-            tmp_currentDate = currentDataset[2][j].replace(/today/i,TODAY_STRING).replace(/yesterday/i,YESTERDAY_STRING);
+            tmp_currentDate = currentDataset[2][j].replace(/today/i,TODAY_STRING).replace(/yesterday/i,YESTERDAY_STRING).replace(/tomorrow/i,TOMORROW_STRING);
             tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName][tmp_currentDate] = currentDataset[5][i].data[j];
-
           }
         }
       }
 
-      debugLog('this.getStoredGraphData()',this.getStoredGraphData());
       set('graphData',Object_merge(this.getStoredGraphData(), tmp_graphDataObject),{ prefType: 'JSON' });
-
       return get('graphData',Object_merge(this.getStoredGraphData(), tmp_graphDataObject),{ prefType: 'JSON' });
-
     };
 
 
@@ -1289,26 +1289,19 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
     {
 
     };
+
+    this.init = function() {
+      //TODO: Rearrangethe logic of this slightly 
+      this.reformatGraphData();
+    }
   };
 
-  debugLog('chartData.dataGrabbedFromCurrentPage()', chartData.dataGrabbedFromCurrentPage());
-  debugLog('chartData.reformatGraphData()', chartData.reformatGraphData());
-
+  chartData.init();
 }
 /*
  function grabChartData(arg_chartData, arg_page, arg_currentUser) {}
 
-
- debugLog('GRAPHS_onCurrentPage',GRAPHS_onCurrentPage);
-
-
  */
-
-
-
-console.info(localStorage);
-
-
 
 
 function insertLocalServerTime()
@@ -1422,7 +1415,7 @@ function insertLocalServerTime()
 
         var serverTimeDifference = (ServerTime - LocalTime) / (one_hour);
         serverTimeDifference = Math.floor(serverTimeDifference * 1000) / 1000;
-        console.info('serverTimeOffset', serverTimeDifference, { prefType:'string' } );
+
         set('serverTimeOffset', serverTimeDifference, { prefType:'string' } );
 
 
@@ -1438,7 +1431,6 @@ function insertLocalServerTime()
         //      debugLog(tmp_ART);
 
         var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
-        console.info('AdResetTime_hours', AdResetTimeDifference, { prefType:'string' } );
         set('AdResetTime_hours', AdResetTimeDifference, { prefType:'string' } );
 
         break;
@@ -1724,7 +1716,6 @@ function insertLocalServerTime()
     } + ")()";
 
     document.getElementById('localServerTimeText').addEventListener('click',function localServerTime_onClick(){
-      console.info('time clicked');
       document.getElementById('containerDiv_timer').style.display = ('none' == document.getElementById('containerDiv_timer').style.display) ? '' : 'none' ;
     },false);
 
@@ -1741,7 +1732,6 @@ insertLocalServerTime();
   var availableGraphs = [];
 
   for(var graphId in friendlyNameLookup){
-    console.info(graphId);
     availableGraphs.push(graphId);
   }
 
@@ -2229,7 +2219,7 @@ var chartDataBars = new function()
     elmt_bar.setAttribute("style", arg_customDataBarCss);
 
     elmt_bar.innerHTML = arg_dataBarText;
-    
+
     var chartContainer = document.getElementById(arg_containerID);
     chartContainer.parentNode.appendChild(elmt_bar);
 
@@ -2241,10 +2231,19 @@ var chartDataBars = new function()
     alert(arg_testing);
   }
 
-  this.databarIntervals = [4,6,9];
+  this.databarIntervals = {
+//    10: [0,1,2,3,4,5,6,7,8,9],
+    10: [4,6,9],
+    15: [4,9,14],
+    90: [29,59,89]
+  };
 
-  this.getDataBarData = function(arg_graphId)  
+  this.getDataBarData = function(arg_graphId)
   {
+    var tmp_graphLength = graphLengthLookup[arg_graphId];
+    console.info('tmp_graphLength = '+tmp_graphLength);
+    console.info(this.databarIntervals[tmp_graphLength]);
+
     var tmp_dataSet = get('graphData',{},{prefType:'JSON'})[friendlyNameLookup[arg_graphId]];
 
     var tmp_currentDayData;
@@ -2259,91 +2258,161 @@ var chartDataBars = new function()
     var tmp_currentDate;
     var tmp_currentValue;
 
+    var tmp_extensionsMin;
+    var tmp_extensionsMax;
 
     console.info(tmp_dataSet.__count__);
-    for(var j in tmp_dataSet)
-    {
-      console.info(tmp_dataSet[j]);
+    if(friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/)){
+      tmp_extensionsMin = friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/)[1];
+      tmp_extensionsMax = friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/)[2];
 
-      for(var i= 0; i<this.databarIntervals.length; i++){
-        tmp_maxInterval = (this.databarIntervals[i] > tmp_maxInterval) ? this.databarIntervals[i] : tmp_maxInterval;
-      }
-      console.info('max interval = '+tmp_maxInterval);
-      for(var m=0; m<=tmp_maxInterval; m++)
+      for(var j in tmp_dataSet)
       {
-        tmp_currentDate = dates_array[m];
-        tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
+        console.info('foobar',arg_graphId, j, tmp_dataSet[j]);
 
-        tmp_sum[m] = tmp_sum[m-1] + tmp_currentValue || tmp_currentValue;
-        tmp_average[m] = tmp_sum[m] / (m+1);
-
-        databarData[tmp_currentDate] = {
-          'value': tmp_currentValue,
-          'sum': tmp_sum[m],
-          'avg': tmp_average[m]
+        for(var i= 0; i<this.databarIntervals[tmp_graphLength].length; i++){
+          tmp_maxInterval = (this.databarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? this.databarIntervals[tmp_graphLength][i] : tmp_maxInterval;
         }
+        console.info('max interval = '+tmp_maxInterval);
+        for(var m=0; m<=tmp_maxInterval; m++)
+        {
+          tmp_currentDate = dates_array[(m * -1) - tmp_extensionsMin];
+          if("undefined" !== typeof tmp_dataSet[j][tmp_currentDate]) {
+            tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
+          }
+          else
+          {
+//            console.info((m * -1), '-',tmp_extensionsMin, ' = ', (m * -1) - tmp_extensionsMin);
+//            console.info(tmp_currentDate);
+//            console.info(tmp_dataSet[j]);
+//            console.info(tmp_currentValue);
+          }
+
+
+          tmp_sum[m] = tmp_sum[m-1] + tmp_currentValue || tmp_currentValue;
+          tmp_average[m] = tmp_sum[m] / (m+1);
+
+          databarData[tmp_currentDate] = {
+            'value': tmp_currentValue,
+            'sum': tmp_sum[m],
+            'avg': tmp_average[m]
+          };
+//          console.info('JSON.stringify(databarData['+tmp_currentDate+']) = '+JSON.stringify(databarData[tmp_currentDate]));
+        }
+      }
+    }
+    else
+    {
+      for(var j in tmp_dataSet)
+      {
+        console.group();
+        console.info(arg_graphId, j, tmp_dataSet[j]);
+
+        for(var i= 0; i<this.databarIntervals[tmp_graphLength].length; i++){
+          tmp_maxInterval = (this.databarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? this.databarIntervals[tmp_graphLength][i] : tmp_maxInterval;
+        }
+        console.info('max interval = '+tmp_maxInterval);
+        for(var m=0; m<=tmp_maxInterval; m++)
+        {
+          tmp_currentDate = dates_array[m];
+          tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
+
+          tmp_sum[m] = tmp_sum[m-1] + tmp_currentValue || tmp_currentValue;
+          tmp_average[m] = tmp_sum[m] / (m+1);
+
+          console.info(arg_graphId+' - '+m+'\n','tmp_currentDate = ',tmp_currentDate,'\n','tmp_currentValue = ',tmp_currentValue,'\n','tmp_sum[m] = ',tmp_sum[m],'\n','tmp_average[m] = ',tmp_average[m]);
+
+          databarData[tmp_currentDate] = {
+            'value': tmp_currentValue,
+            'sum': tmp_sum[m],
+            'avg': tmp_average[m]
+          };
+          console.info(arg_graphId+' - '+m+'\n','JSON.stringify(databarData['+tmp_currentDate+']) = '+JSON.stringify(databarData[tmp_currentDate]));          
+        }
+        console.info(arg_graphId+' - '+m+'\n','JSON.stringify(databarData) = '+JSON.stringify(databarData));
+        console.groupEnd();
       }
     }
 
 
     return databarData;
-    
+
   };
 
-  this.init = function() {
-//    alert('foo');
+  this.init = function()
+  {
+    //    alert('foo');
     var graphBarCSS = ".graphBar { border:1px solid #AAAAAA; color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; margin: -11px auto 10px; max-width: 82%; min-width:75%; padding:1px 2%; text-align:left; vertical-align:middle; white-space:nowrap; width:"+(this.maxDataBarWidth/1.75)+"em; }";
     GM_addStyle(graphBarCSS);
 
     var tmp_dataBarText;
     var tmp_dataSet;
     var tmp_databarDataToOutput;
+    var tmp_graphLength;
 
-    for(var i=0; i < this.graphsOnCurrentPage.length; i++){
+    for(var i=0; i < this.graphsOnCurrentPage.length; i++)
+    {
+
+      tmp_graphLength = graphLengthLookup[this.graphsOnCurrentPage[i]];
       tmp_dataSet = this.getDataBarData(this.graphsOnCurrentPage[i]);
+      var tmp_dateAdjuster = friendlyNameLookup[this.graphsOnCurrentPage[i]].match(/extensions_([0-9]+)To([0-9]+)/) || [-1,0];
 
+      var tmp_counter = 0;
+
+
+      console.info('-- tmp_dateAdjuster[1] = '+tmp_dateAdjuster[1] +'--');
 
       // Now do the averages bar
       tmp_databarDataToOutput = [];
-      for(var y=0; y<this.databarIntervals.length; y++){
-        console.info('sum_'+this.databarIntervals[y], dates_array[this.databarIntervals[y]], tmp_dataSet[dates_array[this.databarIntervals[y]]]);
+      console.info('this.databarIntervals[tmp_graphLength].length = '+this.databarIntervals[tmp_graphLength].length);
+      for(var y=0; y<this.databarIntervals[tmp_graphLength].length; y++){
+        console.info('this.databarIntervals[tmp_graphLength][y] = '+this.databarIntervals[tmp_graphLength][y]);
+
+        var tmp_extensionGraphs = (this.graphsOnCurrentPage[i].match(/extensions_([0-9]+)To([0-9]+)/)) ? true : false;
+
+        tmp_counter = (tmp_dateAdjuster[0] == -1) ? y : -this.databarIntervals[tmp_graphLength][y] - tmp_dateAdjuster[1];
         tmp_databarDataToOutput.push([
-            '('+
-                (this.databarIntervals[y]+1)+
-             ') ' +
-                tmp_dataSet[dates_array[this.databarIntervals[y]]]['avg'].toFixed(3)
+          '('+
+              (this.databarIntervals[tmp_graphLength][y]+1)+
+              ') ' +
+              tmp_dataSet[dates_array[tmp_counter]]['avg'].toFixed(3)
         ]);
       }
       tmp_dataBarText = 'Averages: '+ tmp_databarDataToOutput.join(' ');
       insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'mean', 'margin-top:10px;');
 
 
-
       // Do the sums bar
       tmp_databarDataToOutput = [];
-      for(var y=0; y<this.databarIntervals.length; y++){
-        console.info('sum_'+this.databarIntervals[y], dates_array[this.databarIntervals[y]], tmp_dataSet[dates_array[this.databarIntervals[y]]]);
-        tmp_databarDataToOutput.push([
-            '('+
-                (this.databarIntervals[y]+1)+
-             ') ' +
-                tmp_dataSet[dates_array[this.databarIntervals[y]]]['sum'].toFixed(3)
-        ]);
+//      tmp_counter = 0;
+      for(var y=0; y<this.databarIntervals[tmp_graphLength].length; y++){
+//        console.info(y,
+//            tmp_counter);
+//        console.info(
+//            'avg_'+this.databarIntervals[tmp_graphLength][y],
+//            this.databarIntervals[tmp_graphLength][y],
+//            dates_array[this.databarIntervals[tmp_graphLength][y]],
+//            tmp_dataSet[dates_array[tmp_counter]]);
+        
+        tmp_databarDataToOutput[y] =
+          '('+
+              (this.databarIntervals[tmp_graphLength][y]+1)+
+              ') ' +
+              tmp_dataSet[dates_array[y]]['sum'].toFixed(3);
       }
-      tmp_dataBarText = 'Sums: '+ tmp_databarDataToOutput.join(' ');
+      tmp_dataBarText = 'Sum: '+ tmp_databarDataToOutput.join(' ');
       insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'_sum', '');
 
 
 
       // Do the Avg. Income bar
       tmp_databarDataToOutput = [];
-      for(var y=0; y<this.databarIntervals.length; y++){
-        console.info('sum_'+this.databarIntervals[y], dates_array[this.databarIntervals[y]], tmp_dataSet[dates_array[this.databarIntervals[y]]]);
+      for(var y=0; y<this.databarIntervals[tmp_graphLength].length; y++){
         tmp_databarDataToOutput.push([
-            '('+
-                (this.databarIntervals[y]+1)+
-             ') ' +
-                '$'+(tmp_dataSet[dates_array[this.databarIntervals[y]]]['avg']*0.01).toFixed(3)
+          '('+
+              (this.databarIntervals[tmp_graphLength][y]+1)+
+              ') ' +
+              '$'+(tmp_dataSet[dates_array[y]]['avg']*0.01).toFixed(3)
         ]);
       }
       tmp_dataBarText = 'Avg. Income: '+ tmp_databarDataToOutput.join(' ');
@@ -2351,8 +2420,8 @@ var chartDataBars = new function()
 
     }
 
-//    var dataBarsOnPage = document.body.getElementsBy
-//    document.getElementById(this.graphsOnCurrentPage[i]+'_'+i).addEventListener('click', function(){ dataBarClickHandler(this.graphsOnCurrentPage[i]+'_'+i); }, false);
+    //    var dataBarsOnPage = document.body.getElementsBy
+    //    document.getElementById(this.graphsOnCurrentPage[i]+'_'+i).addEventListener('click', function(){ dataBarClickHandler(this.graphsOnCurrentPage[i]+'_'+i); }, false);
   };
 
 };
@@ -2366,14 +2435,6 @@ function insertChartDataBars()
 {
   var maxDataBarWidth = 0;
 
-
-
-
-
-
-  debugLog('graphsOnCurrentPage');
-  debugLog(graphsOnCurrentPage);
-  debugLog('graphsOnCurrentPage.length = ' +graphsOnCurrentPage.length);
 
   console.group();
   for (var i = 0; i < graphsOnCurrentPage.length; i++)
