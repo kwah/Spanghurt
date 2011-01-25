@@ -1257,10 +1257,10 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
 
         currentDataset = tmp_graphData[tmp_currentGraphFriendlyName];
 
-          console.info('_i',_i,
-           'tmp_dataGrabbedFromCurrentPage[_i]',tmp_dataGrabbedFromCurrentPage[_i],
-           'friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]]',friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]]
-           );
+//          console.info('_i',_i,'\n',
+//           'tmp_dataGrabbedFromCurrentPage[_i]',tmp_dataGrabbedFromCurrentPage[_i],'\n',
+//           'friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]]',friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]]
+//           );
 
 
 
@@ -1291,7 +1291,7 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
     };
 
     this.init = function() {
-      //TODO: Rearrangethe logic of this slightly 
+      //TODO: Rearrangethe logic of this slightly
       this.reformatGraphData();
     }
   };
@@ -1938,7 +1938,7 @@ var referralListings = new function()
           locked: (1 === cr[17]) ? 'Y' : 'N',
           recycleable: (1 === cr[16]) ? 'Y' : 'N',
 
-          nextPayment: cr[3]
+          nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].nextPayment : cr[3]
         };
       }
       else if (0 < location.href.indexOf('ss3=1'))
@@ -1951,13 +1951,22 @@ var referralListings = new function()
         };
       }
 
-      tmp_referrals[cr_ID].lastSeen = tmp_currentDateTime;
+
+      function todayYesterdayToDate(arg_string){
+        var searchRegex_today = /today/i;
+        var searchRegex_yesterday = /yesterday/i;
+
+        return arg_string.replace(searchRegex_today,dates_array[0]).replace(searchRegex_yesterday,dates_array[1]);
+      }
+
+      tmp_referrals[cr_ID].lastSeen = tmp_currentDateTime.toString();
       tmp_referrals[cr_ID].hash = cr[7];
-      tmp_referrals[cr_ID].referralSince = ('9' == cr[3]) ? pr.referralSince : cr[3];
-      tmp_referrals[cr_ID].lastClick = ('9' == cr[4]) ? pr.lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4];
+      tmp_referrals[cr_ID].referralSince = todayYesterdayToDate(('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince : cr[2]);
+      tmp_referrals[cr_ID].lastClick = todayYesterdayToDate(('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4]);
       tmp_referrals[cr_ID].totalClicks = cr[5];
       tmp_referrals[cr_ID].overallAverage = ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6];
 
+//      console.info('cr: ',cr,'\n\n','pr: ',pr);
 
       /* Ultimate only stuff, based on the ultimate minigraphs */
       // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
@@ -2192,10 +2201,15 @@ logo.init();
 
 
 
+var profitGraph = new function()
+{
+
+};
+
 
 var chartDataBars = new function()
 {
-  this.maxDataBarWidth = 0;
+  var maxDataBarWidth = 0;
   this.graphsOnCurrentPage = [];
 
   for(var i=0; i < availableGraphs.length; i++){
@@ -2224,14 +2238,14 @@ var chartDataBars = new function()
     chartContainer.parentNode.appendChild(elmt_bar);
 
     var currentDataBarWidth = elmt_bar.textContent.split('').length;
-    this.maxDataBarWidth = (this.maxDataBarWidth < currentDataBarWidth) ? currentDataBarWidth : this.maxDataBarWidth;
+    maxDataBarWidth = (maxDataBarWidth < currentDataBarWidth) ? currentDataBarWidth : maxDataBarWidth;
   }
 
   function dataBarClickHandler(arg_testing){
     alert(arg_testing);
   }
 
-  this.databarIntervals = {
+  this.dataBarIntervals = {
 //    10: [0,1,2,3,4,5,6,7,8,9],
     10: [4,6,9],
     15: [4,9,14],
@@ -2242,13 +2256,13 @@ var chartDataBars = new function()
   {
     var tmp_graphLength = graphLengthLookup[arg_graphId];
     console.info('tmp_graphLength = '+tmp_graphLength);
-    console.info(this.databarIntervals[tmp_graphLength]);
+    console.info(this.dataBarIntervals[tmp_graphLength]);
 
     var tmp_dataSet = get('graphData',{},{prefType:'JSON'})[friendlyNameLookup[arg_graphId]];
 
     var tmp_currentDayData;
 
-    var databarData = { 0: {}, 1: {}, 2: {} };
+    var dataBarData = { };
 
     var tmp_sum = [];
     var tmp_average = [];
@@ -2270,8 +2284,8 @@ var chartDataBars = new function()
       {
         console.info('foobar',arg_graphId, j, tmp_dataSet[j]);
 
-        for(var i= 0; i<this.databarIntervals[tmp_graphLength].length; i++){
-          tmp_maxInterval = (this.databarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? this.databarIntervals[tmp_graphLength][i] : tmp_maxInterval;
+        for(var i= 0; i<this.dataBarIntervals[tmp_graphLength].length; i++){
+          tmp_maxInterval = (this.dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? this.dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
         }
         console.info('max interval = '+tmp_maxInterval);
         for(var m=0; m<=tmp_maxInterval; m++)
@@ -2292,12 +2306,12 @@ var chartDataBars = new function()
           tmp_sum[m] = tmp_sum[m-1] + tmp_currentValue || tmp_currentValue;
           tmp_average[m] = tmp_sum[m] / (m+1);
 
-          databarData[tmp_currentDate] = {
+          dataBarData[tmp_currentDate] = {
             'value': tmp_currentValue,
             'sum': tmp_sum[m],
             'avg': tmp_average[m]
           };
-//          console.info('JSON.stringify(databarData['+tmp_currentDate+']) = '+JSON.stringify(databarData[tmp_currentDate]));
+//          console.info('JSON.stringify(dataBarData['+tmp_currentDate+']) = '+JSON.stringify(dataBarData[tmp_currentDate]));
         }
       }
     }
@@ -2308,10 +2322,11 @@ var chartDataBars = new function()
         console.group();
         console.info(arg_graphId, j, tmp_dataSet[j]);
 
-        for(var i= 0; i<this.databarIntervals[tmp_graphLength].length; i++){
-          tmp_maxInterval = (this.databarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? this.databarIntervals[tmp_graphLength][i] : tmp_maxInterval;
+        for(var i= 0; i<this.dataBarIntervals[tmp_graphLength].length; i++){
+          tmp_maxInterval = (this.dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? this.dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
         }
         console.info('max interval = '+tmp_maxInterval);
+        var tmp_roundedTo = 10000;
         for(var m=0; m<=tmp_maxInterval; m++)
         {
           tmp_currentDate = dates_array[m];
@@ -2320,34 +2335,48 @@ var chartDataBars = new function()
           tmp_sum[m] = tmp_sum[m-1] + tmp_currentValue || tmp_currentValue;
           tmp_average[m] = tmp_sum[m] / (m+1);
 
-          console.info(arg_graphId+' - '+m+'\n','tmp_currentDate = ',tmp_currentDate,'\n','tmp_currentValue = ',tmp_currentValue,'\n','tmp_sum[m] = ',tmp_sum[m],'\n','tmp_average[m] = ',tmp_average[m]);
+//          console.info(arg_graphId+' - '+m+'\n','tmp_currentDate = ',tmp_currentDate,'\n','tmp_currentValue = ',tmp_currentValue,'\n','tmp_sum[m] = ',tmp_sum[m],'\n','tmp_average[m] = ',tmp_average[m]);
 
-          databarData[tmp_currentDate] = {
-            'value': tmp_currentValue,
-            'sum': tmp_sum[m],
-            'avg': tmp_average[m]
+          dataBarData[tmp_currentDate] = {
+            'value': Math.round(tmp_currentValue * tmp_roundedTo) / tmp_roundedTo,
+            'sum': Math.round(tmp_sum[m] * tmp_roundedTo) / tmp_roundedTo,
+            'avg': Math.round(tmp_average[m] * tmp_roundedTo) / tmp_roundedTo
           };
-          console.info(arg_graphId+' - '+m+'\n','JSON.stringify(databarData['+tmp_currentDate+']) = '+JSON.stringify(databarData[tmp_currentDate]));          
+//          console.info(arg_graphId+' - '+m+'\n','tmp_currentDate = ',tmp_currentDate,'\n','JSON.stringify(dataBarData['+tmp_currentDate+']) = '+JSON.stringify(dataBarData[tmp_currentDate]));
+
+          if('ch_cr' == arg_graphId || 'ch_cd' == arg_graphId || 'ch_cliques' == arg_graphId){
+            console.info(dataBarData[tmp_currentDate].avg * 0.01);
+            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.referralClickValue * tmp_roundedTo) / tmp_roundedTo;
+          }
+          if('ch_recycle' == arg_graphId){
+            dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / 0.07 * tmp_roundedTo) / tmp_roundedTo;
+          }
         }
-        console.info(arg_graphId+' - '+m+'\n','JSON.stringify(databarData) = '+JSON.stringify(databarData));
+        console.info(arg_graphId+' - '+m+'\n','JSON.stringify(dataBarData) = '+JSON.stringify(dataBarData));
         console.groupEnd();
       }
     }
 
 
-    return databarData;
+    return dataBarData;
 
   };
 
   this.init = function()
   {
     //    alert('foo');
-    var graphBarCSS = ".graphBar { border:1px solid #AAAAAA; color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; margin: -11px auto 10px; max-width: 82%; min-width:75%; padding:1px 2%; text-align:left; vertical-align:middle; white-space:nowrap; width:"+(this.maxDataBarWidth/1.75)+"em; }";
+    var graphBarCSS = "" +
+        ".dataBarContainer { margin-top:10px; border-collapse:collapse; margin: 10px auto 10px; max-width: 85%; min-width:75%; white-space:nowrap; }" +
+        ".dataBarContainer tr { border:1px solid #AAAAAA; }" +
+        ".graphBar {  color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; padding:1px 2%; vertical-align:middle; }" +
+        ".graphBarFirstCell { text-align: left; width: 8em;}" +
+        ".graphBarSecondCell { text-align: left; }" +
+        "";
     GM_addStyle(graphBarCSS);
 
     var tmp_dataBarText;
     var tmp_dataSet;
-    var tmp_databarDataToOutput;
+    var tmp_dataBarDataToOutput;
     var tmp_graphLength;
 
     for(var i=0; i < this.graphsOnCurrentPage.length; i++)
@@ -2359,66 +2388,185 @@ var chartDataBars = new function()
 
       var tmp_counter = 0;
 
+      function dataToOutputToDataBar(arg_dataSet,arg_dataBarIntervals,arg_dataBarTitle,arg_fieldToShow,arg_daysPrefix,arg_daysSuffix,arg_numberOfFixedDecimalPoints){
+        tmp_dataBarDataToOutput = [];
 
-      console.info('-- tmp_dateAdjuster[1] = '+tmp_dateAdjuster[1] +'--');
-
-      // Now do the averages bar
-      tmp_databarDataToOutput = [];
-      console.info('this.databarIntervals[tmp_graphLength].length = '+this.databarIntervals[tmp_graphLength].length);
-      for(var y=0; y<this.databarIntervals[tmp_graphLength].length; y++){
-        console.info('this.databarIntervals[tmp_graphLength][y] = '+this.databarIntervals[tmp_graphLength][y]);
-
-        var tmp_extensionGraphs = (this.graphsOnCurrentPage[i].match(/extensions_([0-9]+)To([0-9]+)/)) ? true : false;
-
-        tmp_counter = (tmp_dateAdjuster[0] == -1) ? y : -this.databarIntervals[tmp_graphLength][y] - tmp_dateAdjuster[1];
-        tmp_databarDataToOutput.push([
-          '('+
-              (this.databarIntervals[tmp_graphLength][y]+1)+
-              ') ' +
-              tmp_dataSet[dates_array[tmp_counter]]['avg'].toFixed(3)
-        ]);
+        try
+        {
+          for(var y = arg_dataBarIntervals.length - 1; y >= 0; y--)
+          {
+            tmp_counter = (tmp_dateAdjuster[0] == -1) ? y : 0 - arg_dataBarIntervals[y] - tmp_dateAdjuster[1];
+            tmp_dataBarDataToOutput.push(
+              arg_daysPrefix+ (arg_dataBarIntervals[y]+1)+ arg_daysSuffix +
+                  arg_dataSet[dates_array[arg_dataBarIntervals[tmp_counter]]][arg_fieldToShow].toFixed(arg_numberOfFixedDecimalPoints)
+            );
+          }
+          return arg_dataBarTitle+ tmp_dataBarDataToOutput.join(' ');
+        }catch(e){
+          console.info('ERROR! \n',e);
+          return 'error in calculations';
+        }
       }
-      tmp_dataBarText = 'Averages: '+ tmp_databarDataToOutput.join(' ');
-      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'mean', 'margin-top:10px;');
 
 
-      // Do the sums bar
-      tmp_databarDataToOutput = [];
-//      tmp_counter = 0;
-      for(var y=0; y<this.databarIntervals[tmp_graphLength].length; y++){
-//        console.info(y,
-//            tmp_counter);
-//        console.info(
-//            'avg_'+this.databarIntervals[tmp_graphLength][y],
-//            this.databarIntervals[tmp_graphLength][y],
-//            dates_array[this.databarIntervals[tmp_graphLength][y]],
-//            tmp_dataSet[dates_array[tmp_counter]]);
-        
-        tmp_databarDataToOutput[y] =
-          '('+
-              (this.databarIntervals[tmp_graphLength][y]+1)+
-              ') ' +
-              tmp_dataSet[dates_array[y]]['sum'].toFixed(3);
+      if(!friendlyNameLookup[this.graphsOnCurrentPage[i]].match(/extensions_([0-9]+)To([0-9]+)/)){
       }
-      tmp_dataBarText = 'Sum: '+ tmp_databarDataToOutput.join(' ');
-      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'_sum', '');
 
+      var graphBarsContainerId = this.graphsOnCurrentPage[i]+'_containers';
 
-
-      // Do the Avg. Income bar
-      tmp_databarDataToOutput = [];
-      for(var y=0; y<this.databarIntervals[tmp_graphLength].length; y++){
-        tmp_databarDataToOutput.push([
-          '('+
-              (this.databarIntervals[tmp_graphLength][y]+1)+
-              ') ' +
-              '$'+(tmp_dataSet[dates_array[y]]['avg']*0.01).toFixed(3)
-        ]);
+      if(document.getElementById(graphBarsContainerId)) {
+        document.getElementById(graphBarsContainerId).parentNode.removeChild(document.getElementById(graphBarsContainerId));
       }
-      tmp_dataBarText = 'Avg. Income: '+ tmp_databarDataToOutput.join(' ');
-      insertUnderGraph(this.graphsOnCurrentPage[i], tmp_dataBarText, this.graphsOnCurrentPage[i]+'__'+i+'_avgIncome', '');
 
+
+      var chartContainer = document.getElementById(this.graphsOnCurrentPage[i]);
+
+      var graphBarTable = document.createElement("table");
+      graphBarTable.setAttribute("id", graphBarsContainerId);
+      graphBarTable.setAttribute("class", 'dataBarContainer');
+
+
+      function createDataBarRow(arg_graphId,argBarCode,arg_dataBarColumns,arg_customDataBarCss){
+
+        var elmt_bar = document.createElement("tr");
+        elmt_bar.setAttribute("id", arg_graphId+'__'+argBarCode);
+        elmt_bar.setAttribute("style", arg_customDataBarCss);
+
+        for(var i=0; i<arg_dataBarColumns.length; i++){
+          var elmt_col = document.createElement("td");
+          elmt_col.setAttribute("class", "graphBar"+((i==0)?" graphBarFirstCell":"") + ((i==1)?" graphBarSecondCell":""));
+          elmt_col.innerHTML = arg_dataBarColumns[i];
+          elmt_bar.appendChild(elmt_col);
+        }
+
+        var currentDataBarWidth = elmt_bar.textContent.split('').length;
+        maxDataBarWidth = (maxDataBarWidth < currentDataBarWidth) ? currentDataBarWidth : maxDataBarWidth;
+
+        return elmt_bar;
+      }
+
+      // Generic DataBars
+      switch(this.graphsOnCurrentPage[i])
+      {
+        case 'ch_cliques':
+          // Fall-through
+        case 'ch_cd':
+          // Fall-through
+        case 'ch_cr':
+
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                ['Sum: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') ',0)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                ['Avg. Clicks: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') ',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avgIncome',
+                ['Avg. Income: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avgIncome','(',') $',3)],
+                ''
+              )
+          );
+
+          break;
+        case 'ch_recycle':
+          // Fall-through
+        case 'ch_extensions':
+          // Fall-through
+        case 'ch_autopay':
+          // Fall-through
+        case 'ch_trrb':
+          // Fall-through
+        case 'ch_earnings':
+          // Fall-through
+        case 'ch_profit':
+
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                ['Sum: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                ['Avg. Expense: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                ''
+              )
+          );
+
+
+      }
+
+
+      // Specific DataBars
+      switch(this.graphsOnCurrentPage[i])
+      {
+        case 'ch_recycle':
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                ['Avg. #Recycles: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avgRecycles','(',') ',3)],
+                ''
+              )
+          );
+
+        break;
+
+
+        case 'ch_trpb':
+
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                ['Sum: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                ['Avg. Transfer: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                ''
+              )
+          );
+
+        break;
+
+        case 'ch_trar':
+
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                ['Sum: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') ',1)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                ['Average Recycles: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') ',1)],
+                ''
+              )
+          );
+
+        break;
+
+      }
+
+      chartContainer.parentNode.appendChild(graphBarTable);
     }
+
+    GM_addStyle('.dataBarContainer { width:'+(maxDataBarWidth/1.75)+'em; }');
 
     //    var dataBarsOnPage = document.body.getElementsBy
     //    document.getElementById(this.graphsOnCurrentPage[i]+'_'+i).addEventListener('click', function(){ dataBarClickHandler(this.graphsOnCurrentPage[i]+'_'+i); }, false);
@@ -2427,6 +2575,16 @@ var chartDataBars = new function()
 };
 
 chartDataBars.init();
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3173,4 +3331,262 @@ mk_ch2("ch_cliques",
     -1.1,
     [3]
   ); */
+
+
+
+var convertRefListingsToUl = function(){
+
+  console.info(localStorage);
+
+  var referrals = JSON.parse(localStorage.getItem('referrals'))
+
+  console.info(referrals);
+
+
+  function to_ul (obj) {
+      // --------v create an <ul> element
+      var f, li, ul = document.createElement ("ul");
+
+      // --v loop through its children
+      for (var i in obj)
+      {
+          if(obj.hasOwnProperty(i))
+          {
+              //console.info(i);
+              li = document.createElement ("li");
+              // if the child has a 'folder' prop on its own, call me again
+              if ('object' == typeof obj[i]) {
+                  li.appendChild (to_ul (obj[i]));
+              } else {
+                  // console.info(document.createTextNode(i));
+                  li.appendChild(document.createTextNode(i + ' = ' + obj[i]));
+              }
+              ul.appendChild(li);
+          }
+      }
+
+      return ul;
+  }
+
+
+  this.init = function() {
+    var tmp_ul = to_ul(referrals);
+
+    console.info(tmp_ul);
+
+//    document.body.innerHTML = "";
+    document.body.appendChild(tmp_ul);
+  }
+};
+
+
+//convertRefListingsToUl.init();
+
+
+var widenPages = new function(){
+
+  this.referralListings = function(){
+    document.body.children[1].style.width = '90%';
+    document.body.children[1].style.padding = '0 4em';
+
+    document.getElementById('tblprp').style.maxWidth = '78em';
+    document.getElementById('tblprp').style.overflow = 'auto';
+
+    GM_addStyle('.l { white-space: nowrap; } ')
+  };
+
+  this.accountSummary = function(){
+//    document.body.children[1].style.width = '90%';
+    document.body.children[1].style.width = '';
+    document.body.children[1].style.padding = '0 4em';
+  }
+};
+
+
+
+var referralListingsNewColumnsTest = function(){
+
+  var colCount = document.querySelectorAll('div#tblprp > table > tbody > tr')[1].children[0].getAttribute('colspan');
+
+  function addColumn(arg_row,arg_columnText,arg_colId,arg_customCSS)
+  {
+    var tmp_newColumn;
+
+//    console.info(arg_colId);
+    var tmp_existingCol = document.getElementById(arg_colId);
+    if(tmp_existingCol) {
+      tmp_existingCol.parentNode.removeChild(tmp_existingCol);
+    }
+    tmp_newColumn = document.createElement('td');
+    tmp_newColumn.innerHTML = arg_columnText;
+    tmp_newColumn.setAttribute('id', arg_colId);
+
+    tmp_newColumn.setAttribute('class',arg_row.children[arg_row.children.length - 1].getAttribute('class'));
+    tmp_newColumn.setAttribute('style',
+        arg_row.children[arg_row.children.length - 1].getAttribute('style') +
+        arg_customCSS
+        );
+
+    arg_row.appendChild(tmp_newColumn);
+    colCount++;
+
+    var tmp_colspans = document.querySelectorAll('div#tblprp > table > tbody > tr>td[colspan]');
+
+    for(var i=1; i<tmp_colspans.length;i++){
+//      if(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan') == (colCount-1){
+        tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
+//      }
+//      console.info(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan'));
+    }
+
+
+  }
+
+
+  function dateToDHM(arg_date)
+  {
+    var onesec = 1000;
+    var onemin = onesec * 60;
+    var onehr = onemin * 60;
+    var oneday = onehr * 24;
+
+    var now = new Date();
+
+//    console.info('now: ',now,'\nother date: ',arg_date);
+
+    var t_diff = new Date(arg_date) - now;
+//    console.info('t_diff = '+t_diff);
+
+
+    var future = (t_diff > 0);
+    var remaining_time = (t_diff > 0) ? t_diff : t_diff * -1;
+
+//    console.info('remaining_time: ',remaining_time);
+
+    var diff_days = Math.floor(remaining_time / oneday);
+    remaining_time -= diff_days * oneday;
+
+//    console.info('diff_days: ',diff_days,'\nremaining_time: ',remaining_time);
+
+    var diff_hrs = Math.floor(remaining_time / onehr);
+    remaining_time -= diff_hrs * onehr;
+
+//    console.info('diff_hrs: ',diff_hrs,'\nremaining_time: ',remaining_time);
+
+    var diff_mins = Math.floor(remaining_time / onemin);
+    remaining_time -= diff_mins * onemin;
+
+//    console.info('diff_mins: ',diff_mins,'\nremaining_time: ',remaining_time);
+
+    var diff_secs = Math.floor(remaining_time / onesec);
+    remaining_time -= diff_secs * onesec;
+
+//    console.info('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
+
+   return '['+
+       diff_days+'d'+
+       ', '+diff_hrs+'h'+
+       ', '+diff_mins+'m'+
+//       ', '+diff_secs+'s'+
+       ']';
+  }
+
+  function nextPaymentStringToDate(arg_string)
+  {
+    arg_string = arg_string.toString();
+//    console.info('nextPaymentStringToDate: \n','arg_string : ',arg_string);
+    var onesec = 1000;
+    var onemin = onesec * 60;
+    var onehr = onemin * 60;
+    var oneday = onehr * 24;
+
+    var spliced = arg_string.match(/([0-9]+).*([0-9]{2})\:([0-9]{2})/);
+    var tmp_days = spliced[1]*1;
+    var tmp_hours = spliced[2]*1;
+    var tmp_mins = spliced[3]*1;
+
+    var tmp_date = new Date( (new Date()*1) +
+        (tmp_days * oneday) +
+        (tmp_hours * onehr) +
+        (tmp_mins * onemin) );
+
+//    console.info(tmp_days+'d, '+tmp_hours+'h, '+tmp_mins+'m');
+    return tmp_date;
+
+  }
+
+  var headerRow = document.querySelectorAll('div#tblprp > table > tbody > tr')[0];
+  var referralRows = document.querySelectorAll('div#tblprp > table > tbody > tr[onmouseover]');
+  var tmp_currentRow;
+  var tmp_currentID, tmp_income;
+  var tmp_dhmOwned;
+
+  var colIndexes = {
+    refID: 3,
+    refSince: 5
+  };
+
+  var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
+    console.info(tmp_referralsData);
+
+  var headerCol_idPrefix = 'header_';
+  var newCol_idPrefix;
+  addColumn(headerRow,'Income',headerCol_idPrefix+'income','');
+
+  addColumn(headerRow,'D/H/M Ref Since',headerCol_idPrefix+'dhmRefSince','');
+  addColumn(headerRow,'D/H/M Next Payment',headerCol_idPrefix+'nextPayment','');
+  
+  for(var i=0; i<referralRows.length; i++){
+
+    tmp_currentRow = referralRows[i];
+//    console.info(i, tmp_currentRow);
+
+    tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/)[0];
+    newCol_idPrefix = tmp_currentID + '_';
+    
+//    console.info(tmp_currentID);
+//    console.info(tmp_referralsData[tmp_currentID]);
+    try
+    {
+      tmp_income = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.referralClickValue).toFixed(3);
+      addColumn(tmp_currentRow,"$"+tmp_income,newCol_idPrefix+'income','');
+    } catch(e) {
+      console.info('error\n',e);
+    }
+
+//    console.info('tmp_referralsData[tmp_currentID].referralSince : ',tmp_referralsData[tmp_currentID].referralSince);
+    var tmp_refSince = new Date(tmp_referralsData[tmp_currentID].referralSince);
+    try
+    {
+//      tmp_refSince = nextPaymentStringToDate(tmp_refSince);
+      tmp_refSince = dateToDHM(tmp_refSince);
+      addColumn(tmp_currentRow,tmp_refSince,newCol_idPrefix+'dhmRefSince','');
+    } catch(e) {
+      console.info('error\n',e);
+    }
+
+    var tmp_nextPayment = tmp_referralsData[tmp_currentID].nextPayment;
+    console.info('tmp_nextPayment : ',tmp_nextPayment);
+    try
+    {
+      tmp_nextPayment = nextPaymentStringToDate(tmp_nextPayment);
+      tmp_nextPayment = dateToDHM(tmp_nextPayment);
+      addColumn(tmp_currentRow,tmp_nextPayment,newCol_idPrefix+'nextPayment','');
+    } catch(e) {
+      console.info('error\n',e);
+    }
+  }
+
+};
+
+if(currentPage.pageCode.match(/referralListings_Rented/))
+{
+  widenPages.referralListings();
+  referralListingsNewColumnsTest();
+}
+
+if(currentPage.pageCode.match(/accSummary/i))
+{
+  widenPages.accountSummary();
+}
 
