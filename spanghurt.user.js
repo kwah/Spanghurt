@@ -871,8 +871,6 @@ var currentPage = new function()
 
   function detectPageCode ()
   {
-
-    if(testAgainstUrlPath(['v'])) { return 'viewingAdvertisement'; }
     if(testAgainstUrlPath(['forum'])) { return 'viewingForums'; }
 
     if(testAgainstUrlPath(['c']))
@@ -978,7 +976,8 @@ var currentPage = new function()
     }
 
 
-    if(testAgainstUrlParameters(['m','v'])) { return 'viewAdvertisementsPage'; }
+    if(testAgainstUrlPath(['m','v'])) { return 'viewAdvertisementsPage'; }
+    if(testAgainstUrlPath(['v']) && testAgainstUrlParameters(['a=l'])) { return 'viewingAdvertisement'; }
     if(testAgainstUrlParameters(['u=p'])) { return 'neobuxFrontPage'; }
 
 
@@ -1729,11 +1728,11 @@ function insertLocalServerTime()
 insertLocalServerTime();
 
 
-  var availableGraphs = [];
+var availableGraphs = [];
 
-  for(var graphId in friendlyNameLookup){
-    availableGraphs.push(graphId);
-  }
+for(var graphId in friendlyNameLookup){
+  availableGraphs.push(graphId);
+}
 
 
 // Used for detection on pages
@@ -1894,8 +1893,8 @@ var referralListings = new function()
 
     for(var i = 0; i < arg_referralListingsData.length; i++)
     {
-      console.group();
-      console.info('i',i);
+//      console.group();
+//      console.info('i',i);
 
     /**
      * ## referralSince and lastClick ##
@@ -2093,7 +2092,7 @@ var referralListings = new function()
       } /* END calculating stats for minigraph clicks */
 
       //console.info(JSON.stringify(tmp_referrals));
-      console.groupEnd();
+//      console.groupEnd();
 
     } /* End of for(var i = 0; i < arg_referralListingsData.length; i++) {} loop  */
 
@@ -2170,9 +2169,10 @@ var logo =
       elmnt_logoImage.style.cursor = 'pointer';
       elmnt_logoImage.border = "0";
       elmnt_logoImage.width = '16';
-      elmnt_logoImage.alt = 'Spanghurt Greasemonkey Script Preferences';
-      elmnt_logoImage.title = 'Spanghurt Greasemonkey Script Preferences';
-      elmnt_logoImage.src = 'http://img262.imageshack.us/img262/3654/neobuxv3logolargered2.png';
+      elmnt_logoImage.alt = 'Spanghurt Script Preferences';
+      elmnt_logoImage.title = 'Spanghurt Script Preferences';
+      elmnt_logoImage.src = 'http://kwah.org/neobux/script/images/logo.png';
+//      elmnt_logoImage.src = 'http://img262.imageshack.us/img262/3654/neobuxv3logolargered2.png';
       // img.src = 'http://img262.imageshack.us/img262/4965/neobuxv3logolargered3.png';
 
 
@@ -2255,8 +2255,8 @@ var chartDataBars = new function()
   this.getDataBarData = function(arg_graphId)
   {
     var tmp_graphLength = graphLengthLookup[arg_graphId];
-    console.info('tmp_graphLength = '+tmp_graphLength);
-    console.info(this.dataBarIntervals[tmp_graphLength]);
+//    console.info('tmp_graphLength = '+tmp_graphLength);
+//    console.info(this.dataBarIntervals[tmp_graphLength]);
 
     var tmp_dataSet = get('graphData',{},{prefType:'JSON'})[friendlyNameLookup[arg_graphId]];
 
@@ -2275,7 +2275,7 @@ var chartDataBars = new function()
     var tmp_extensionsMin;
     var tmp_extensionsMax;
 
-    console.info(tmp_dataSet.__count__);
+//    console.info(tmp_dataSet.__count__);
     if(friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/)){
       tmp_extensionsMin = friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/)[1];
       tmp_extensionsMax = friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/)[2];
@@ -2319,13 +2319,13 @@ var chartDataBars = new function()
     {
       for(var j in tmp_dataSet)
       {
-        console.group();
-        console.info(arg_graphId, j, tmp_dataSet[j]);
+//        console.group();
+//        console.info(arg_graphId, j, tmp_dataSet[j]);
 
         for(var i= 0; i<this.dataBarIntervals[tmp_graphLength].length; i++){
           tmp_maxInterval = (this.dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? this.dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
         }
-        console.info('max interval = '+tmp_maxInterval);
+//        console.info('max interval = '+tmp_maxInterval);
         var tmp_roundedTo = 10000;
         for(var m=0; m<=tmp_maxInterval; m++)
         {
@@ -2345,15 +2345,18 @@ var chartDataBars = new function()
 //          console.info(arg_graphId+' - '+m+'\n','tmp_currentDate = ',tmp_currentDate,'\n','JSON.stringify(dataBarData['+tmp_currentDate+']) = '+JSON.stringify(dataBarData[tmp_currentDate]));
 
           if('ch_cr' == arg_graphId || 'ch_cd' == arg_graphId || 'ch_cliques' == arg_graphId){
-            console.info(dataBarData[tmp_currentDate].avg * 0.01);
+//            console.info(dataBarData[tmp_currentDate].avg * 0.01);
             dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.referralClickValue * tmp_roundedTo) / tmp_roundedTo;
           }
           if('ch_recycle' == arg_graphId){
             dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / 0.07 * tmp_roundedTo) / tmp_roundedTo;
           }
+
+
+
         }
-        console.info(arg_graphId+' - '+m+'\n','JSON.stringify(dataBarData) = '+JSON.stringify(dataBarData));
-        console.groupEnd();
+//        console.info(arg_graphId+' - '+m+'\n','JSON.stringify(dataBarData) = '+JSON.stringify(dataBarData));
+//        console.groupEnd();
       }
     }
 
@@ -2369,7 +2372,7 @@ var chartDataBars = new function()
         ".dataBarContainer { margin-top:10px; border-collapse:collapse; margin: 10px auto 10px; max-width: 85%; min-width:75%; white-space:nowrap; }" +
         ".dataBarContainer tr { border:1px solid #AAAAAA; }" +
         ".graphBar {  color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; padding:1px 2%; vertical-align:middle; }" +
-        ".graphBarFirstCell { text-align: left; width: 8em;}" +
+        ".graphBarFirstCell { text-align: left; min-width: 8em;}" +
         ".graphBarSecondCell { text-align: left; }" +
         "";
     GM_addStyle(graphBarCSS);
@@ -2577,12 +2580,436 @@ var chartDataBars = new function()
 chartDataBars.init();
 
 
+var exportTabs = new function()
+{
+
+  var _currentGraph,tmp_currentGraphId;
+
+
+  this.insertStyles = function () {
+    var newDialog_Style = "" +
+        "#modalContainer {"+
+        "background-color: transparent;"+
+        "position: absolute;"+
+        "width: 100%;"+
+        "height: 100%;"+
+        "top: 0px;"+
+        "left: 0px;"+
+        "z-index: 10000;"+
+        "background-image: url(tp.png); /* required by MSIE to prevent actions on lower z-index elements */"+
+        " }"+
+
+        "#alertBox {"+
+        "position: relative;"+
+        "width: 300px;"+
+        "min-height: 100px;"+
+        "margin-top: 50px;"+
+        "border: 2px solid #000;"+
+        "background-color: #F2F5F6;"+
+        "background-image: url(alert.png);"+
+        "background-repeat: no-repeat;"+
+        "background-position: 20px 30px;"+
+        " }"+
+
+        "#modalContainer > #alertBox {"+
+        "position: fixed;"+
+        " }"+
+
+        "#alertBox h1 {"+
+        "margin: 0;"+
+        "font: bold 0.9em verdana,arial;"+
+        "background-color: #78919B;"+
+        "color: #FFF;"+
+        "border-bottom: 1px solid #000;"+
+        "padding: 2px 0 2px 5px;"+
+        " }"+
+
+        "#alertBox p {"+
+        "font-family: verdana,arial;"+
+        "padding: 10px;"+
+        "margin: 10px;"+
+        "height: auto;"+
+        " }"+
+
+        "#alertBox textarea {"+
+        "font-family: monospace,courier new,verdana,arial;"+
+        "font-size: x-small;"+
+        "margin: 15px;"+
+        "margin-top: 0px;"+
+        "height: auto;"+
+        "width: 85%;"+
+        " }"+
+
+        "#alertBox #closeBtn {"+
+        "display: block;"+
+        "position: relative;"+
+        "margin: 15px auto;"+
+        "padding: 3px;"+
+        "border: 2px solid #000;"+
+        "width: 70px;"+
+        "font: 0.7em verdana,arial;"+
+        "text-transform: uppercase;"+
+        "text-align: center;"+
+        "color: #FFF;"+
+        "background-color: #78919B;"+
+        "text-decoration: none;"+
+        "}";
 
 
 
 
+    var newDialogStyle = document.body.appendChild(document.createElement('style'));
+    newDialogStyle.setAttribute('type', 'text/css');
+    newDialogStyle.innerHTML = newDialog_Style;
 
 
+
+    var tabStyles = '';
+    tabStyles += '.exportTab { -moz-border-radius: 0.6em 0.6em 0px 0px; display: inline-block; font-size: xx-small; padding: 0px 7px; margin-right: 7px; text-align: center; cursor: pointer; }';
+    tabStyles += '.csvExportTab{ background-color:#ecd; }';
+    tabStyles += '.tsvExportTab{ background-color:#edc; }';
+    tabStyles += '.xmlExportTab{ background-color:#cde; }';
+    tabStyles += '.textExportTab{ background-color:#dce; }';
+
+    GM_addStyle(tabStyles);
+  }
+
+  function createExportDialog(arg_txt, arg_exportText, arg_alertTitle, arg_alertButtonText, arg_exportText_reversed, arg_event)
+  {
+    var textareaContents = arg_exportText;
+    if (arg_event.ctrlKey && arg_exportText_reversed)
+    {
+      textareaContents = arg_exportText_reversed;
+    }
+    createCustomAlert(arg_txt, textareaContents, arg_alertTitle, arg_alertButtonText);
+  }
+
+  function createCustomAlert(arg_txt, arg_textareaContents, arg_alertTitle, arg_alertButtonText)
+  {
+    // constants to define the title of the alert and button text.
+    arg_txt = arg_txt || '';
+    arg_textareaContents = arg_textareaContents || '';
+    arg_alertTitle = arg_alertTitle || 'Oops!';
+    arg_alertButtonText = arg_alertButtonText || 'Ok';
+
+
+    // shortcut reference to the document object
+    var d = document;
+
+    // if the modalContainer object already exists in the DOM, bail out.
+    if (d.getElementById("modalContainer"))
+    {
+      return;
+    }
+
+    // create the modalContainer div as a child of the BODY element
+    // make sure its as tall as it needs to be to overlay all the content on the page
+    var mObj = d.getElementsByTagName("body")[0].appendChild(d.createElement("div"));
+    mObj.id = "modalContainer";
+    mObj.style.height = document.documentElement.scrollHeight + "px";
+
+    // create the DIV that will be the alert
+    var alertObj = mObj.appendChild(d.createElement("div"));
+    alertObj.id = "alertBox";
+
+
+    // MSIE doesnt treat position:fixed correctly, so this compensates for positioning the alert
+    if (d.all && !window.opera)
+    {
+      alertObj.style.top = document.documentElement.scrollTop + "px";
+    }
+
+    // center the alert box
+    alertObj.style.left = (d.documentElement.scrollWidth - alertObj.offsetWidth) / 2 + "px";
+
+    // create an H1 element as the title bar
+    var h1 = alertObj.appendChild(d.createElement("h1"));
+    h1.appendChild(d.createTextNode(arg_alertTitle));
+
+    if ('' !== arg_txt)
+    {
+      // create a paragraph element to contain the _txt argument
+      var msg = alertObj.appendChild(d.createElement("p"));
+      msg.innerHTML = arg_txt;
+    }
+
+    if ('' !== arg_textareaContents)
+    {
+      // create a textarea
+      var textarea = alertObj.appendChild(d.createElement("center")).appendChild(d.createElement("textarea"));
+      textarea.value = arg_textareaContents;
+
+      var maxHeight = 300;
+
+      var adjustedHeight = textarea.clientHeight;
+      if (!maxHeight || maxHeight > adjustedHeight)
+      {
+        adjustedHeight = Math.max(textarea.scrollHeight, adjustedHeight);
+        if (maxHeight)
+        {
+          adjustedHeight = Math.min(maxHeight, adjustedHeight);
+        }
+        if (adjustedHeight > textarea.clientHeight)
+        {
+          textarea.style.height = adjustedHeight + "px";
+        }
+      }
+
+    }
+
+    // create an anchor element to use as the confirmation button.
+    var btn = alertObj.appendChild(d.createElement("a"));
+    btn.id = "closeBtn";
+    btn.appendChild(d.createTextNode(arg_alertButtonText));
+
+    // set up the onclick event to remove the alert when the anchor is clicked
+    btn.addEventListener('click', function () {
+      removeCustomAlert();
+    }, false);
+
+  }
+
+  // removes the custom alert from the DOM
+  function removeCustomAlert()
+  {
+    document.getElementsByTagName("body")[0].removeChild(document.getElementById("modalContainer"));
+  }
+
+  function EXPORT_TAB(arg_exportType, arg_tabText, arg_textareaContents)
+  {
+    var exportTab = document.createElement('div');
+    // exportTab.style.cssFloat = 'left';
+    // exportTab.style.width = '20px';
+    exportTab.className = arg_exportType+'ExportTab exportTab';
+    exportTab.id = arg_exportType+'ExportTab_'+tmp_currentGraphId;
+
+    exportTab.innerHTML = arg_tabText;
+
+    var textareaContents = arg_textareaContents || "not found";
+    var textareaContentsReverse = "not found";
+    var messageHeader = "not found";
+
+    if(_currentGraph.export)
+    {
+      textareaContents = _currentGraph.export[arg_exportType];
+      textareaContentsReverse = _currentGraph.export.reverse[arg_exportType];
+      messageHeader = 'Exporting the "'+_currentGraph.name+'" graph as '+arg_tabText+':';
+    }
+
+    exportTab.addEventListener('click', function exportTabs_onClick(event)
+    {
+      // (event.ctrlKey && event.altKey && event.shiftKey)
+      createExportDialog(messageHeader,textareaContents,'Exporting to '+arg_tabText+'..','Close',textareaContentsReverse,event);
+    }, false);
+
+
+    return exportTab;
+  }
+
+  function insertTabs()
+  {
+
+
+
+  }
+  function dataToExportFormat(arg_format, arg_data, arg_length)
+  {
+//    console.info('dataToExportFormat arguments: ',arguments);
+    var tmp_valuesArray = [];
+    var tmp_valuesToExportArray = [];
+    var exportString = '';
+    var maxCount = 10;
+
+    if(arg_length){
+      maxCount = arg_length;
+    }
+
+
+    var tmp_currentDate;
+    if(tmp_currentGraphId.match(/ch_ext_schedule/)){}else{
+      for(var tmp_j = 0; tmp_j < maxCount; tmp_j++)
+      {
+        tmp_currentDate = dates_array[tmp_j];
+  //      console.info('tmp_currentDate = ',tmp_currentDate);
+        if('undefined' !== typeof arg_data[tmp_currentDate]) {
+          tmp_valuesArray.push([tmp_currentDate,arg_data[tmp_currentDate]]);
+        }
+      }
+    }
+    
+    try{
+      switch(arg_format){
+        case 'csv':
+            for(var i = 0; i < maxCount; i++) {
+              tmp_valuesToExportArray[i] = tmp_valuesArray[i].join(',');
+            }
+            return tmp_valuesToExportArray.join(',\n');
+        break;
+        case 'tsv':
+            for(var i = 0; i < maxCount; i++) {
+              tmp_valuesToExportArray[i] = tmp_valuesArray[i].join("\t");
+            }
+            return tmp_valuesToExportArray.join("\t\n");
+        break;
+        case 'text':
+            for(var i = 0; i < maxCount; i++) {
+              tmp_valuesToExportArray[i] = tmp_valuesArray[i][1];
+            }
+            return tmp_valuesToExportArray.join("\t\n");
+        break;
+      }
+    }catch(e){
+      console.info("ERROR!\n#" +
+          'tmp_currentGraphId = ',tmp_currentGraphId,"\n" +
+          "Error details: \n",e);
+      return 'Error retrieving data';
+    }
+  }
+
+//  console.info(dataToExportFormat('csv',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+//  console.info(dataToExportFormat('tsv',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+//  console.info(dataToExportFormat('text',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+
+
+  this.init = function()
+  {
+    this.insertStyles();
+
+    for(var _NameOfCurrentGraph in availableGraphs)
+    {
+      tmp_currentGraphId = availableGraphs[_NameOfCurrentGraph];
+      if(document.getElementById(tmp_currentGraphId))
+      {
+
+        var tmp_dataSet = get('graphData',{},{prefType:'JSON'});
+        _currentGraph = tmp_dataSet[friendlyNameLookup[tmp_currentGraphId]];
+
+        var referenceNode = document.getElementById(tmp_currentGraphId);
+
+//        console.info('tmp_currentGraphId: ',tmp_currentGraphId,'\n',
+//            '_currentGraph: ',_currentGraph,'\n',
+//            'referenceNode: ',referenceNode);
+
+
+        var tmp_currentDataset;
+        var tmp_headerValue;
+        switch(tmp_currentGraphId)
+        {
+          case 'ch_cliques':
+            tmp_headerValue = 'Local Time';
+          break;
+          case 'ch_cd':
+          //fall through
+          case 'ch_cr':
+            tmp_headerValue = 'Credited clicks';
+          break;
+          case 'ch_recycle':
+            tmp_headerValue = 'Recycle value';
+          break;
+          case 'ch_extensions':
+            tmp_headerValue = 'Extension value';
+          break;
+          case 'ch_autopay':
+            tmp_headerValue = 'AutoPay value';
+          break;
+          case 'ch_trrb':
+            tmp_headerValue = 'Transfer value';
+          break;
+          case 'ch_earnings':
+            tmp_headerValue = 'Extension value';
+          break;
+          case 'ch_profit':
+            tmp_headerValue = 'Extension value';
+          break;
+          case 'ch_trar':
+            tmp_headerValue = 'Referrals';
+          break;
+          case 'ch_trpb':
+            tmp_headerValue = 'Transfer value';
+          break;
+          case 'ch_ext_schedule8':
+          //fall through
+          case 'ch_ext_schedule7':
+          //fall through
+          case 'ch_ext_schedule6':
+          //fall through
+          case 'ch_ext_schedule5':
+          //fall through
+          case 'ch_ext_schedule4':
+          //fall through
+          case 'ch_ext_schedule3':
+          //fall through
+          case 'ch_ext_schedule2':
+          //fall through
+          case 'ch_ext_schedule1':
+          //fall through
+          case 'ch_ext_schedule':
+          //fall through
+            tmp_headerValue = 'Total number of referrals';
+          break;
+        }
+        tmp_currentDataset = get('graphData',{},{prefType:'JSON'})[friendlyNameLookup[tmp_currentGraphId]][tmp_headerValue];
+
+
+    if(tmp_currentGraphId.match(/ch_ext_schedule/)){}else{
+      console.info('tmp_currentDataset: ',tmp_currentDataset)
+        console.info(dataToExportFormat('csv',tmp_currentDataset,4));
+        console.info(dataToExportFormat('tsv',tmp_currentDataset,4));
+        console.info(dataToExportFormat('text',tmp_currentDataset,4));
+
+
+        try
+        {
+          //// Add Export Links
+          // Create and insert wrapper for export 'tabs'
+          var exportTabsWrapper = document.createElement('div');
+          exportTabsWrapper.setAttribute('style','bottom:-1px; margin-left:17px; margin-top:4px; position:relative; text-align:left;');
+          exportTabsWrapper.id = 'exportTabsWrapper_'+tmp_currentGraphId;
+          exportTabsWrapper.innerHTML = ' ';
+
+          referenceNode.parentNode.insertBefore(exportTabsWrapper,referenceNode);
+
+          // Define the export 'tabs'
+          var csvExportTab = EXPORT_TAB('csv','CSV',dataToExportFormat('csv',tmp_currentDataset,10));
+          var tsvExportTab = EXPORT_TAB('tsv','TSV',dataToExportFormat('tsv',tmp_currentDataset,10));
+          var xmlExportTab = EXPORT_TAB('xml','XML',dataToExportFormat('xml',tmp_currentDataset,10));
+          var textExportTab = EXPORT_TAB('text','Text',dataToExportFormat('text',tmp_currentDataset,10));
+
+
+          // Insert 'Export as CSV' Tab
+          if(document.getElementById('csvExportTab_'+tmp_currentGraphId)){
+            document.getElementById('csvExportTab_'+tmp_currentGraphId).innerHTML = csvExportTab.innerHTML
+          }else{
+            document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(csvExportTab);
+          }
+
+          // Insert 'Export as TSV' Tab and attach click event
+          if(document.getElementById('tsvExportTab_'+tmp_currentGraphId)){
+            document.getElementById('tsvExportTab_'+tmp_currentGraphId).innerHTML = tsvExportTab.innerHTML
+          }else{
+            document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(tsvExportTab);
+          }
+
+          // Insert 'Export as XML' Tab and attach click event
+          // document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(xmlExportTab);
+
+          // Insert 'Export as Text' Tab and attach click event
+          if(document.getElementById('textExportTab_'+tmp_currentGraphId)){
+            document.getElementById('textExportTab_'+tmp_currentGraphId).innerHTML = textExportTab.innerHTML
+          }else{
+            document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(textExportTab);
+          }
+        } catch(e) {
+          console.info("ERROR!\nCannot add export tabs.\n\nFull error message:\n",e)
+        }
+    }
+      }
+    }
+  }
+
+};
+
+exportTabs.init();
 
 
 
@@ -3396,9 +3823,10 @@ var widenPages = new function(){
   };
 
   this.accountSummary = function(){
-//    document.body.children[1].style.width = '90%';
+    document.body.children[1].style.maxWidth = '90%';
+    document.body.children[1].style.minWidth = '50%';
     document.body.children[1].style.width = '';
-    document.body.children[1].style.padding = '0 4em';
+    document.body.children[1].style.padding = '0 0 0 4em';
   }
 };
 
@@ -3406,7 +3834,7 @@ var widenPages = new function(){
 
 var referralListingsNewColumnsTest = function(){
 
-  var colCount = document.querySelectorAll('div#tblprp > table > tbody > tr')[1].children[0].getAttribute('colspan');
+  var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
 
   function addColumn(arg_row,arg_columnText,arg_colId,arg_customCSS)
   {
@@ -3430,9 +3858,9 @@ var referralListingsNewColumnsTest = function(){
     arg_row.appendChild(tmp_newColumn);
     colCount++;
 
-    var tmp_colspans = document.querySelectorAll('div#tblprp > table > tbody > tr>td[colspan]');
+    var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
 
-    for(var i=1; i<tmp_colspans.length;i++){
+    for(var i=1; i<tmp_colspans.length - 1;i++){
 //      if(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan') == (colCount-1){
         tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
 //      }
@@ -3515,8 +3943,8 @@ var referralListingsNewColumnsTest = function(){
 
   }
 
-  var headerRow = document.querySelectorAll('div#tblprp > table > tbody > tr')[0];
-  var referralRows = document.querySelectorAll('div#tblprp > table > tbody > tr[onmouseover]');
+  var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
+  var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
   var tmp_currentRow;
   var tmp_currentID, tmp_income;
   var tmp_dhmOwned;
@@ -3566,7 +3994,7 @@ var referralListingsNewColumnsTest = function(){
     }
 
     var tmp_nextPayment = tmp_referralsData[tmp_currentID].nextPayment;
-    console.info('tmp_nextPayment : ',tmp_nextPayment);
+//    console.info('tmp_nextPayment : ',tmp_nextPayment);
     try
     {
       tmp_nextPayment = nextPaymentStringToDate(tmp_nextPayment);
@@ -3590,3 +4018,49 @@ if(currentPage.pageCode.match(/accSummary/i))
   widenPages.accountSummary();
 }
 
+
+function insertAdCounterBox(){
+  if('undefined' === typeof GM_addStyle){
+    function GM_addStyle(arg_css) {
+      var head = document.getElementsByTagName("head")[0];
+      if (head) {
+        var style = document.createElement("style");
+        style.textContent = arg_css;
+        style.type = "text/css";
+        head.appendChild(style);
+      }
+      return style;
+    }
+  }
+
+  var elmnt_totalsContainer = document.createElement('div');
+  elmnt_totalsContainer.id = 'clickTotalsContainer';
+  elmnt_totalsContainer.setAttribute('style', 'position: fixed; bottom: 2em; right: 2em; width: 130px; min-height: 10em; background-color: white; border: 1px solid black; font-size:x-small !important; padding: 1em 1em; opacity: 0.5;');
+
+  elmnt_totalsContainer.setAttribute('onmouseover','document.getElementById("clickTotalsContainer").style.opacity = "1";');
+  elmnt_totalsContainer.setAttribute('onmouseout','document.getElementById("clickTotalsContainer").style.opacity = "0.5";');
+
+  GM_addStyle(".adCountIncrementButton { width:2em; text-align:center; }"+
+      ".adCountDecrementButton { width:2em; text-align:center; }"+
+      "#clickTotalsContainer table tr td { font-size:x-small; }");
+
+  elmnt_totalsContainer.innerHTML =  ""+
+      "<table>"+
+      ["<tr><td>"+ "Extended Ad: ", "<button id='extendedAdCount_incrementButton' class='adCountIncrementButton'>+</button>", "<span id='extendedAdCount_textCount'>0</span>", "<button id='extendedAdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>')+
+      ["<tr><td>"+ "Regular Ad: ",  "<button id='regularAdCount_incrementButton' class='adCountIncrementButton'>+</button>",  "<span id='regularAdCount_textCount'>0</span>",  "<button id='regularAdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>')+
+      ["<tr><td>"+ "Mini Ad: ",     "<button id='miniAdCount_incrementButton' class='adCountIncrementButton'>+</button>",     "<span id='miniAdCount_textCount'>0</span>",     "<button id='miniAdCount_decrementButton' class='adCountDecrementButton'>+</button>"+"</td></tr>"].join('</td><td>')+
+      ["<tr><td>"+ "Micro Ad: ",    "<button id='microAdCount_incrementButton' class='adCountIncrementButton'>+</button>",    "<span id='microAdCount_textCount'>0</span>",    "<button id='microAdCount_decrementButton' class='adCountDecrementButton'>+</button>"+"</td></tr>"].join('</td><td>')+
+      "</table>";
+
+
+  if(document.getElementById('clickTotalsContainer')){
+      document.getElementById('clickTotalsContainer').parentNode.removeChild(document.getElementById('clickTotalsContainer'));
+  }
+
+  document.body.appendChild(elmnt_totalsContainer);
+}
+
+if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
+{
+  insertAdCounterBox();
+}
