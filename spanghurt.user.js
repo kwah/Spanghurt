@@ -786,6 +786,10 @@ function get(arg_prefName, arg_defaultValue, arg_options)
       return parseInt(tmp);
     case 'string':
       return tmp.toString();
+    case 'boolean':
+        if('true' === tmp.toString()) { return true; }
+        if('false' === tmp.toString()) { return false; }
+      return !!tmp;
     case 'JSON':
       try {
         return JSON.parse(tmp);
@@ -1193,10 +1197,14 @@ var currentUser = new function()
 //    this.shrinkColumnContents = get(tmp_prefs[i],defaultSettings['shrinkColumnContents'], { prefType: 'JSON' });
 //    this.timePeriods = get(tmp_prefs[i],defaultSettings['timePeriods'], { prefType: 'JSON' });
 
+    //JSON vars
     var tmp_prefs = ['columnPrefixes','numeriseDates','shortFormatTimer','showColumn','shrinkColumnContents','timePeriods'];
     for(var i=0; i<tmp_prefs.length; i++){
       this[tmp_prefs[i]] = get(tmp_prefs[i],defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
     }
+
+    //Boolean vars
+    this['flag_textify'] = get('flag_textify',true, { prefType: 'boolean' });
   };
 };
 
@@ -3469,10 +3477,16 @@ var widenPages = new function(){
   };
 
   this.accountSummary = function(){
-    document.body.children[1].style.maxWidth = '90%';
-    document.body.children[1].style.minWidth = '50%';
-    document.body.children[1].style.width = '';
-    document.body.children[1].style.padding = '0 0 0 4em';
+//    document.body.children[1].style.maxWidth = '90%';
+//    document.body.children[1].style.minWidth = '50%';
+//    document.body.children[1].style.width = '';
+//    document.body.children[1].style.padding = '0 0 0 4em';
+  }
+
+  this.generic = function(){;
+    document.body.children[0].style.width = '';
+    document.body.children[0].style.maxWidth = '98%';
+    document.body.children[1].style.width = '1100px';
   }
 };
 
@@ -3694,6 +3708,61 @@ var referralListingsNewColumnsTest = function()
 
 };
 
+if(false){
+  function flag_textify(arg_currentReferral)
+  {
+
+    // The flag column
+    if (currentPage.pageCode.match(/rented/i && currentUser.preferences.flag_textify))
+    {
+      // Get the flag colour of the referral
+      // Expecting only 0-5 for the 6 colorus / 'types' of flag
+      switch (parseInt(referrals[refIndex].flagType, 10))
+      {
+        case 0:
+          // flag0.gif == White (W) flag
+          referrals[refIndex].flagColour = ('W');
+          break;
+        case 1:
+          // flag1.gif == Red (R) flag
+          referrals[refIndex].flagColour = ('R');
+          break;
+        case 2:
+          // flag2.gif == Orange (O) flag
+          referrals[refIndex].flagColour = ('O');
+          break;
+        case 3:
+          // flag3.gif == Yellow (Y) flag
+          referrals[refIndex].flagColour = ('Y');
+          break;
+        case 4:
+          // flag4.gif == Green (G) flag
+          referrals[refIndex].flagColour = ('G');
+          break;
+        case 5:
+          // flag5.gif == Blue (B) flag
+          referrals[refIndex].flagColour = ('B');
+          break;
+        default:
+          // Unknown (U) flag
+          // Will appear if different numbering scheme is used or if extra flags
+          // are added
+          referrals[refIndex].flagColour = ('U');
+          break;
+      }
+
+
+      // Append the appropriate flag letter after the flag
+      columns.flag.innerHTML += script.preferences.columnPrefix['flag'] + referrals[refIndex].flagColour;
+
+      // Stop the extra letter causing the cell to wrap around and increase
+      // the height of the rows
+      columns.flag.style.whiteSpace = "nowrap";
+    }
+
+  }
+
+}
 if(currentPage.pageCode.match(/referralListings_Rented/))
 {
   widenPages.referralListings();
@@ -3989,3 +4058,6 @@ if(currentPage.pageCode.match(/referralStatistics/))
 {
   insertSidebar();
 }
+
+
+widenPages.generic();
