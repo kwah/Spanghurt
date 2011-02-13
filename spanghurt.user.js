@@ -144,6 +144,9 @@ new u(this,this.eq(0).closest("form"),a);return this.data("validator",b)}}})(jQu
 
 
 
+/**
+ * Compatability functions
+ */
 if('undefined' === typeof GM_log){
   function GM_log() {
     //console.info(arguments);
@@ -166,7 +169,6 @@ if('undefined' === typeof console){
   console.info('console not defined');
 }
 
-
 if('undefined' === typeof GM_addStyle){
   function GM_addStyle(arg_css) {
     var head = document.getElementsByTagName("head")[0];
@@ -180,6 +182,10 @@ if('undefined' === typeof GM_addStyle){
   }
 }
 
+
+/**
+ * Logging functions
+ */
 function debugLog()
 {
   if (2 >= arguments.length) {
@@ -201,7 +207,6 @@ function debugLog()
   }
 }
 
-
 function pageCodeDebugLog()
 {
   if (2 >= arguments.length) {
@@ -214,7 +219,6 @@ function pageCodeDebugLog()
     console.groupEnd();
   }
 }
-
 
 function errorLog()
 {
@@ -238,6 +242,9 @@ function errorLog()
 }
 
 
+/**
+ * Utility functions
+ */
 function docEvaluate(arg_xpath)
 {
   return document.evaluate(arg_xpath,
@@ -257,7 +264,6 @@ function padZeros(arg_input,arg_desiredStringLength)
   }
   return output;
 }
-
 
 // Function that merges objects, appending the contents of _newObj to the existing object
 // * Runs infinitely levels deep
@@ -310,14 +316,102 @@ function Object_merge(arg_oldObj, arg_newObj)
 }
 
 
+function ModalDialog(arg_dialogId) {
+  this.create = function (arg_Css, arg_innerHTML)
+  {
+    if(null === typeof arg_Css) {
+      arg_Css = 'background-color: white; margin: 8em auto; padding: 2em; width: 30em;';
+    }
 
+    var shadowBackdrop = document.getElementById('shadowBackdrop_'+arg_dialogId);
+    if(!shadowBackdrop)
+    {
+      GM_addStyle('#shadowBackdrop_'+arg_dialogId+' { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; }');
+      shadowBackdrop = document.createElement('div');
+      shadowBackdrop.id = 'shadowBackdrop_'+arg_dialogId;
+      shadowBackdrop.setAttribute('class',"overlay");
 
+      shadowBackdrop.innerHTML = '';
 
+      shadowBackdrop.style.display = 'none';
 
+      document.body.appendChild(shadowBackdrop);
+    }
 
+    GM_addStyle('#modalDialogWrapper_'+arg_dialogId+' { height: 100%; left: 0; position: absolute; top: 0; width: 100%; }');
+    GM_addStyle('#modalDialogElement_'+arg_dialogId+' { '+arg_Css+' }');
 
+    var modalDialogWrapper = document.getElementById('modalDialogWrapper_'+arg_dialogId);
+    if(!modalDialogWrapper)
+    {
+      modalDialogWrapper = document.createElement('div');
+      modalDialogWrapper.id = 'modalDialogWrapper_'+arg_dialogId;
+      modalDialogWrapper.style.display = 'none';
+
+      var modalDialogElement = document.createElement('div');
+      modalDialogElement.innerHTML = arg_innerHTML;
+      modalDialogElement.id = 'modalDialogElement_'+arg_dialogId
+
+      modalDialogWrapper.appendChild(modalDialogElement);
+      document.body.appendChild(modalDialogWrapper);
+    }
+
+    this.dialogElement = modalDialogWrapper;
+
+    return modalDialogWrapper;
+  }
+  this.show = function()
+  {
+    document.getElementById('shadowBackdrop_'+arg_dialogId).style.display = '';
+    document.getElementById('modalDialogWrapper_'+arg_dialogId).style.display = '';
+  }
+  this.hide = function()
+  {
+    document.getElementById('shadowBackdrop_'+arg_dialogId).style.display = 'none';
+    document.getElementById('modalDialogWrapper_'+arg_dialogId).style.display = 'none';
+  }
+  return this;
+}
+
+/**
+ * Initial Setup
+ */
+
+// Depending upon the storage method used, a true value may be stored as boolean or string type so shall test for both
 if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.getItem('setupComplete'))
 {
+  var initialSetupDialog = new ModalDialog('initialSetup');
+  initialSetupDialog.create(
+      'background-color: white; margin: 8em auto; padding: 2em; width: 30em;',
+      '' +
+      '<strong>Spanghurt! Initial Setup</strong><br>' +
+      '<br>' +
+      '<hr>' +
+      "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.<br>" +
+      '<hr>' +
+      '<br>' +
+      'How many direct referrals do you have? <input id="initialSetup_directReferrals" size="4" value="0" type="text" /><br>' +
+      'How many rented referrals do you have? <input id="initialSetup_rentedReferrals" size="4" value="0" type="text" /><br>' +
+      'Do you use autopay? <input id="initialSetup_autopay" type="checkbox" /><br>' +
+      '<br>' +
+      'For how long do you usually renew your referrals? <select id="initialSetup_normalRenewalLength">' +
+      '<option value="15">15 days (The "Base Rate")</option>' +
+      '<option value="30" selected="selected">30 days (5% discount)</option>' +
+      '<option value="60">60 days (10% discount)</option>' +
+      '<option value="90">90 days (18% discount)</option>' +
+      '<option value="150">150 days (25% discount)</option>' +
+      '<option value="240">240 days (30% discount)</option>' +
+      '</select> <br>' +
+      '<br>' +
+      'What is the time difference between your time and the server\'s time? <input id="initialSetup_timeDifference" size="4" value="" type="text" /><br>' +
+      '<br>' +
+      "<small><i>If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>" +
+      '<br>' +
+      '<input id="initialSetup_save" value="Save Settings" type="button"/>' +
+      '<input id="initialSetup_close" value="Close" type="button"/>' +
+      ''
+      );
+
   GM_addStyle('#shadowBackdrop { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; }');
   GM_addStyle('#initialSetup { background-color: white; margin: 8em auto; padding: 2em; width: 30em; }');
 
@@ -1176,7 +1270,7 @@ var currentUser = new function()
 //      console.info('currentTest.minRefs = '+currentTest.minRefs+'\n'+
 //          'totalRentedRefs = '+totalRentedRefs+'\n'+
 //          'currentTest.cost = '+currentTest.cost);
-      
+
       if(parseInt(currentTest.minRefs, 10) < parseInt(totalRentedRefs, 10)) {
         perAutoPayCost = currentTest.cost;
       }
@@ -2623,7 +2717,7 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                ['Average Recycles: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') ',1)],
+                ['Average Free Recycles: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') ',1)],
                 ''
               )
           );
@@ -2650,7 +2744,8 @@ var exportTabs = new function()
   var _currentGraph,tmp_currentGraphId;
 
 
-  this.insertStyles = function () {
+  this.insertStyles = function ()
+  {
     var newDialog_Style = "" +
         "#modalContainer {"+
         "background-color: transparent;"+
@@ -2738,108 +2833,8 @@ var exportTabs = new function()
     GM_addStyle(tabStyles);
   }
 
-  function createExportDialog(arg_txt, arg_exportText, arg_alertTitle, arg_alertButtonText, arg_exportText_reversed, arg_event)
-  {
-    var textareaContents = arg_exportText;
-    if (arg_event.ctrlKey && arg_exportText_reversed)
-    {
-      textareaContents = arg_exportText_reversed;
-    }
-    createCustomAlert(arg_txt, textareaContents, arg_alertTitle, arg_alertButtonText);
-  }
 
-  function createCustomAlert(arg_txt, arg_textareaContents, arg_alertTitle, arg_alertButtonText)
-  {
-    // constants to define the title of the alert and button text.
-    arg_txt = arg_txt || '';
-    arg_textareaContents = arg_textareaContents || '';
-    arg_alertTitle = arg_alertTitle || 'Oops!';
-    arg_alertButtonText = arg_alertButtonText || 'Ok';
-
-
-    // shortcut reference to the document object
-    var d = document;
-
-    // if the modalContainer object already exists in the DOM, bail out.
-    if (d.getElementById("modalContainer"))
-    {
-      return;
-    }
-
-    // create the modalContainer div as a child of the BODY element
-    // make sure its as tall as it needs to be to overlay all the content on the page
-    var mObj = d.getElementsByTagName("body")[0].appendChild(d.createElement("div"));
-    mObj.id = "modalContainer";
-    mObj.style.height = document.documentElement.scrollHeight + "px";
-
-    // create the DIV that will be the alert
-    var alertObj = mObj.appendChild(d.createElement("div"));
-    alertObj.id = "alertBox";
-
-
-    // MSIE doesnt treat position:fixed correctly, so this compensates for positioning the alert
-    if (d.all && !window.opera)
-    {
-      alertObj.style.top = document.documentElement.scrollTop + "px";
-    }
-
-    // center the alert box
-    alertObj.style.left = (d.documentElement.scrollWidth - alertObj.offsetWidth) / 2 + "px";
-
-    // create an H1 element as the title bar
-    var h1 = alertObj.appendChild(d.createElement("h1"));
-    h1.appendChild(d.createTextNode(arg_alertTitle));
-
-    if ('' !== arg_txt)
-    {
-      // create a paragraph element to contain the _txt argument
-      var msg = alertObj.appendChild(d.createElement("p"));
-      msg.innerHTML = arg_txt;
-    }
-
-    if ('' !== arg_textareaContents)
-    {
-      // create a textarea
-      var textarea = alertObj.appendChild(d.createElement("center")).appendChild(d.createElement("textarea"));
-      textarea.value = arg_textareaContents;
-
-      var maxHeight = 300;
-
-      var adjustedHeight = textarea.clientHeight;
-      if (!maxHeight || maxHeight > adjustedHeight)
-      {
-        adjustedHeight = Math.max(textarea.scrollHeight, adjustedHeight);
-        if (maxHeight)
-        {
-          adjustedHeight = Math.min(maxHeight, adjustedHeight);
-        }
-        if (adjustedHeight > textarea.clientHeight)
-        {
-          textarea.style.height = adjustedHeight + "px";
-        }
-      }
-
-    }
-
-    // create an anchor element to use as the confirmation button.
-    var btn = alertObj.appendChild(d.createElement("a"));
-    btn.id = "closeBtn";
-    btn.appendChild(d.createTextNode(arg_alertButtonText));
-
-    // set up the onclick event to remove the alert when the anchor is clicked
-    btn.addEventListener('click', function () {
-      removeCustomAlert();
-    }, false);
-
-  }
-
-  // removes the custom alert from the DOM
-  function removeCustomAlert()
-  {
-    document.getElementsByTagName("body")[0].removeChild(document.getElementById("modalContainer"));
-  }
-
-  function EXPORT_TAB(arg_exportType, arg_tabText, arg_textareaContents)
+  function EXPORT_TAB(arg_exportType, arg_exportTabText, arg_textDescription, arg_textareaContents)
   {
     var exportTab = document.createElement('div');
     // exportTab.style.cssFloat = 'left';
@@ -2847,38 +2842,64 @@ var exportTabs = new function()
     exportTab.className = arg_exportType+'ExportTab exportTab';
     exportTab.id = arg_exportType+'ExportTab_'+tmp_currentGraphId;
 
-    exportTab.innerHTML = arg_tabText;
+    exportTab.innerHTML = arg_exportTabText;
 
     var textareaContents = arg_textareaContents || "not found";
     var textareaContentsReverse = "not found";
-    var messageHeader = "not found";
+    var messageHeader = arg_textDescription || "not found";
 
     if(_currentGraph.export)
     {
       textareaContents = _currentGraph.export[arg_exportType];
       textareaContentsReverse = _currentGraph.export.reverse[arg_exportType];
-      messageHeader = 'Exporting the "'+_currentGraph.name+'" graph as '+arg_tabText+':';
+      messageHeader = 'Exporting the "'+_currentGraph.name+'" graph as '+arg_exportTabText+':';
     }
+
 
     exportTab.addEventListener('click', function exportTabs_onClick(event)
     {
       // (event.ctrlKey && event.altKey && event.shiftKey)
-      createExportDialog(messageHeader,textareaContents,'Exporting to '+arg_tabText+'..','Close',textareaContentsReverse,event);
+
+      if (event.ctrlKey && textareaContentsReverse)
+      {
+        var exportTab = new ModalDialog('exportTab_'+arg_exportType);
+        exportTab.create('background-color: white; margin: 8em auto; padding: 2em; width: 16em;',
+            '' +
+                '<h3>'+'Exporting to '+arg_exportTabText+'..'+'</h3>' +
+                messageHeader+'<br>' +
+                '<textarea style="height: 15em; width: 15em;">'+textareaContentsReverse +'</textarea><br>' +
+                '<button id="'+arg_exportType+'ExportTab_okButton">Ok</button>');
+      }
+      else
+      {
+        var exportTab = new ModalDialog('exportTab_'+arg_exportType);
+        exportTab.create('background-color: white; margin: 8em auto; padding: 2em; width: 16em;',
+            '' +
+                '<h3>'+'Exporting to '+arg_exportTabText+'..'+'</h3>' +
+                messageHeader+'<br>' +
+                '<textarea style="height: 15em; width: 15em;">'+textareaContents+'</textarea><br>' +
+                '<button id="'+arg_exportType+'ExportTab_okButton">Ok</button>');
+      }
+
+      document.getElementById(arg_exportType+'ExportTab_okButton').addEventListener('click',
+          function (event){
+            exportTab.hide();
+          }, false);
+
+
+      exportTab.show();
+
+
+      //      createExportDialog(messageHeader,textareaContents,'Exporting to '+arg_exportTabText+'..','Close',textareaContentsReverse,event);
     }, false);
 
 
     return exportTab;
   }
 
-  function insertTabs()
-  {
-
-
-
-  }
   function dataToExportFormat(arg_format, arg_data, arg_length)
   {
-//    console.info('dataToExportFormat arguments: ',arguments);
+    //    console.info('dataToExportFormat arguments: ',arguments);
     var tmp_valuesArray = [];
     var tmp_valuesToExportArray = [];
     var exportString = '';
@@ -2894,7 +2915,7 @@ var exportTabs = new function()
       for(var tmp_j = 0; tmp_j < maxCount; tmp_j++)
       {
         tmp_currentDate = dates_array[tmp_j];
-  //      console.info('tmp_currentDate = ',tmp_currentDate);
+        //      console.info('tmp_currentDate = ',tmp_currentDate);
         if('undefined' !== typeof arg_data[tmp_currentDate]) {
           tmp_valuesArray.push([tmp_currentDate,arg_data[tmp_currentDate]]);
         }
@@ -2904,23 +2925,23 @@ var exportTabs = new function()
     try{
       switch(arg_format){
         case 'csv':
-            for(var i = 0; i < maxCount; i++) {
-              tmp_valuesToExportArray[i] = tmp_valuesArray[i].join(',');
-            }
-            return tmp_valuesToExportArray.join(',\n');
-        break;
+          for(var i = 0; i < maxCount; i++) {
+            tmp_valuesToExportArray[i] = tmp_valuesArray[i].join(',');
+          }
+          return tmp_valuesToExportArray.join(',\n');
+          break;
         case 'tsv':
-            for(var i = 0; i < maxCount; i++) {
-              tmp_valuesToExportArray[i] = tmp_valuesArray[i].join("\t");
-            }
-            return tmp_valuesToExportArray.join("\t\n");
-        break;
+          for(var i = 0; i < maxCount; i++) {
+            tmp_valuesToExportArray[i] = tmp_valuesArray[i].join("\t");
+          }
+          return tmp_valuesToExportArray.join("\t\n");
+          break;
         case 'text':
-            for(var i = 0; i < maxCount; i++) {
-              tmp_valuesToExportArray[i] = tmp_valuesArray[i][1];
-            }
-            return tmp_valuesToExportArray.join("\t\n");
-        break;
+          for(var i = 0; i < maxCount; i++) {
+            tmp_valuesToExportArray[i] = tmp_valuesArray[i][1];
+          }
+          return tmp_valuesToExportArray.join("\t\n");
+          break;
       }
     }catch(e){
       console.info("ERROR!\n#" +
@@ -2930,9 +2951,9 @@ var exportTabs = new function()
     }
   }
 
-//  console.info(dataToExportFormat('csv',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
-//  console.info(dataToExportFormat('tsv',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
-//  console.info(dataToExportFormat('text',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+  //  console.info(dataToExportFormat('csv',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+  //  console.info(dataToExportFormat('tsv',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+  //  console.info(dataToExportFormat('text',get('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
 
 
   this.init = function()
@@ -2950,9 +2971,9 @@ var exportTabs = new function()
 
         var referenceNode = document.getElementById(tmp_currentGraphId);
 
-//        console.info('tmp_currentGraphId: ',tmp_currentGraphId,'\n',
-//            '_currentGraph: ',_currentGraph,'\n',
-//            'referenceNode: ',referenceNode);
+        //        console.info('tmp_currentGraphId: ',tmp_currentGraphId,'\n',
+        //            '_currentGraph: ',_currentGraph,'\n',
+        //            'referenceNode: ',referenceNode);
 
 
         var tmp_currentDataset;
@@ -2961,36 +2982,36 @@ var exportTabs = new function()
         {
           case 'ch_cliques':
             tmp_headerValue = 'Local Time';
-          break;
+            break;
           case 'ch_cd':
           //fall through
           case 'ch_cr':
             tmp_headerValue = 'Credited clicks';
-          break;
+            break;
           case 'ch_recycle':
             tmp_headerValue = 'Recycle value';
-          break;
+            break;
           case 'ch_extensions':
             tmp_headerValue = 'Extension value';
-          break;
+            break;
           case 'ch_autopay':
             tmp_headerValue = 'AutoPay value';
-          break;
+            break;
           case 'ch_trrb':
             tmp_headerValue = 'Transfer value';
-          break;
+            break;
           case 'ch_earnings':
             tmp_headerValue = 'Extension value';
-          break;
+            break;
           case 'ch_profit':
             tmp_headerValue = 'Extension value';
-          break;
+            break;
           case 'ch_trar':
             tmp_headerValue = 'Referrals';
-          break;
+            break;
           case 'ch_trpb':
             tmp_headerValue = 'Transfer value';
-          break;
+            break;
           case 'ch_ext_schedule8':
           //fall through
           case 'ch_ext_schedule7':
@@ -3008,65 +3029,56 @@ var exportTabs = new function()
           case 'ch_ext_schedule1':
           //fall through
           case 'ch_ext_schedule':
-          //fall through
+            //fall through
             tmp_headerValue = 'Total number of referrals';
-          break;
+            break;
         }
         tmp_currentDataset = get('graphData',{},{prefType:'JSON'})[friendlyNameLookup[tmp_currentGraphId]][tmp_headerValue];
 
 
-    if(tmp_currentGraphId.match(/ch_ext_schedule/)){}else{
-//      console.info('tmp_currentDataset: ',tmp_currentDataset)
-//        console.info(dataToExportFormat('csv',tmp_currentDataset,4));
-//        console.info(dataToExportFormat('tsv',tmp_currentDataset,4));
-//        console.info(dataToExportFormat('text',tmp_currentDataset,4));
-
-
-        try
+        if(tmp_currentGraphId.match(/ch_ext_schedule/))
+        {}
+        else
         {
-          //// Add Export Links
-          // Create and insert wrapper for export 'tabs'
-          var exportTabsWrapper = document.createElement('div');
-          exportTabsWrapper.setAttribute('style','bottom:-1px; margin-left:17px; margin-top:4px; position:relative; text-align:left;');
-          exportTabsWrapper.id = 'exportTabsWrapper_'+tmp_currentGraphId;
-          exportTabsWrapper.innerHTML = ' ';
+          //      console.info('tmp_currentDataset: ',tmp_currentDataset)
+          //        console.info(dataToExportFormat('csv',tmp_currentDataset,4));
+          //        console.info(dataToExportFormat('tsv',tmp_currentDataset,4));
+          //        console.info(dataToExportFormat('text',tmp_currentDataset,4));
 
-          referenceNode.parentNode.insertBefore(exportTabsWrapper,referenceNode);
+          try
+          {
+            //// Add Export Links
+            // Create and insert wrapper for export 'tabs'
+            var exportTabsWrapper = document.createElement('div');
+            exportTabsWrapper.setAttribute('style','bottom:-1px; margin-left:17px; margin-top:4px; position:relative; text-align:left;');
+            exportTabsWrapper.id = 'exportTabsWrapper_'+tmp_currentGraphId;
+            exportTabsWrapper.innerHTML = ' ';
 
-          // Define the export 'tabs'
-          var csvExportTab = EXPORT_TAB('csv','CSV',dataToExportFormat('csv',tmp_currentDataset,10));
-          var tsvExportTab = EXPORT_TAB('tsv','TSV',dataToExportFormat('tsv',tmp_currentDataset,10));
-          var xmlExportTab = EXPORT_TAB('xml','XML',dataToExportFormat('xml',tmp_currentDataset,10));
-          var textExportTab = EXPORT_TAB('text','Text',dataToExportFormat('text',tmp_currentDataset,10));
+            referenceNode.parentNode.insertBefore(exportTabsWrapper,referenceNode);
 
+//            console.info('tmp_currentGraphId = ',tmp_currentGraphId);
 
-          // Insert 'Export as CSV' Tab
-          if(document.getElementById('csvExportTab_'+tmp_currentGraphId)){
-            document.getElementById('csvExportTab_'+tmp_currentGraphId).innerHTML = csvExportTab.innerHTML
-          }else{
-            document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(csvExportTab);
+            var exportTabTypes = ['CSV','TSV','Text'];
+            for(var i=0; i<exportTabTypes.length; i++)
+            {
+//              console.info('tmp_currentGraphId = ',tmp_currentGraphId,'\n','exportTabTypes[i] = ',exportTabTypes[i]);
+              var exportTabElement = EXPORT_TAB(exportTabTypes[i].toLowerCase(),
+                    exportTabTypes[i],
+                    tmp_headerValue,
+                    dataToExportFormat(exportTabTypes[i].toLowerCase(),tmp_currentDataset,10)
+                  );
+
+              if(document.getElementById(exportTabTypes[i].toLowerCase()+'ExportTab_'+tmp_currentGraphId)){
+                document.getElementById(exportTabTypes[i].toLowerCase()+'ExportTab_'+tmp_currentGraphId).innerHTML = exportTabElement.innerHTM
+              }else{
+                document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(exportTabElement);
+              }
+
+            }
+          } catch(e) {
+            console.info("ERROR!\nCannot add export tabs.\n\nFull error message:\n",e)
           }
-
-          // Insert 'Export as TSV' Tab and attach click event
-          if(document.getElementById('tsvExportTab_'+tmp_currentGraphId)){
-            document.getElementById('tsvExportTab_'+tmp_currentGraphId).innerHTML = tsvExportTab.innerHTML
-          }else{
-            document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(tsvExportTab);
-          }
-
-          // Insert 'Export as XML' Tab and attach click event
-          // document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(xmlExportTab);
-
-          // Insert 'Export as Text' Tab and attach click event
-          if(document.getElementById('textExportTab_'+tmp_currentGraphId)){
-            document.getElementById('textExportTab_'+tmp_currentGraphId).innerHTML = textExportTab.innerHTML
-          }else{
-            document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(textExportTab);
-          }
-        } catch(e) {
-          console.info("ERROR!\nCannot add export tabs.\n\nFull error message:\n",e)
         }
-    }
       }
     }
   }
@@ -3763,10 +3775,99 @@ if(false){
   }
 
 }
+
+function addClickStatsToGoldenGraph(){
+  function mk_ch_ref(x, o, w0, w, O, L, m)
+  {
+    console.info(arguments);
+    if (m == 0)
+    {
+      n = [0, 0, 0];
+    } else
+    {
+      n = m;
+    }
+    var s1 = 20, s2 = 20, s3 = 20, s4 = 50;
+    if (L == 1)
+    {
+      s3 = 30;
+    }
+    var g = [s1, s2, s3, s4];
+    var chart = new (Highcharts.Chart)({chart: {renderTo: x, defaultSeriesType: "line", margin: g, showAxes: 1, borderWidth: 0, shadow: 0}, title: {text: ""}, xAxis: {categories: o, labels: {enabled: 0}, tickmarkPlacement: "on", gridLineWidth: 1, lineColor: "#fff", tickColor: "#fff", gridLineColor: "#ddd"}, yAxis: {title: {enabled: 0, text: null}, min: -0.1, endOnTick: 0, startOnTick: 0, tickPixelInterval: 20, plotLines: [
+      {value: 0, width: 1, color: "#888"}
+    ]}, tooltip: {formatter: function ()
+    {
+      return "<b>" + this.series.name + "</b><br/>" + this.x + ": " + w0 + this.y + " " + w;
+    }}, legend: {enabled: L, layout: "horizontal", symbolWidth: 5, style: {left: "auto", bottom: "5px", right: "5px", top: "auto", font: "normal 12px Verdana, sans-serif"}}, plotOptions: {line: {lineWidth: 2, marker: {enabled: 1, symbol: "circle", radius: 3, states: {hover: {enabled: 1, radius: 5}}}}}, series: O, credits: {enabled: 0}});
+
+    var newElmnt = document.createElement('div');
+    console.info('O[0].data: ', O[0].data);
+    var disp_clicks = "Clicks:";
+    var disp_sum = "Sums:";
+    var disp_avg = "Avgs:";
+
+    var clicks = [];
+    var sum = [];
+    var avg = [];
+
+
+    for (var i = 0; i < O[0].data.length; i++) {
+      disp_clicks += ' ' + O[0].data[i];
+      clicks[i] = O[0].data[i];
+    }
+
+//    for (var i = 0; i < O[0].data.length; i++) {
+//      sum[i] = clicks[i] + sum[i-1] | clicks[i];
+    for (var i = O[0].data.length - 1; i >= 0; i--) {
+      sum[i] = clicks[i] + sum[i+1] | clicks[i];
+      avg[i] = (sum[i] / ((O[0].data.length - i)+1)).toFixed(1);
+
+//      console.info('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
+    }
+
+    //for (var i = O[0].data.length - 1; i >= 0; i--) {
+//    for (var i = 0; i < O[0].data.length; i++) {
+//      disp_sum += ' ' + sum[i];
+//      disp_avg += ' ' + avg[i].toFixed(1);
+//    }
+
+    newElmnt.innerHTML = '<table class="refGraphDatabar">' +
+        '<tr><td>'+ [
+          'Day # '+'</td><td>'+[9,8,7,6,5,4,3,2,1,0].join('</td><td>'),
+          'Clicks:'+'</td><td>'+clicks.join('</td><td>'),
+          'Sum: '+'</td><td>'+sum.join('</td><td>'),
+          'Avg: '+'</td><td>'+avg.join('</td><td>')].join('</td></tr><tr><td>') +
+        '</td></tr>' +
+        '</table>';
+
+    newElmnt.style.padding = '0 1.5em 1em';
+    
+    document.getElementById(x).style.minHeight = '130px';
+    document.getElementById(x).style.height = '';
+//    document.getElementById(x).style.minWidth = '280px';
+    document.getElementById(x).style.width = '280px';
+    document.getElementById(x).style.textAlign = 'center';
+    document.getElementById(x).appendChild(newElmnt);
+  }
+
+
+  GM_addStyle(".refGraphDatabar { border-collapse: collapse; }" +
+      ".refGraphDatabar tbody tr td { font-size: x-small; padding:0 1px; border: 1px solid black; }");
+
+//  console.info('mk_ch_ref.toString() : ',mk_ch_ref.toString());
+  var script = document.createElement("script");
+  script.setAttribute('type','text/javascript');
+  script.text = mk_ch_ref.toString();
+  document.body.appendChild(script);
+
+}
+
 if(currentPage.pageCode.match(/referralListings_Rented/))
 {
   widenPages.referralListings();
   referralListingsNewColumnsTest();
+  addClickStatsToGoldenGraph();
+
 }
 
 if(currentPage.pageCode.match(/accSummary/i))
@@ -3834,7 +3935,7 @@ function insertSidebar()
   tmp += " </span>";
 
 
-  var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6]];
+  var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,14],[1,14]];
   var tmp_dataSet = JSON.parse(localStorage.getItem('graphData'));
   var tmp_currentDataset;
 
@@ -4010,7 +4111,7 @@ function insertSidebar()
     tmp += "- Autopay: $" + sidebarData['autopayCost'][dates_array[endDay]].sum.toFixed(3) + " / " + (sidebarData['autopayCost'][dates_array[endDay]].sum / currentUser.autopayFee) + "<br>";
     tmp += "- Golden Pack: $" + (numberOfDays * currentUser.accountType['cost'] / 365).toFixed(3) + "<br>";
     tmp += "</div>";
-  
+
     tmp += "<h6 title='Some statistics for clicks made "+header.toLowerCase()+"'> + Stats</h6>";
     tmp += "<div class='sidebarDetails'>";
     tmp += showThisIfUserHasRentedReferrals("- Rented Average: " + (sidebarData['rentedClicks'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Rented'] * numberOfDays)).toFixed(3) + "<br>");
