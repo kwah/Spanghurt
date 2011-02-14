@@ -1258,7 +1258,7 @@ var currentUser = new function()
   {
     var defaultAutopayValues = Neobux.accountDefaults.autopayValues[arg_accountType.verbose];
 
-    var totalRentedRefs = (0 <= arg_numberOfRentedReferrals) ? arg_numberOfRentedReferrals : currentUser.numberOfRefs.Rented;
+    var totalRentedRefs = (0 <= arg_numberOfRentedReferrals) ? arg_numberOfRentedReferrals : 0;
     var perAutoPayCost = 0;
 
     var j = defaultAutopayValues.length - 1;
@@ -3544,237 +3544,6 @@ function insertAdCounterBox(){
   document.body.appendChild(elmnt_totalsContainer);
 }
 
-var referralListingsNewColumnsTest = function()
-{
-
-  var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
-
-  function addColumn(arg_row,arg_columnText,arg_colId,arg_customCSS)
-  {
-    var tmp_newColumn;
-
-//    console.info(arg_colId);
-    var tmp_existingCol = document.getElementById(arg_colId);
-    if(tmp_existingCol) {
-      tmp_existingCol.parentNode.removeChild(tmp_existingCol);
-    }
-    tmp_newColumn = document.createElement('td');
-    tmp_newColumn.innerHTML = arg_columnText;
-    tmp_newColumn.setAttribute('id', arg_colId);
-
-    tmp_newColumn.setAttribute('class',arg_row.children[arg_row.children.length - 1].getAttribute('class'));
-    tmp_newColumn.setAttribute('style',
-        arg_row.children[arg_row.children.length - 1].getAttribute('style') +
-        arg_customCSS
-        );
-
-    arg_row.appendChild(tmp_newColumn);
-    colCount++;
-
-    var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
-
-    for(var i=1; i<tmp_colspans.length - 1;i++){
-//      if(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan') == (colCount-1){
-        tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
-//      }
-//      console.info(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan'));
-    }
-
-
-  }
-
-
-  function dateToDHM(arg_date)
-  {
-    var onesec = 1000;
-    var onemin = onesec * 60;
-    var onehr = onemin * 60;
-    var oneday = onehr * 24;
-
-    var now = new Date();
-
-//    console.info('now: ',now,'\nother date: ',arg_date);
-
-    var t_diff = new Date(arg_date) - now;
-//    console.info('t_diff = '+t_diff);
-
-
-    var future = (t_diff > 0);
-    var remaining_time = (t_diff > 0) ? t_diff : t_diff * -1;
-
-//    console.info('remaining_time: ',remaining_time);
-
-    var diff_days = Math.floor(remaining_time / oneday);
-    remaining_time -= diff_days * oneday;
-
-//    console.info('diff_days: ',diff_days,'\nremaining_time: ',remaining_time);
-
-    var diff_hrs = Math.floor(remaining_time / onehr);
-    remaining_time -= diff_hrs * onehr;
-
-//    console.info('diff_hrs: ',diff_hrs,'\nremaining_time: ',remaining_time);
-
-    var diff_mins = Math.floor(remaining_time / onemin);
-    remaining_time -= diff_mins * onemin;
-
-//    console.info('diff_mins: ',diff_mins,'\nremaining_time: ',remaining_time);
-
-    var diff_secs = Math.floor(remaining_time / onesec);
-    remaining_time -= diff_secs * onesec;
-
-//    console.info('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
-
-   return '['+
-       diff_days+'d'+
-       ', '+diff_hrs+'h'+
-       ', '+diff_mins+'m'+
-//       ', '+diff_secs+'s'+
-       ']';
-  }
-
-  function nextPaymentStringToDate(arg_string)
-  {
-    arg_string = arg_string.toString();
-//    console.info('nextPaymentStringToDate: \n','arg_string : ',arg_string);
-    var onesec = 1000;
-    var onemin = onesec * 60;
-    var onehr = onemin * 60;
-    var oneday = onehr * 24;
-
-    var spliced = arg_string.match(/([0-9]+).*([0-9]{2}):([0-9]{2})/);
-    var tmp_days = spliced[1]*1;
-    var tmp_hours = spliced[2]*1;
-    var tmp_mins = spliced[3]*1;
-
-    var tmp_date = new Date( (new Date()*1) +
-        (tmp_days * oneday) +
-        (tmp_hours * onehr) +
-        (tmp_mins * onemin) );
-
-//    console.info(tmp_days+'d, '+tmp_hours+'h, '+tmp_mins+'m');
-    return tmp_date;
-
-  }
-
-  var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
-  var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
-  var tmp_currentRow;
-  var tmp_currentID, tmp_income;
-  var tmp_dhmOwned;
-
-  var colIndexes = {
-    refID: 3,
-    refSince: 5
-  };
-
-  var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
-    console.info(tmp_referralsData);
-
-  var headerCol_idPrefix = 'header_';
-  var newCol_idPrefix;
-  addColumn(headerRow,'Income',headerCol_idPrefix+'income','');
-
-  addColumn(headerRow,'D/H/M Ref Since',headerCol_idPrefix+'dhmRefSince','');
-  addColumn(headerRow,'D/H/M Next Payment',headerCol_idPrefix+'nextPayment','');
-
-  for(var i=0; i<referralRows.length; i++){
-
-    tmp_currentRow = referralRows[i];
-//    console.info(i, tmp_currentRow);
-
-    tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/)[0];
-    newCol_idPrefix = tmp_currentID + '_';
-
-//    console.info(tmp_currentID);
-//    console.info(tmp_referralsData[tmp_currentID]);
-    try
-    {
-      tmp_income = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.referralClickValue).toFixed(3);
-      addColumn(tmp_currentRow,"$"+tmp_income,newCol_idPrefix+'income','');
-    } catch(e) {
-      console.info('error\n',e);
-    }
-
-//    console.info('tmp_referralsData[tmp_currentID].referralSince : ',tmp_referralsData[tmp_currentID].referralSince);
-    var tmp_refSince = new Date(tmp_referralsData[tmp_currentID].referralSince);
-    try
-    {
-//      tmp_refSince = nextPaymentStringToDate(tmp_refSince);
-      tmp_refSince = dateToDHM(tmp_refSince);
-      addColumn(tmp_currentRow,tmp_refSince,newCol_idPrefix+'dhmRefSince','');
-    } catch(e) {
-      console.info('error\n',e);
-    }
-
-    var tmp_nextPayment = tmp_referralsData[tmp_currentID].nextPayment;
-//    console.info('tmp_nextPayment : ',tmp_nextPayment);
-    try
-    {
-      tmp_nextPayment = nextPaymentStringToDate(tmp_nextPayment);
-      tmp_nextPayment = dateToDHM(tmp_nextPayment);
-      addColumn(tmp_currentRow,tmp_nextPayment,newCol_idPrefix+'nextPayment','');
-    } catch(e) {
-      console.info('error\n',e);
-    }
-  }
-
-};
-
-if(false){
-  function flag_textify(arg_currentReferral)
-  {
-
-    // The flag column
-    if (currentPage.pageCode.match(/rented/i && currentUser.preferences.flag_textify))
-    {
-      // Get the flag colour of the referral
-      // Expecting only 0-5 for the 6 colorus / 'types' of flag
-      switch (parseInt(referrals[refIndex].flagType, 10))
-      {
-        case 0:
-          // flag0.gif == White (W) flag
-          referrals[refIndex].flagColour = ('W');
-          break;
-        case 1:
-          // flag1.gif == Red (R) flag
-          referrals[refIndex].flagColour = ('R');
-          break;
-        case 2:
-          // flag2.gif == Orange (O) flag
-          referrals[refIndex].flagColour = ('O');
-          break;
-        case 3:
-          // flag3.gif == Yellow (Y) flag
-          referrals[refIndex].flagColour = ('Y');
-          break;
-        case 4:
-          // flag4.gif == Green (G) flag
-          referrals[refIndex].flagColour = ('G');
-          break;
-        case 5:
-          // flag5.gif == Blue (B) flag
-          referrals[refIndex].flagColour = ('B');
-          break;
-        default:
-          // Unknown (U) flag
-          // Will appear if different numbering scheme is used or if extra flags
-          // are added
-          referrals[refIndex].flagColour = ('U');
-          break;
-      }
-
-
-      // Append the appropriate flag letter after the flag
-      columns.flag.innerHTML += script.preferences.columnPrefix['flag'] + referrals[refIndex].flagColour;
-
-      // Stop the extra letter causing the cell to wrap around and increase
-      // the height of the rows
-      columns.flag.style.whiteSpace = "nowrap";
-    }
-
-  }
-
-}
 
 function addClickStatsToGoldenGraph(){
   function mk_ch_ref(x, o, w0, w, O, L, m)
@@ -3862,10 +3631,237 @@ function addClickStatsToGoldenGraph(){
 
 }
 
+var referralListings = new function()
+{
+
+  var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
+  var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
+  var tmp_currentRow;
+
+  var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
+
+  var colIndexes = {
+    refID: 3,
+    refSince: 5
+  };
+  var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
+  console.info(tmp_referralsData);
+
+
+  function addColumn(arg_row,arg_columnText,arg_colId,arg_customCSS)
+  {
+    var tmp_newColumn;
+
+//    console.info(arg_colId);
+    var tmp_existingCol = document.getElementById(arg_colId);
+    if(tmp_existingCol) {
+      tmp_existingCol.parentNode.removeChild(tmp_existingCol);
+    }
+    tmp_newColumn = document.createElement('td');
+    tmp_newColumn.innerHTML = arg_columnText;
+    tmp_newColumn.setAttribute('id', arg_colId);
+
+    tmp_newColumn.setAttribute('class',arg_row.children[arg_row.children.length - 1].getAttribute('class'));
+    tmp_newColumn.setAttribute('style',
+        arg_row.children[arg_row.children.length - 1].getAttribute('style') +
+        arg_customCSS
+        );
+
+    arg_row.appendChild(tmp_newColumn);
+    colCount++;
+
+    var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
+
+//    for(var i=1; i<tmp_colspans.length - 1;i++){
+////      if(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan') == (colCount-1){
+//        tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
+////      }
+////      console.info(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan'));
+//    }
+
+
+  }
+
+  function dateToDHM(arg_date)
+  {
+    var onesec = 1000;
+    var onemin = onesec * 60;
+    var onehr = onemin * 60;
+    var oneday = onehr * 24;
+
+    var now = new Date();
+
+//    console.info('now: ',now,'\nother date: ',arg_date);
+
+    var t_diff = new Date(arg_date) - now;
+//    console.info('t_diff = '+t_diff);
+
+
+    var future = (t_diff > 0);
+    var remaining_time = (t_diff > 0) ? t_diff : t_diff * -1;
+
+//    console.info('remaining_time: ',remaining_time);
+
+    var diff_days = Math.floor(remaining_time / oneday);
+    remaining_time -= diff_days * oneday;
+
+//    console.info('diff_days: ',diff_days,'\nremaining_time: ',remaining_time);
+
+    var diff_hrs = Math.floor(remaining_time / onehr);
+    remaining_time -= diff_hrs * onehr;
+
+//    console.info('diff_hrs: ',diff_hrs,'\nremaining_time: ',remaining_time);
+
+    var diff_mins = Math.floor(remaining_time / onemin);
+    remaining_time -= diff_mins * onemin;
+
+//    console.info('diff_mins: ',diff_mins,'\nremaining_time: ',remaining_time);
+
+    var diff_secs = Math.floor(remaining_time / onesec);
+    remaining_time -= diff_secs * onesec;
+
+//    console.info('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
+
+   return '['+
+       diff_days+'d'+
+       ', '+diff_hrs+'h'+
+       ', '+diff_mins+'m'+
+//       ', '+diff_secs+'s'+
+       ']';
+  }
+
+  function nextPaymentStringToDate(arg_string)
+  {
+    arg_string = arg_string.toString();
+//    console.info('nextPaymentStringToDate: \n','arg_string : ',arg_string);
+    var onesec = 1000;
+    var onemin = onesec * 60;
+    var onehr = onemin * 60;
+    var oneday = onehr * 24;
+
+    /* nb: bugfix - occasionally neobux displafs displays a negative # of hours for the next payment date which breaks the regex */
+//    var spliced = arg_string.match(/([0-9]+).*([0-9]{2}):([0-9]{2})/);
+    var spliced = arg_string.match(/([0-9]+)[^-]*(-?[0-9]{1,2}):([0-9]{2})/);
+    var tmp_days = spliced[1]*1;
+    var tmp_hours = spliced[2]*1;
+    var tmp_mins = spliced[3]*1;
+
+    var tmp_date = new Date( (new Date()*1) +
+        (tmp_days * oneday) +
+        (tmp_hours * onehr) +
+        (tmp_mins * onemin) );
+
+//    console.info(tmp_days+'d, '+tmp_hours+'h, '+tmp_mins+'m');
+    return tmp_date;
+
+  }
+
+  this.editHeaderRow =function ()
+  {
+
+  }
+  this.mainLoop = function()
+  {
+    var tmp_currentID, tmp_income, tmp_value;
+    var tmp_dhmOwned;
+
+    var headerCol_idPrefix = 'header_';
+    var newCol_idPrefix = ''; // set within the loop
+
+    var columns = {
+      incomeCol: {
+        colType: 'new',
+        colPrefix: '$',
+        colSuffix: '',
+        colHeaderText: 'Income'
+      },
+      refSince_DHM: {
+        colType: 'new',
+        colPrefix: '',
+        colSuffix: '',
+        colHeaderText: 'D/H/M Ref Since'
+      },
+      nextPayment_DHM: {
+        colType: 'new',
+        colPrefix: '',
+        colSuffix: '',
+        colHeaderText: 'D/H/M Next Payment'
+      },
+      textifyFlag: {
+        colType: 'new',
+        colPrefix: '',
+        colSuffix: '',
+        colHeaderText: 'Flag Colour'
+      }
+    };
+
+
+    for(var columnName in columns)
+    {
+      addColumn(headerRow,
+          columns[columnName].colHeaderText,
+          headerCol_idPrefix + columnName,
+          '');
+    }
+
+    for(var i=0; i<referralRows.length; i++){
+      tmp_currentRow = referralRows[i];
+
+      tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/)[0];
+      tmp_currentRow.id = tmp_currentID;
+      tmp_currentRow.setAttribute('class',tmp_currentRow.getAttribute('class') + ' referralRow');
+
+      GM_addStyle('.referralRow { letter-spacing: -0.01em; }');
+      
+      newCol_idPrefix = tmp_currentID + '_';
+
+      for(var columnName in columns){
+        switch(columnName){
+          case 'incomeCol':
+            tmp_value = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.referralClickValue).toFixed(3);
+          break;
+          case 'refSince_DHM':
+            tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].referralSince));
+          break;
+          case 'nextPayment_DHM':
+            tmp_value = dateToDHM(
+                nextPaymentStringToDate(tmp_referralsData[tmp_currentID].nextPayment)
+                );
+          break;
+          case 'textifyFlag':
+            tmp_value = tmp_referralsData[tmp_currentID].flag.split('')[0];
+          break;
+        }
+
+        if('new' === columns[columnName].colType){
+          try{
+            addColumn(tmp_currentRow,
+                columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix,
+                newCol_idPrefix+columnName,
+                ''
+                );
+          }catch(e) {
+            console.info('error with new column - '+columnName+' ::\n',e);
+          }
+        }
+      }
+    }
+  }
+
+  this.init = function (arg_options)
+  {
+    var settings = {};
+  }
+}
+
 if(currentPage.pageCode.match(/referralListings_Rented/))
 {
   widenPages.referralListings();
-  referralListingsNewColumnsTest();
+
+  referralListings.init();
+  referralListings.mainLoop();
+
+//  referralListingsNewColumnsTest();
   addClickStatsToGoldenGraph();
 
 }
