@@ -3657,28 +3657,21 @@ var referralListings = new function()
     if(tmp_existingCol) {
       tmp_existingCol.parentNode.removeChild(tmp_existingCol);
     }
-    tmp_newColumn = document.createElement('td');
-    tmp_newColumn.innerHTML = arg_columnText;
-    tmp_newColumn.setAttribute('id', arg_colId);
 
-    tmp_newColumn.setAttribute('class',arg_row.children[arg_row.children.length - 1].getAttribute('class'));
-    tmp_newColumn.setAttribute('style',
-        arg_row.children[arg_row.children.length - 1].getAttribute('style') +
-        arg_customCSS
-        );
+    /*NB: container needs to be a table otherwise Firefox disposes of the contaning <td> due to it not being within a suitable containing element*/
+    var tmp_container = document.createElement('table');
+    tmp_container.innerHTML = '' +
+        '<tbody><tr><td id="'+arg_colId+'"' +
+          ' class="'+arg_row.children[arg_row.children.length - 1].getAttribute('class')+'"' +
+          ' style="'+arg_row.children[arg_row.children.length - 1].getAttribute('style') +
+          arg_customCSS+'"' +
+        '>' +
+          arg_columnText+
+        '</td></tr></tbody>';
 
+    var tmp_newColumn = tmp_container.children[0].children[0].children[0];
     arg_row.appendChild(tmp_newColumn);
     colCount++;
-
-    var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
-
-//    for(var i=1; i<tmp_colspans.length - 1;i++){
-////      if(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan') == (colCount-1){
-//        tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
-////      }
-////      console.info(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan'));
-//    }
-
 
   }
 
@@ -3802,6 +3795,15 @@ var referralListings = new function()
           columns[columnName].colHeaderText,
           headerCol_idPrefix + columnName,
           '');
+    }
+
+    var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
+
+    for(var i=1; i<tmp_colspans.length - 1;i++){
+//      if(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan') == (colCount-1){
+        tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
+//      }
+//      console.info(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan'));
     }
 
     for(var i=0; i<referralRows.length; i++){
