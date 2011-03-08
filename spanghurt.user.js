@@ -190,37 +190,42 @@ function ModalDialog(arg_dialogId) {
     }
 
     shadowBackdrop = document.getElementById('shadowBackdrop_'+arg_dialogId);
-    if(!shadowBackdrop)
-    {
-      GM_addStyle('#shadowBackdrop_'+arg_dialogId+' { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; }');
-      shadowBackdrop = document.createElement('div');
-      shadowBackdrop.id = 'shadowBackdrop_'+arg_dialogId;
-      shadowBackdrop.setAttribute('class',"overlay");
-
-      shadowBackdrop.innerHTML = '';
-
-      shadowBackdrop.style.display = 'none';
-
-      document.body.appendChild(shadowBackdrop);
+    if(shadowBackdrop){
+      shadowBackdrop.parentNode.removeChild(shadowBackdrop);
     }
+
+    GM_addStyle('#shadowBackdrop_'+arg_dialogId+' { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; }');
+
+    shadowBackdrop = document.createElement('div');
+    shadowBackdrop.id = 'shadowBackdrop_'+arg_dialogId;
+    shadowBackdrop.setAttribute('class',"overlay");
+
+    shadowBackdrop.innerHTML = '';
+
+    shadowBackdrop.style.display = 'none';
+
+    document.body.appendChild(shadowBackdrop);
+
 
     GM_addStyle('#modalDialogWrapper_'+arg_dialogId+' { height: 100%; left: 0; position: absolute; top: 0; width: 100%; }');
     GM_addStyle('#modalDialogElement_'+arg_dialogId+' { '+tmp_cssText+' }');
 
     var modalDialogWrapper = document.getElementById('modalDialogWrapper_'+arg_dialogId);
-    if(!modalDialogWrapper)
-    {
-      modalDialogWrapper = document.createElement('div');
-      modalDialogWrapper.id = 'modalDialogWrapper_'+arg_dialogId;
-      modalDialogWrapper.style.display = 'none';
-
-      var modalDialogElement = document.createElement('div');
-      modalDialogElement.innerHTML = arg_innerHTML;
-      modalDialogElement.id = 'modalDialogElement_'+arg_dialogId;
-
-      modalDialogWrapper.appendChild(modalDialogElement);
-      document.body.appendChild(modalDialogWrapper);
+    if(modalDialogWrapper) {
+      modalDialogWrapper.parentNode.removeChild(modalDialogWrapper);
     }
+
+    modalDialogWrapper = document.createElement('div');
+    modalDialogWrapper.id = 'modalDialogWrapper_'+arg_dialogId;
+    modalDialogWrapper.style.display = 'none';
+
+    var modalDialogElement = document.createElement('div');
+    modalDialogElement.innerHTML = arg_innerHTML;
+    modalDialogElement.id = 'modalDialogElement_'+arg_dialogId;
+
+    modalDialogWrapper.appendChild(modalDialogElement);
+    document.body.appendChild(modalDialogWrapper);
+
 
     this.dialogElement = modalDialogWrapper;
 
@@ -2163,6 +2168,88 @@ if(0 < location.href.indexOf('ss3=1') || 0 < location.href.indexOf('ss3=2')) {
   referralListings.init();
 }
 
+
+
+function PREFERENCE_INPUT_FIELD(arg_inputType, arg_preferenceId, arg_label, arg_values, arg_longDescription, arg_cssStyle_Label, arg_cssStyle_Input)
+{
+  var tmp_container = document.createElement('span');
+  tmp_container.id = 'label_'+arg_preferenceId;
+  tmp_container.title = arg_longDescription;
+  var tmp_innerHTML = '';
+  tmp_innerHTML += '<label for="'+arg_preferenceId+'">'+arg_label;
+
+  switch(arg_inputType)
+  {
+    case 'text':
+      tmp_innerHTML += '<input type="text" value="'+arg_values.toString()+'" id="'+arg_preferenceId+'"/>';
+      break;
+  }
+
+  tmp_innerHTML += ''+
+      '</label>'+
+      '<br>';
+
+  tmp_container.innerHTML = tmp_innerHTML;
+  console.info(tmp_container.innerHTML);
+
+  return tmp_container.innerHTML;
+
+}
+
+var preferencesDialogStuff = {
+  'username': {
+    inputType: 'text',
+    preferenceId: 'username',
+    label: 'Username: ',
+    values: 'kwah',
+    longDescription: "Your account's username.",
+    cssStyle_Label: '',
+    cssStyle_Input: ''
+  },
+  'rentedReferralsCount': {
+    inputType: 'text',
+    preferenceId: 'rentedReferralsCount',
+    label: 'Rented Refs: ',
+    values: 417,
+    longDescription: "How many rented referrals you have.",
+    cssStyle_Label: '',
+    cssStyle_Input: ''
+  }
+};
+
+var tmp_preferencesDialogInnerHtml = ''+
+    '<div style="max-height:99%; background-color:pink;">'+
+    '<h1>Preferences</h1>'+
+    '<br>';
+
+for(var tmp_prefId in preferencesDialogStuff)
+{
+  tmp_preferencesDialogInnerHtml += ''+
+      PREFERENCE_INPUT_FIELD(
+          preferencesDialogStuff[tmp_prefId].inputType,
+          preferencesDialogStuff[tmp_prefId].preferenceId,
+          preferencesDialogStuff[tmp_prefId].label,
+          preferencesDialogStuff[tmp_prefId].values,
+          preferencesDialogStuff[tmp_prefId].longDescription,
+          preferencesDialogStuff[tmp_prefId].cssStyle_Label,
+          preferencesDialogStuff[tmp_prefId].cssStyle_Input
+          );
+}
+
+tmp_preferencesDialogInnerHtml += ''+
+    ''+
+    '</div>';
+
+
+var preferencesDialog;
+preferencesDialog = new ModalDialog('preferencesDialog');
+preferencesDialog.create('background-color: white; margin: 8em auto; padding: 2em; width: 40em;',tmp_preferencesDialogInnerHtml);
+
+
+
+
+
+
 var logo =
 {
   insert: function()
@@ -2214,15 +2301,15 @@ var logo =
     }
   },
 
-  addClickEvent: function()
+  addClickEvent: function(arg_clickFunction)
   {
-
+    document.getElementById('spanghurtLogo').addEventListener('click',function() { arg_clickFunction(); },false);
   },
 
   init: function()
   {
     this.insert();
-    this.addClickEvent();
+    this.addClickEvent(preferencesDialog.show);
   }
 
 };
@@ -2939,7 +3026,7 @@ var exportTabs = new function()
                   );
 
               if(document.getElementById(exportTabTypes[i].toLowerCase()+'ExportTab_'+tmp_currentGraphId)){
-                document.getElementById(exportTabTypes[i].toLowerCase()+'ExportTab_'+tmp_currentGraphId).innerHTML = exportTabElement.innerHTM
+                document.getElementById(exportTabTypes[i].toLowerCase()+'ExportTab_'+tmp_currentGraphId).innerHTML = exportTabElement.innerHTML
               }else{
                 document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(exportTabElement);
               }
@@ -3373,7 +3460,8 @@ var widenPages = new function(){
 };
 
 
-function insertAdCounterBox(){
+function insertAdCounterBox(arg_dateIndex)
+{
   if('undefined' === typeof GM_addStyle){
     function GM_addStyle(arg_css) {
       var head = document.getElementsByTagName("head")[0];
@@ -3398,7 +3486,9 @@ function insertAdCounterBox(){
       ".adCountDecrementButton { width: 2.5em; text-align:center; font-size: xx-small; }"+
       "#clickTotalsContainer table tr td { font-size:x-small; }");
 
-  elmnt_totalsContainer.innerHTML =  ""+
+  elmnt_totalsContainer.innerHTML =  "" +
+      "<center><button id='date_decrementButton' class='adCountIncrementButton'>-</button>" + "<span id='date_textCount'>"+dates_array[arg_dateIndex]+"</span>" + "<button id='date_incrementButton' class='adCountIncrementButton'>+</button></center>" +
+      "<br>"+
       "<table>"+
       ["<tr><td>"+ "Extended Ad: ", "<button id='extendedAdCount_incrementButton' class='adCountIncrementButton'>+</button>", "<span id='extendedAdCount_textCount'>0</span>", "<button id='extendedAdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>')+
       ["<tr><td>"+ "Regular Ad: ",  "<button id='regularAdCount_incrementButton' class='adCountIncrementButton'>+</button>",  "<span id='regularAdCount_textCount'>0</span>",  "<button id='regularAdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>')+
@@ -3412,6 +3502,12 @@ function insertAdCounterBox(){
   }
 
   document.body.appendChild(elmnt_totalsContainer);
+
+//  function decrementDate() { insertAdCounterBox(arg_dateIndex - 1); }
+//  function incrementDate() { insertAdCounterBox(arg_dateIndex + 1); }
+//
+//  document.getElementById('date_decrementButton').addEventListener('click',arguments.callee(arg_dateIndex - 1),false);
+//  document.getElementById('date_incrementButton').addEventListener('click',arguments.callee(arg_dateIndex + 1),false);
 }
 
 
@@ -3769,7 +3865,7 @@ if(currentPage.pageCode.match(/accSummary/i))
 
 if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 {
-  insertAdCounterBox();
+  insertAdCounterBox(0);
 }
 
 
@@ -3826,6 +3922,14 @@ function insertSidebar()
   tmp += " </span>";
 
 
+  // Time periods for the statistics sidebar where:
+  // 0=today, 1=1day ago, 14=14days ago etc
+  // [
+  //    [starting day, ending day],
+  //    [next time periods....],
+  //    [another time period....],
+  //    [etc..]
+  // ]
   var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,14],[1,14]];
   var tmp_dataSet = JSON.parse(localStorage.getItem('graphData'));
   var tmp_currentDataset;
@@ -3838,6 +3942,10 @@ function insertSidebar()
     currentSidebarTimePeriod = sidebarTimePeriods[i];
     if(!(0 <= currentSidebarTimePeriod[0]) || !(0 <= currentSidebarTimePeriod[1])) {
       console.info("Error!\n\n", "Sidebar Timeperiod #"+i+' is not numerical. Moving onto next time period');
+      continue;
+    }
+    if(currentSidebarTimePeriod[0] > currentSidebarTimePeriod[1]) {
+      console.info("Error!\n\n", "Sidebar Timeperiod #"+i+' is not in the correct order (end day is earlier than the start day). Moving onto next time period');
       continue;
     }
     showProjected = false;
