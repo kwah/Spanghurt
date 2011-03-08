@@ -286,62 +286,8 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
       ''
       );
 
-  GM_addStyle('#shadowBackdrop { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; }');
-  GM_addStyle('#initialSetup { background-color: white; margin: 8em auto; padding: 2em; width: 30em; }');
 
-  shadowBackdrop = document.getElementById('shadowBackdrop');
-  if(!shadowBackdrop)
-  {
-    shadowBackdrop = document.createElement('div');
-    shadowBackdrop.id = "shadowBackdrop";
-    shadowBackdrop.setAttribute('class',"overlay");
-
-    shadowBackdrop.innerHTML = '';
-
-    document.body.appendChild(shadowBackdrop);
-  }
-
-  initialSetupDiv = document.getElementById('initialSetup');
-  if(!initialSetupDiv)
-  {
-    initialSetupDiv = document.createElement('div');
-    initialSetupDiv.id = "initialSetup";
-    initialSetupDiv.setAttribute('class',"overlay");
-  }
-
-  initialSetupDiv.innerHTML = '' +
-      '<strong>Spanghurt! Initial Setup</strong><br>' +
-      '<br>' +
-      '<hr>' +
-      "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.<br>" +
-      '<hr>' +
-      '<br>' +
-      'How many direct referrals do you have? <input id="initialSetup_directReferrals" size="4" value="0" type="text" /><br>' +
-      'How many rented referrals do you have? <input id="initialSetup_rentedReferrals" size="4" value="0" type="text" /><br>' +
-      'Do you use autopay? <input id="initialSetup_autopay" type="checkbox" /><br>' +
-      '<br>' +
-      'For how long do you usually renew your referrals? <select id="initialSetup_normalRenewalLength">' +
-      '<option value="15">15 days (The "Base Rate")</option>' +
-      '<option value="30" selected="selected">30 days (5% discount)</option>' +
-      '<option value="60">60 days (10% discount)</option>' +
-      '<option value="90">90 days (18% discount)</option>' +
-      '<option value="150">150 days (25% discount)</option>' +
-      '<option value="240">240 days (30% discount)</option>' +
-      '</select> <br>' +
-      '<br>' +
-      'What is the time difference between your time and the server\'s time? <input id="initialSetup_timeDifference" size="4" value="" type="text" /><br>' +
-      '<br>' +
-      "<small><i>If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>" +
-      '<br>' +
-      '<input id="initialSetup_save" value="Save Settings" type="button"/>' +
-      '<input id="initialSetup_close" value="Close" type="button"/>' +
-      '';
-
-  var initialSetupWrapper = document.createElement('div');
-  initialSetupWrapper.setAttribute('style','height: 100%; left: 0; position: absolute; top: 0; width: 100%;');
-  initialSetupWrapper.appendChild(initialSetupDiv);
-
-  document.body.appendChild(initialSetupWrapper);
+  initialSetupDialog.show();
 
 
   document.getElementById('initialSetup_save').addEventListener('click',function() {
@@ -360,15 +306,15 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
 
       if(confirm('Please check that this is what you have entered then click okay to save it or cancel to retry:\n\n' +
           'Direct Referrals: ' + tmp_directRefs[1] + '\n' +
-          'Rented Referrals '+tmp_directRefs[1]+'\n' +
+          'Rented Referrals '+tmp_rentedRefs[1]+'\n' +
           'Autopay On: '+tmp_autopay+'\n' +
-          'Length of Renewals: '+tmp_renewalLength+'\n' +
-          'Time Difference: '+tmp_timeDifference[1])
+          'Length of Renewals: '+tmp_renewalLength+' days\n' +
+          'Time Difference: '+tmp_timeDifference[1]+' hrs')
           )
       {
 
         localStorage.setItem('directReferrals', tmp_directRefs[1]);
-        localStorage.setItem('rentedReferrals', tmp_directRefs[1]);
+        localStorage.setItem('rentedReferrals', tmp_rentedRefs[1]);
         localStorage.setItem('autopayOn', tmp_autopay);
         localStorage.setItem('renewalsLength', tmp_renewalLength);
         localStorage.setItem('serverTimeOffset', tmp_timeDifference[1]);
@@ -378,8 +324,8 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
 
         alert('Settings saved! The script will run on the next Neobux page that you load.');
 
-        document.getElementById('shadowBackdrop').style.display = "none";
-        document.getElementById('initialSetup').parentNode.style.display = "none";
+        initialSetupDialog.hide();
+        
       }
     }
     else{
@@ -394,8 +340,7 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
   },false);
 
   document.getElementById('initialSetup_close').addEventListener('click',function() {
-    document.getElementById('shadowBackdrop').style.display = "none";
-    document.getElementById('initialSetup').parentNode.style.display = "none";
+    initialSetupDialog.hide();
   },false);
 
 
@@ -2238,6 +2183,9 @@ for(var tmp_prefId in preferencesDialogStuff)
 
 tmp_preferencesDialogInnerHtml += ''+
     ''+
+    '</div>' +
+    '<div>' +
+    '<button id="preferencesDialog_Close">Close</button>' +
     '</div>';
 
 
@@ -2245,7 +2193,7 @@ var preferencesDialog;
 preferencesDialog = new ModalDialog('preferencesDialog');
 preferencesDialog.create('background-color: white; margin: 8em auto; padding: 2em; width: 40em;',tmp_preferencesDialogInnerHtml);
 
-
+document.getElementById('preferencesDialog_Close').addEventListener('click',function() { preferencesDialog.hide(); },false);
 
 
 
