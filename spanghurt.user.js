@@ -313,8 +313,8 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
           )
       {
 
-        localStorage.setItem('directReferrals', tmp_directRefs[1]);
-        localStorage.setItem('rentedReferrals', tmp_rentedRefs[1]);
+        localStorage.setItem('numberOfDirectReferrals', tmp_directRefs[1]);
+        localStorage.setItem('numberOfRentedReferrals', tmp_rentedRefs[1]);
         localStorage.setItem('autopayOn', tmp_autopay);
         localStorage.setItem('renewalsLength', tmp_renewalLength);
         localStorage.setItem('serverTimeOffset', tmp_timeDifference[1]);
@@ -687,7 +687,7 @@ function getPref(arg_prefName, arg_defaultValue, arg_options)
 
   var tmp = localStorage.getItem(arg_prefName);
   if(!tmp) {
-    errorLog('Error retrieving value from localStorage, using supplied defualt value.',arguments);
+    errorLog('Error retrieving value from localStorage, using supplied default value.',arguments);
     tmp = setPref(arg_prefName, arg_defaultValue, arg_options);
   }
 
@@ -746,11 +746,20 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
       break;
   }
 
-  /*Having issues with the localStorage being wiped occasionally so storing to GM_log too as a backup*/
-  if("undefined" !== typeof GM_setValue) {
-    GM_setValue(arg_prefName, tmp_value);
-  }
+
   localStorage.setItem(arg_prefName, tmp_value);
+
+
+  /*Having issues with the localStorage being wiped occasionally [nb: caused by a privacy addon] so storing to GM_log too as a backup*/
+  // Also having issues with floats not being able to be stored :S
+  if("undefined" !== typeof GM_setValue) {
+    try
+    {
+      GM_setValue(arg_prefName, tmp_value);
+    } catch(e) {
+      GM_setValue(arg_prefName, tmp_value.toString());
+    }
+  }
   return getPref(arg_prefName, tmp_value, arg_options);
 }
 
@@ -1067,8 +1076,8 @@ var currentUser = new function()
   this.referralClickValue = (this.accountType.isStandard) ? referralClickValue_standard : referralClickValue_default;
 
   this.numberOfRefs = {
-    Rented: getPref('numberOfRentedRefs',defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
-    Direct: getPref('numberOfDirectRefs',defaultSettings.numberOfRefs['Direct'], { prefType: 'integer' })
+    Rented: getPref('numberOfRentedReferrals',defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
+    Direct: getPref('numberOfDirectReferrals',defaultSettings.numberOfRefs['Direct'], { prefType: 'integer' })
   };
 
   this.recycleFee = getPref('recycleFee',Neobux.accountDefaults['recycleCost'][this.accountType.verbose], { prefType: 'float' });
