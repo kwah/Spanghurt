@@ -3417,7 +3417,7 @@ var widenPages = new function(){
 };
 
 
-function insertAdCounterBox(arg_dateIndex)
+function insertAdCounterBox(arg_dateIndex, arg_adCounts)
 {
   if('undefined' === typeof GM_addStyle){
     function GM_addStyle(arg_css) {
@@ -3443,16 +3443,59 @@ function insertAdCounterBox(arg_dateIndex)
       ".adCountDecrementButton { width: 2.5em; text-align:center; font-size: xx-small; }"+
       "#clickTotalsContainer table tr td { font-size:x-small; }");
 
-  elmnt_totalsContainer.innerHTML =  "" +
-      "<center><button id='date_decrementButton' class='adCountIncrementButton'>-</button>" + "<span id='date_textCount'>"+dates_array[arg_dateIndex]+"</span>" + "<button id='date_incrementButton' class='adCountIncrementButton'>+</button></center>" +
-      "<br>"+
-      "<table>"+
-      ["<tr><td>"+ "Extended Ad: ", "<button id='extendedAdCount_incrementButton' class='adCountIncrementButton'>+</button>", "<span id='extendedAdCount_textCount'>0</span>", "<button id='extendedAdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>')+
-      ["<tr><td>"+ "Regular Ad: ",  "<button id='regularAdCount_incrementButton' class='adCountIncrementButton'>+</button>",  "<span id='regularAdCount_textCount'>0</span>",  "<button id='regularAdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>')+
-      ["<tr><td>"+ "Mini Ad: ",     "<button id='miniAdCount_incrementButton' class='adCountIncrementButton'>+</button>",     "<span id='miniAdCount_textCount'>0</span>",     "<button id='miniAdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>')+
-      ["<tr><td>"+ "Micro Ad: ",    "<button id='microAdCount_incrementButton' class='adCountIncrementButton'>+</button>",    "<span id='microAdCount_textCount'>0</span>",    "<button id='microAdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>')+
-      "</table>";
 
+  var tmp_foo = {
+    extendedAdCount: {
+      adCount: arg_adCounts['extended'],
+      text: "Extended:",
+      countsToTos37: true,
+      value: 0.02
+    },
+    regularAdCount: {
+      adCount: arg_adCounts['regular'],
+      text: "Regular:",
+      countsToTos37: true,
+      value: 0.01
+    },
+    miniAdCount: {
+      adCount: arg_adCounts['mini'],
+      text: "Mini:",
+      countsToTos37: false,
+      value: 0.005
+    },
+    fixedAdCount: {
+      adCount: arg_adCounts['fixed'],
+      text: "Fixed:",
+      countsToTos37: true,
+      value: 0.001
+    },
+    microAdCount: {
+      adCount: arg_adCounts['micro'],
+      text: "Micro:",
+      countsToTos37: false,
+      value: 0.001
+    },
+  };
+
+
+  var tmp_totalsContainerHTML = "";
+
+  tmp_totalsContainerHTML += "" +
+      "<center><button id='date_decrementButton' class='adCountDecrementButton'>-</button>" + "<span id='date_textCount'>"+dates_array[arg_dateIndex]+"</span>" + "<button id='date_incrementButton' class='adCountIncrementButton'>+</button></center>" +
+      "<br>"+
+      "<table>";
+
+  for(var tmp_label in tmp_foo) {
+    if(tmp_foo.hasOwnProperty(tmp_label))
+    {
+      tmp_totalsContainerHTML += ["<tr><td>"+ tmp_foo[tmp_label].text, "<button id='"+tmp_label+"_incrementButton' class='adCountIncrementButton'>+</button>", "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>", "<button id='"+tmp_label+"_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>');
+    }
+  }
+  
+  tmp_totalsContainerHTML += "</table>";
+
+  elmnt_totalsContainer.innerHTML = tmp_totalsContainerHTML;
+  
 
   if(document.getElementById('clickTotalsContainer')){
       document.getElementById('clickTotalsContainer').parentNode.removeChild(document.getElementById('clickTotalsContainer'));
@@ -3460,11 +3503,52 @@ function insertAdCounterBox(arg_dateIndex)
 
   document.body.appendChild(elmnt_totalsContainer);
 
-//  function decrementDate() { insertAdCounterBox(arg_dateIndex - 1); }
-//  function incrementDate() { insertAdCounterBox(arg_dateIndex + 1); }
-//
-//  document.getElementById('date_decrementButton').addEventListener('click',arguments.callee(arg_dateIndex - 1),false);
-//  document.getElementById('date_incrementButton').addEventListener('click',arguments.callee(arg_dateIndex + 1),false);
+
+  /* Add handlers for changing the currently selected date */
+
+  // NB: The date index is in reverse order (ie, n days into the past) thus incrementing this index equates to going an increased number of days into the past
+  document.getElementById('date_decrementButton').addEventListener('click',function () {
+    insertAdCounterBox(arg_dateIndex + 1, {
+      extended: arg_adCounts['extended'],
+      regular: arg_adCounts['regular'],
+      mini: arg_adCounts['mini'],
+      fixed: arg_adCounts['fixed'],
+      micro: arg_adCounts['micro']
+    });
+  },false);
+
+  document.getElementById('date_incrementButton').addEventListener('click',function () {
+    insertAdCounterBox(arg_dateIndex - 1, {
+      extended: arg_adCounts['extended'],
+      regular: arg_adCounts['regular'],
+      mini: arg_adCounts['mini'],
+      fixed: arg_adCounts['fixed'],
+      micro: arg_adCounts['micro']
+    });
+  },false);
+
+
+  /* Add handlers for changing the ad counts */
+
+  function addIncrementDecrementListeners(arg_adType)
+  {
+    var tmp_adCounts = {};
+
+    tmp_adCounts = arg_adCounts;
+    tmp_adCounts[arg_adType] = arg_adCounts[arg_adType] + 1;
+    document.getElementById(arg_adType+'_incrementButton').addEventListener('click',function () { console.info(arg_adType+'_incrementButton click event'); insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
+
+    tmp_adCounts = arg_adCounts;
+    tmp_adCounts[arg_adType] = arg_adCounts[arg_adType] - 1;
+    document.getElementById(arg_adType+'_decrementButton').addEventListener('click',function () { console.info(arg_adType+'_decrementButton click event'); insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
+  }
+
+  for(var tmp_label in tmp_foo) {
+    if(tmp_foo.hasOwnProperty(tmp_label))
+    {
+      addIncrementDecrementListeners(tmp_label)
+    }
+  }
 }
 
 
@@ -3822,7 +3906,13 @@ if(currentPage.pageCode.match(/accSummary/i))
 
 if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 {
-  insertAdCounterBox(0);
+  insertAdCounterBox(0, {
+      extended: 0,
+      regular: 1,
+      mini: 2,
+      fixed: 3,
+      micro: 4
+    });
 }
 
 
@@ -3920,7 +4010,11 @@ function insertSidebar()
     var tmp_currentDate;
     var tmp_foobar;
 
-    for(var j in tmp_dataSet){
+    var dataIsComplete = false;
+
+
+    for(var j in tmp_dataSet)
+    {
       if(tmp_dataSet.hasOwnProperty(j)){
 
         var tmp_headerValue;
@@ -3995,10 +4089,8 @@ function insertSidebar()
           }
           else
           {
-////            console.info((m * -1), '-',tmp_extensionsMin, ' = ', (m * -1) - tmp_extensionsMin);
-//            console.info('tmp_currentDate: ',tmp_currentDate, '\n',
-//                'tmp_currentDataset: ',tmp_currentDataset,'\n',
-//                'tmp_currentValue: ',tmp_currentValue);
+            //Data is missing therefore mark it as incomplete
+            dataIsComplete = true;
           }
 
 
@@ -4015,7 +4107,9 @@ function insertSidebar()
 //        console.groupEnd();
       }
     }
+
 //    console.info('sidebarData = ',sidebarData);
+
     var header = "Totals between "+startDay+" Days Ago and "+(endDay+1)+" Days Ago";
 
     if(0 == startDay) {
@@ -4041,6 +4135,9 @@ function insertSidebar()
 
 
     tmp += "<h5 class='bold grey'>[ "+header+" ]</h5>";
+    if(!dataIsComplete) {
+      tmp += "<span style='font-colour:pink;'>Incomplete</span><br>";
+    }
     tmp += "<span class='bold h5_subHead'>&nbsp; - Net : $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) +"</span>";
     tmp += "<hr width= '155px' height='1px' color='#cccccc'/>";
 
