@@ -3493,15 +3493,14 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
   }
   
   tmp_totalsContainerHTML += "</table>";
-
   elmnt_totalsContainer.innerHTML = tmp_totalsContainerHTML;
-  
 
   if(document.getElementById('clickTotalsContainer')){
       document.getElementById('clickTotalsContainer').parentNode.removeChild(document.getElementById('clickTotalsContainer'));
   }
-
   document.body.appendChild(elmnt_totalsContainer);
+
+
 
 
   /* Add handlers for changing the currently selected date */
@@ -3530,23 +3529,35 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
 
   /* Add handlers for changing the ad counts */
 
-  function addIncrementDecrementListeners(arg_adType)
+  function addIncrementListener(arg_adType, arg_oldAdCounts)
   {
     var tmp_adCounts = {};
 
-    tmp_adCounts = arg_adCounts;
-    tmp_adCounts[arg_adType] = arg_adCounts[arg_adType] + 1;
-    document.getElementById(arg_adType+'_incrementButton').addEventListener('click',function () { console.info(arg_adType+'_incrementButton click event'); insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
+    //Set all values in the
+    for(var tmp_index in arg_oldAdCounts) {
+      if(arg_oldAdCounts.hasOwnProperty(tmp_index)) { tmp_adCounts[tmp_index] = arg_oldAdCounts[tmp_index]; }
+    }
+    tmp_adCounts[arg_adType] = parseInt(arg_oldAdCounts[arg_adType]) + 1;
+    document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function () { insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
+  }
+  function addDecrementListener(arg_adType, arg_oldAdCounts)
+  {
+    var tmp_adCounts = {};
 
-    tmp_adCounts = arg_adCounts;
-    tmp_adCounts[arg_adType] = arg_adCounts[arg_adType] - 1;
-    document.getElementById(arg_adType+'_decrementButton').addEventListener('click',function () { console.info(arg_adType+'_decrementButton click event'); insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
+    //Set all values in the
+    for(var tmp_index in arg_oldAdCounts) {
+      if(arg_oldAdCounts.hasOwnProperty(tmp_index)) { tmp_adCounts[tmp_index] = arg_oldAdCounts[tmp_index]; }
+    }
+    tmp_adCounts[arg_adType] = parseInt(arg_oldAdCounts[arg_adType]) - 1;
+    document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function () { insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
   }
 
-  for(var tmp_label in tmp_foo) {
-    if(tmp_foo.hasOwnProperty(tmp_label))
+  // Loop through the different ad types and call the function that adds the click events for the increment and decrement buttons
+  for(var tmp_label in arg_adCounts) {
+    if(arg_adCounts.hasOwnProperty(tmp_label))
     {
-      addIncrementDecrementListeners(tmp_label)
+      addDecrementListener(tmp_label, arg_adCounts);
+      addIncrementListener(tmp_label, arg_adCounts);
     }
   }
 }
