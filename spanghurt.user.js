@@ -3549,6 +3549,8 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
       if(arg_oldAdCounts.hasOwnProperty(tmp_index)) { tmp_adCounts[tmp_index] = arg_oldAdCounts[tmp_index]; }
     }
     tmp_adCounts[arg_adType] = parseInt(arg_oldAdCounts[arg_adType]) - 1;
+    tmp_adCounts[arg_adType] = (0 > tmp_adCounts[arg_adType]) ? 0 : tmp_adCounts[arg_adType];
+    
     document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function () { insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
   }
 
@@ -3919,10 +3921,10 @@ if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 {
   insertAdCounterBox(0, {
       extended: 0,
-      regular: 1,
-      mini: 2,
-      fixed: 3,
-      micro: 4
+      regular: 0,
+      mini: 0,
+      fixed: 0,
+      micro: 0
     });
 }
 
