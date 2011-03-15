@@ -354,7 +354,7 @@ var dateToday = new Date();
 var dateYesterday = new Date();
 dateYesterday.setDate(dateToday.getDate() - 1);
 
-// Date strings for the last 90 days
+// Date strings for the last 90 days and the next 720days
 var dates_array = [];
 var i=-720;
 do
@@ -3444,33 +3444,48 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
       "#clickTotalsContainer table tr td { font-size:x-small; }");
 
 
+
+  // If the date navigated to doesn't currently exist in the adCounts data, create the data object for it
+  if(!arg_adCounts[dates_array[arg_dateIndex]]){
+    arg_adCounts[dates_array[arg_dateIndex]] = {};
+  }
+
+  // Similarly, check that each of the ad type counts are valid and/or/else reset to zero
+  arg_adCounts[dates_array[arg_dateIndex]]['extended'] = (arg_adCounts[dates_array[arg_dateIndex]]['extended'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['regular'] = (arg_adCounts[dates_array[arg_dateIndex]]['regular'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['mini'] = (arg_adCounts[dates_array[arg_dateIndex]]['mini'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['fixed'] = (arg_adCounts[dates_array[arg_dateIndex]]['fixed'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['micro'] = (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0;
+
+
+
   var tmp_foo = {
-    extendedAdCount: {
-      adCount: arg_adCounts['extended'],
+    extended: {
+      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['extended'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0,
       text: "Extended:",
       countsToTos37: true,
       value: 0.02
     },
-    regularAdCount: {
-      adCount: arg_adCounts['regular'],
+    regular: {
+      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['regular'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0,
       text: "Regular:",
       countsToTos37: true,
       value: 0.01
     },
-    miniAdCount: {
-      adCount: arg_adCounts['mini'],
+    mini: {
+      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['mini'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0,
       text: "Mini:",
       countsToTos37: false,
       value: 0.005
     },
-    fixedAdCount: {
-      adCount: arg_adCounts['fixed'],
+    fixed: {
+      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['fixed'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0,
       text: "Fixed:",
       countsToTos37: true,
-      value: 0.001
+      value: 0.01
     },
-    microAdCount: {
-      adCount: arg_adCounts['micro'],
+    micro: {
+      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0,
       text: "Micro:",
       countsToTos37: false,
       value: 0.001
@@ -3481,14 +3496,21 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
   var tmp_totalsContainerHTML = "";
 
   tmp_totalsContainerHTML += "" +
-      "<center><button id='date_decrementButton' class='adCountDecrementButton'>-</button>" + "<span id='date_textCount'>"+dates_array[arg_dateIndex]+"</span>" + "<button id='date_incrementButton' class='adCountIncrementButton'>+</button></center>" +
+      "<center><button id='date_decrementButton' class='adCountDecrementButton'>-</button>" +
+      "<span id='date_textCount'>"+dates_array[arg_dateIndex]+"</span>" +
+      "<button id='date_incrementButton' class='adCountIncrementButton'>+</button></center>" +
       "<br>"+
       "<table>";
 
   for(var tmp_label in tmp_foo) {
     if(tmp_foo.hasOwnProperty(tmp_label))
     {
-      tmp_totalsContainerHTML += ["<tr><td>"+ tmp_foo[tmp_label].text, "<button id='"+tmp_label+"_incrementButton' class='adCountIncrementButton'>+</button>", "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>", "<button id='"+tmp_label+"_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"].join('</td><td>');
+      tmp_totalsContainerHTML += [
+        "<tr><td>"+ tmp_foo[tmp_label].text,
+        "<button id='"+tmp_label+"AdCount_incrementButton' class='adCountIncrementButton'>+</button>",
+        "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>",
+        "<button id='"+tmp_label+"AdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"
+      ].join('</td><td>');
     }
   }
   
@@ -3507,23 +3529,11 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
 
   // NB: The date index is in reverse order (ie, n days into the past) thus incrementing this index equates to going an increased number of days into the past
   document.getElementById('date_decrementButton').addEventListener('click',function () {
-    insertAdCounterBox(arg_dateIndex + 1, {
-      extended: arg_adCounts['extended'],
-      regular: arg_adCounts['regular'],
-      mini: arg_adCounts['mini'],
-      fixed: arg_adCounts['fixed'],
-      micro: arg_adCounts['micro']
-    });
+    insertAdCounterBox(arg_dateIndex + 1, arg_adCounts);
   },false);
 
   document.getElementById('date_incrementButton').addEventListener('click',function () {
-    insertAdCounterBox(arg_dateIndex - 1, {
-      extended: arg_adCounts['extended'],
-      regular: arg_adCounts['regular'],
-      mini: arg_adCounts['mini'],
-      fixed: arg_adCounts['fixed'],
-      micro: arg_adCounts['micro']
-    });
+    insertAdCounterBox(arg_dateIndex - 1, arg_adCounts);
   },false);
 
 
@@ -3534,29 +3544,49 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
     var tmp_adCounts = {};
 
     //Set all values in the
-    for(var tmp_index in arg_oldAdCounts) {
-      if(arg_oldAdCounts.hasOwnProperty(tmp_index)) { tmp_adCounts[tmp_index] = arg_oldAdCounts[tmp_index]; }
+    for(var tmp_index in arg_oldAdCounts[dates_array[arg_dateIndex]]) {
+      if(arg_adCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_index))
+      {
+        if(!tmp_adCounts[dates_array[arg_dateIndex]]) {
+          tmp_adCounts[dates_array[arg_dateIndex]] = {};
+        }
+        if(arg_oldAdCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_index)) {
+          tmp_adCounts[dates_array[arg_dateIndex]][tmp_index] = arg_oldAdCounts[dates_array[arg_dateIndex]][tmp_index];
+        }
+      }
     }
-    tmp_adCounts[arg_adType] = parseInt(arg_oldAdCounts[arg_adType]) + 1;
+    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) + 1;
+    tmp_adCounts[arg_adType] = (0 > tmp_adCounts[arg_adType]) ? 0 : tmp_adCounts[arg_adType];
+
     document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function () { insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
   }
+  
   function addDecrementListener(arg_adType, arg_oldAdCounts)
   {
     var tmp_adCounts = {};
+//    console.info('function addDecrementListener() arguments: \n',JSON.stringify(arguments));
 
     //Set all values in the
-    for(var tmp_index in arg_oldAdCounts) {
-      if(arg_oldAdCounts.hasOwnProperty(tmp_index)) { tmp_adCounts[tmp_index] = arg_oldAdCounts[tmp_index]; }
+    for(var tmp_index in arg_oldAdCounts[dates_array[arg_dateIndex]]) {
+      if(arg_adCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_index))
+      {
+        if(!tmp_adCounts[dates_array[arg_dateIndex]]) {
+          tmp_adCounts[dates_array[arg_dateIndex]] = {};
+        }
+        if(arg_oldAdCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_index)) {
+          tmp_adCounts[dates_array[arg_dateIndex]][tmp_index] = arg_oldAdCounts[dates_array[arg_dateIndex]][tmp_index];
+        }
+      }
     }
-    tmp_adCounts[arg_adType] = parseInt(arg_oldAdCounts[arg_adType]) - 1;
+    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) - 1;
     tmp_adCounts[arg_adType] = (0 > tmp_adCounts[arg_adType]) ? 0 : tmp_adCounts[arg_adType];
-    
+
     document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function () { insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
   }
 
   // Loop through the different ad types and call the function that adds the click events for the increment and decrement buttons
-  for(var tmp_label in arg_adCounts) {
-    if(arg_adCounts.hasOwnProperty(tmp_label))
+  for(var tmp_label in arg_adCounts[dates_array[arg_dateIndex]]) {
+    if(arg_adCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_label))
     {
       addDecrementListener(tmp_label, arg_adCounts);
       addIncrementListener(tmp_label, arg_adCounts);
@@ -3919,13 +3949,16 @@ if(currentPage.pageCode.match(/accSummary/i))
 
 if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 {
-  insertAdCounterBox(0, {
-      extended: 0,
-      regular: 0,
-      mini: 0,
-      fixed: 0,
-      micro: 0
-    });
+
+  var tmp_dummyAdsData = {
+    '2011/03/10': { extended: 0, regular: 9, mini: 0, fixed: 0, micro: 0 },
+    '2011/03/11': { extended: 0, regular: 8, mini: 0, fixed: 2, micro: 0 },
+    '2011/03/12': { extended: 0, regular: 6, mini: 0, fixed: 0, micro: 0 },
+    '2011/03/13': { extended: 0, regular: 8, mini: 0, fixed: 0, micro: 0 },
+    '2011/03/14': { extended: 0, regular: 5, mini: 0, fixed: 0, micro: 10 }
+  };
+
+  insertAdCounterBox(0, tmp_dummyAdsData);
 }
 
 
