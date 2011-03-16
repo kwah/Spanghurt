@@ -3542,23 +3542,22 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
   function addIncrementListener(arg_adType, arg_oldAdCounts)
   {
     var tmp_adCounts = {};
+//    console.info('function addDecrementListener() arguments: \n',JSON.stringify(arguments));
 
-    //Set all values in the
-    for(var tmp_index in arg_oldAdCounts[dates_array[arg_dateIndex]]) {
-      if(arg_adCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_index))
-      {
-        if(!tmp_adCounts[dates_array[arg_dateIndex]]) {
-          tmp_adCounts[dates_array[arg_dateIndex]] = {};
-        }
-        if(arg_oldAdCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_index)) {
-          tmp_adCounts[dates_array[arg_dateIndex]][tmp_index] = arg_oldAdCounts[dates_array[arg_dateIndex]][tmp_index];
-        }
-      }
-    }
+    Object_merge(tmp_adCounts, arg_oldAdCounts);
+
     tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) + 1;
-    tmp_adCounts[arg_adType] = (0 > tmp_adCounts[arg_adType]) ? 0 : tmp_adCounts[arg_adType];
+    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = (0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) ? 0 : tmp_adCounts[dates_array[arg_dateIndex]][arg_adType];
 
-    document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function () { insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
+    document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function ()
+    {
+      insertAdCounterBox(arg_dateIndex, tmp_adCounts);
+      // Workaround for GM access checks/violations
+      // http://wiki.greasespot.net/Greasemonkey_access_violation
+      setTimeout(function() {
+        setPref('ownAdCountTally',tmp_adCounts, { prefType: 'JSON' });
+      }, 0);
+    },false);
   }
   
   function addDecrementListener(arg_adType, arg_oldAdCounts)
@@ -3566,22 +3565,20 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
     var tmp_adCounts = {};
 //    console.info('function addDecrementListener() arguments: \n',JSON.stringify(arguments));
 
-    //Set all values in the
-    for(var tmp_index in arg_oldAdCounts[dates_array[arg_dateIndex]]) {
-      if(arg_adCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_index))
-      {
-        if(!tmp_adCounts[dates_array[arg_dateIndex]]) {
-          tmp_adCounts[dates_array[arg_dateIndex]] = {};
-        }
-        if(arg_oldAdCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_index)) {
-          tmp_adCounts[dates_array[arg_dateIndex]][tmp_index] = arg_oldAdCounts[dates_array[arg_dateIndex]][tmp_index];
-        }
-      }
-    }
-    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) - 1;
-    tmp_adCounts[arg_adType] = (0 > tmp_adCounts[arg_adType]) ? 0 : tmp_adCounts[arg_adType];
+    Object_merge(tmp_adCounts, arg_oldAdCounts);
 
-    document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function () { insertAdCounterBox(arg_dateIndex, tmp_adCounts); },false);
+    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) - 1;
+    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = (0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) ? 0 : tmp_adCounts[dates_array[arg_dateIndex]][arg_adType];
+
+    document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function ()
+    {
+      insertAdCounterBox(arg_dateIndex, tmp_adCounts);
+      // Workaround for GM access checks/violations
+      // http://wiki.greasespot.net/Greasemonkey_access_violation
+      setTimeout(function() {
+        setPref('ownAdCountTally',tmp_adCounts, { prefType: 'JSON' });
+      }, 0);
+    },false);
   }
 
   // Loop through the different ad types and call the function that adds the click events for the increment and decrement buttons
@@ -3949,16 +3946,8 @@ if(currentPage.pageCode.match(/accSummary/i))
 
 if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 {
-
-  var tmp_dummyAdsData = {
-    '2011/03/10': { extended: 0, regular: 9, mini: 0, fixed: 0, micro: 0 },
-    '2011/03/11': { extended: 0, regular: 8, mini: 0, fixed: 2, micro: 0 },
-    '2011/03/12': { extended: 0, regular: 6, mini: 0, fixed: 0, micro: 0 },
-    '2011/03/13': { extended: 0, regular: 8, mini: 0, fixed: 0, micro: 0 },
-    '2011/03/14': { extended: 0, regular: 5, mini: 0, fixed: 0, micro: 10 }
-  };
-
-  insertAdCounterBox(0, tmp_dummyAdsData);
+  var adCountData = getPref('ownAdCountTally',{}, { prefType: 'JSON' });
+  insertAdCounterBox(0, adCountData);
 }
 
 
