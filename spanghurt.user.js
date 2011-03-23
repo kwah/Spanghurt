@@ -636,6 +636,7 @@ var graphLengthLookup =
 } catch(e) {}*/
 
 var personalClickValue_ultimate = 0.02;
+var personalClickValue_standard = 0.005;
 var referralClickValue_default = 0.01;
 var personalClickValue_default = 0.01;
 var referralClickValue_standard = 0.005;
@@ -968,7 +969,7 @@ function extractNumberOfRefs()
     // Now store the number of detected referrals if numberOfRefs is not false
 //    console.info('tmp_numberOfRefs = ',tmp_numberOfRefs);
     if(0 <= tmp_numberOfRefs){
-      setPref('numberOf' + _pageRefType + 'Refs', tmp_numberOfRefs, { prefType: 'text' });
+      setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'text' });
     }
     return tmp_numberOfRefs;
   }
@@ -1072,8 +1073,16 @@ var currentUser = new function()
     return this;
   };
 
-  this.ownClickValue = (this.accountType.isUltimate)      ? personalClickValue_ultimate : personalClickValue_default;
-  this.referralClickValue = (this.accountType.isStandard) ? referralClickValue_standard : referralClickValue_default;
+  this.ownClickValue = personalClickValue_default;
+  this.referralClickValue = referralClickValue_default;
+
+  if(this.accountType.isStandard){
+    this.ownClickValue = personalClickValue_standard;
+    this.referralClickValue = referralClickValue_standard
+  }
+  if(this.accountType.isUltimate){
+    this.ownClickValue = personalClickValue_ultimate;
+  }
 
   this.numberOfRefs = {
     Rented: getPref('numberOfRentedReferrals',defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
@@ -3417,7 +3426,8 @@ var widenPages = new function(){
 };
 
 
-function insertAdCounterBox(arg_dateIndex, arg_adCounts)
+
+function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_currentPageview)
 {
   if('undefined' === typeof GM_addStyle){
     function GM_addStyle(arg_css) {
@@ -3434,7 +3444,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
 
   var elmnt_totalsContainer = document.createElement('div');
   elmnt_totalsContainer.id = 'clickTotalsContainer';
-  elmnt_totalsContainer.setAttribute('style', 'position: fixed; bottom: 2em; right: 2em; width: 130px; min-height: 10em; background-color: white; border: 1px solid black; font-size:x-small !important; padding: 1em 1em; opacity: 0.5;');
+  elmnt_totalsContainer.setAttribute('style', 'position: fixed; bottom: 2em; right: 2em; width: 150px; min-height: 10em; background-color: white; border: 1px solid black; font-size:x-small !important; padding: 1em 1em; opacity: 0.5;');
 
   elmnt_totalsContainer.setAttribute('onmouseover','document.getElementById("clickTotalsContainer").style.opacity = "1"; ');
   elmnt_totalsContainer.setAttribute('onmouseout','document.getElementById("clickTotalsContainer").style.opacity = "0.5";');
@@ -3509,6 +3519,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
         "<tr><td>"+ tmp_foo[tmp_label].text,
         "<button id='"+tmp_label+"AdCount_incrementButton' class='adCountIncrementButton'>+</button>",
         "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>",
+        "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((arg_adCountChange_currentPageview[tmp_label] > 0) ? "+"+arg_adCountChange_currentPageview[tmp_label]:arg_adCountChange_currentPageview[tmp_label])+")</span>",
         "<button id='"+tmp_label+"AdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"
       ].join('</td><td>');
     }
@@ -3529,29 +3540,35 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
 
   // NB: The date index is in reverse order (ie, n days into the past) thus incrementing this index equates to going an increased number of days into the past
   document.getElementById('date_decrementButton').addEventListener('click',function () {
-    insertAdCounterBox(arg_dateIndex + 1, arg_adCounts);
+    insertAdCounterBox(arg_dateIndex + 1, arg_adCounts, arg_adCountChange_currentPageview);
   },false);
 
   document.getElementById('date_incrementButton').addEventListener('click',function () {
-    insertAdCounterBox(arg_dateIndex - 1, arg_adCounts);
+    insertAdCounterBox(arg_dateIndex - 1, arg_adCounts, arg_adCountChange_currentPageview);
   },false);
 
 
   /* Add handlers for changing the ad counts */
 
-  function addIncrementListener(arg_adType, arg_oldAdCounts)
+  function addIncrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
   {
     var tmp_adCounts = {};
 //    console.info('function addDecrementListener() arguments: \n',JSON.stringify(arguments));
 
     Object_merge(tmp_adCounts, arg_oldAdCounts);
 
+    var tmp_adCountChange = {};
+
+    Object_merge(tmp_adCountChange, arg_tmp_adCountChange_currentPageview);
+    tmp_adCountChange[arg_adType] = parseInt(tmp_adCountChange[arg_adType]) + 1;
+
     tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) + 1;
     tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = (0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) ? 0 : tmp_adCounts[dates_array[arg_dateIndex]][arg_adType];
 
     document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function ()
     {
-      insertAdCounterBox(arg_dateIndex, tmp_adCounts);
+      console.info('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
+      insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
       setTimeout(function() {
@@ -3560,19 +3577,24 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
     },false);
   }
   
-  function addDecrementListener(arg_adType, arg_oldAdCounts)
+  function addDecrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
   {
     var tmp_adCounts = {};
 //    console.info('function addDecrementListener() arguments: \n',JSON.stringify(arguments));
 
     Object_merge(tmp_adCounts, arg_oldAdCounts);
 
+    var tmp_adCountChange = {};
+    Object_merge(tmp_adCountChange, arg_tmp_adCountChange_currentPageview);
+    tmp_adCountChange[arg_adType] = parseInt(tmp_adCountChange[arg_adType]) - 1;
+
     tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) - 1;
     tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = (0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) ? 0 : tmp_adCounts[dates_array[arg_dateIndex]][arg_adType];
 
     document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function ()
     {
-      insertAdCounterBox(arg_dateIndex, tmp_adCounts);
+      console.info('tmp_adCountChange (on decrement click) = ',JSON.stringify(tmp_adCountChange));
+      insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
       setTimeout(function() {
@@ -3585,8 +3607,8 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts)
   for(var tmp_label in arg_adCounts[dates_array[arg_dateIndex]]) {
     if(arg_adCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_label))
     {
-      addDecrementListener(tmp_label, arg_adCounts);
-      addIncrementListener(tmp_label, arg_adCounts);
+      addDecrementListener(tmp_label, arg_adCounts, arg_adCountChange_currentPageview);
+      addIncrementListener(tmp_label, arg_adCounts, arg_adCountChange_currentPageview);
     }
   }
 }
@@ -3947,7 +3969,14 @@ if(currentPage.pageCode.match(/accSummary/i))
 if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 {
   var adCountData = getPref('ownAdCountTally',{}, { prefType: 'JSON' });
-  insertAdCounterBox(0, adCountData);
+  var adCountChange_currentPageview = {
+    extended: 0,
+    regular: 0,
+    mini: 0,
+    fixed: 0,
+    micro: 0
+  };
+  insertAdCounterBox(0, adCountData, adCountChange_currentPageview);
 }
 
 
@@ -3994,7 +4023,7 @@ function insertSidebar()
     try { return arg_varToOutput; }
     catch(e) { return arg_textToDisplayOtherwise; }
   }
-
+  console.info('JSON.stringify(currentUser.numberOfRefs)',JSON.stringify(currentUser.numberOfRefs));
   var tmp = "";
   tmp += "<span class='sidebarContent'>";
   tmp += "<span class='sidebarHeader'>";
