@@ -175,11 +175,38 @@ clickValues['Diamond'].Standard.value = 0.015;
 clickValues['Ultimate'].Standard.value = 0.02;
 
 
+/*Fixed Ads click value - same as standard ads for golden & golden-pack members*/
+clickValues['Emerald'].Fixed.value = clickValues['Emerald'].Standard.value;
+clickValues['Sapphire'].Fixed.value = clickValues['Sapphire'].Standard.value;
+clickValues['Platinum'].Fixed.value = clickValues['Platinum'].Standard.value;
+clickValues['Diamond'].Fixed.value = clickValues['Diamond'].Standard.value;
+clickValues['Ultimate'].Fixed.value = clickValues['Ultimate'].Standard.value;
 
-function TEST_clickValues()
+/*Fixed Ads direct-click value - same as standard ads for golden & golden-pack members
+* Except Golden members*/
+clickValues['Standard'].Fixed.commission.direct = 0.0005;
+clickValues['Golden'].Fixed.commission.direct = 0.005;
+clickValues['Emerald'].Fixed.commission.direct = clickValues['Emerald'].Standard.commission.direct;
+clickValues['Sapphire'].Fixed.commission.direct = clickValues['Sapphire'].Standard.commission.direct;
+clickValues['Platinum'].Fixed.commission.direct = clickValues['Platinum'].Standard.commission.direct;
+clickValues['Diamond'].Fixed.commission.direct = clickValues['Diamond'].Standard.commission.direct;
+clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standard.commission.direct;
+
+
+
+function TEST_clickValuesToForumPost()
 {
   var tmp_output = '';
   var tmp_linebreak = '\n';
+
+  var adTypeColours = {
+    Extended: 'Blue/Green',
+    Standard: 'Green',
+    Mini: 'Blue',
+    FixedMicro: 'Purple',
+    Fixed: 'Orange',
+    Micro: 'Grey'
+  };
 
   for( var memberType in clickValues){
   if( clickValues.hasOwnProperty(memberType) ){
@@ -187,7 +214,7 @@ function TEST_clickValues()
 
       for( var clickType in clickValues[memberType]){
       if( clickValues[memberType].hasOwnProperty(clickType) ){
-          tmp_output += '[i]'+clickType+'[/i]'+ ' = $' + clickValues[memberType][clickType].value + tmp_linebreak;
+          tmp_output += '[i]'+clickType+' ('+adTypeColours[clickType]+')[/i]'+ ' = $' + clickValues[memberType][clickType].value + tmp_linebreak;
           tmp_output += '--Direct = $'+clickValues[memberType][clickType].commission.direct + tmp_linebreak;
           tmp_output += '--Rented = $'+clickValues[memberType][clickType].commission.rented + tmp_linebreak;
       }
@@ -198,6 +225,82 @@ function TEST_clickValues()
   //Copy pasting from an alert (as opposed to console.info()) preserves the linebreaks
   alert(tmp_output);
 }
+function TEST_clickValuesToHtmlTable()
+{
+  var tmp_output = '';
+  var tmp_linebreak = '\n';
 
-TEST_clickValues();
+  var tmp_tdStyle = 'border: 1px solid black; padding: 2px; min-width: 4.5em;';
+
+  var tbl_rowStart = '\n<tr>\n\t<td style="'+tmp_tdStyle+'">';
+  var tbl_newCol = '</td>\n\t<td style="'+tmp_tdStyle+'">';
+  var tbl_rowEnd = '</td>\n</tr>\n';
+
+  var tmp_personalDirectRented = '' +
+      '<td style="'+tmp_tdStyle+'">Own</td>' +
+      '<td style="'+tmp_tdStyle+'">Direct</td>' +
+      '<td style="'+tmp_tdStyle+'">Rented</td>';
+
+
+  var adTypeColours = {
+    Extended: 'Blue/Green',
+    Standard: 'Green',
+    Mini: 'Blue',
+    FixedMicro: 'Purple',
+    Fixed: 'Orange',
+    Micro: 'Grey'
+  };
+
+
+  tmp_output += '<table style="border: 1px solid black; border-collapse: collapse;">' +
+      '<thead style="text-align: center; font-weight: bold;">' +
+      '<tr>'+
+      '<td colspan="1">MemberType</td>';
+
+
+  for( var clickType in adTypeColours){
+    if( clickValues['Golden'].hasOwnProperty(clickType) ){
+        tmp_output += '<td colspan="3"  style="'+tmp_tdStyle+'">'+clickType+' <small><i>('+adTypeColours[clickType]+')</i></small></td>';
+    }
+  }
+  tmp_output += '</tr>';
+
+  tmp_output += '<tr>';
+  tmp_output += '<td>&nbsp;</td>'
+  tmp_output += tmp_personalDirectRented;
+  tmp_output += tmp_personalDirectRented;
+  tmp_output += tmp_personalDirectRented;
+  tmp_output += tmp_personalDirectRented;
+  tmp_output += tmp_personalDirectRented;
+  tmp_output += tmp_personalDirectRented;
+  tmp_output += '</tr>' +
+      '</thead>';
+
+
+
+  for( var memberType in clickValues){
+  if( clickValues.hasOwnProperty(memberType) ){
+      tmp_output += tbl_rowStart
+      tmp_output += '<b>'+memberType+'</b>';
+
+      for( var clickType in adTypeColours){
+      if( clickValues[memberType].hasOwnProperty(clickType) ){
+          tmp_output += tbl_newCol + '$' + clickValues[memberType][clickType].value.toFixed(3);
+          tmp_output += tbl_newCol + ((clickValues[memberType][clickType].commission.direct == 0.0005) ? '$'+clickValues[memberType][clickType].commission.direct : ((clickValues[memberType][clickType].commission.direct > 0) ? '$'+clickValues[memberType][clickType].commission.direct.toFixed(3) : ' -- '));
+          tmp_output += tbl_newCol + ((clickValues[memberType][clickType].commission.rented > 0 ) ? '$'+clickValues[memberType][clickType].commission.rented.toFixed(3) : ' -- ');
+      }
+      }
+
+      tmp_output += tbl_rowEnd;
+  }
+  }
+
+  //Copy pasting from an alert (as opposed to console.info()) preserves the linebreaks
+  document.body.innerHTML = tmp_output;
+}
+
+//TEST_clickValuesToForumPost();
+
+TEST_clickValuesToHtmlTable();
+
 console.info(clickValues);
