@@ -752,6 +752,25 @@ clickValues['Diamond'].Standard.value = 0.015;
 clickValues['Ultimate'].Standard.value = 0.02;
 
 
+/*Fixed Ads click value - same as standard ads for golden & golden-pack members*/
+clickValues['Emerald'].Fixed.value = clickValues['Emerald'].Standard.value;
+clickValues['Sapphire'].Fixed.value = clickValues['Sapphire'].Standard.value;
+clickValues['Platinum'].Fixed.value = clickValues['Platinum'].Standard.value;
+clickValues['Diamond'].Fixed.value = clickValues['Diamond'].Standard.value;
+clickValues['Ultimate'].Fixed.value = clickValues['Ultimate'].Standard.value;
+
+/*Fixed Ads direct-click value - same as standard ads for golden & golden-pack members
+* Except Golden members*/
+clickValues['Standard'].Fixed.commission.direct = 0.0005;
+clickValues['Golden'].Fixed.commission.direct = 0.005;
+clickValues['Emerald'].Fixed.commission.direct = clickValues['Emerald'].Standard.commission.direct;
+clickValues['Sapphire'].Fixed.commission.direct = clickValues['Sapphire'].Standard.commission.direct;
+clickValues['Platinum'].Fixed.commission.direct = clickValues['Platinum'].Standard.commission.direct;
+clickValues['Diamond'].Fixed.commission.direct = clickValues['Diamond'].Standard.commission.direct;
+clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standard.commission.direct;
+
+
+
 /**
  * :Handles stored preferences (eg, referral listings column preferences) and locally cached values (eg, username / number of referrals)
  * @param arg_prefName The name of the stored value that is stored to / fetched from.
