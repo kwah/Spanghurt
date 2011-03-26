@@ -625,22 +625,131 @@ var graphLengthLookup =
 
 
 
-/* consts -- declared as vars because firebug doesn't like const s being declared more than once..
-* todo: add a wrapper that checks if consts have been declared & avoids re-declaring if so (try/catch)
-* */
-/*try{
-  const personalClickValue_ultimate = 0.02;
-  const referralClickValue_default = 0.01;
-  const personalClickValue_default = 0.01;
-  const referralClickValue_standard = 0.005;
-} catch(e) {}*/
 
-var personalClickValue_ultimate = 0.02;
-var personalClickValue_standard = 0.005;
-var referralClickValue_default = 0.01;
-var personalClickValue_default = 0.01;
-var referralClickValue_standard = 0.005;
+var clickValues = {
+  Standard: {
+    Extended: {
+      value: 0.015,
+      commission: {
+        rented: 0.01,
+        direct: 0.01
+      }
+    },
+    Standard: {
+      value: 0.01,
+      commission: {
+        rented: 0.005,
+        direct: 0.005
+      }
+    },
+    Mini: {
+      value: 0.005,
+      commission: {
+        rented: 0,
+        direct: 0
+      }
+    },
+    Micro: {
+      value: 0.001,
+      commission: {
+        rented: 0,
+        direct: 0
+      }
+    },
+    Fixed: {
+      value: 0.001,
+      commission: {
+        rented: 0.005,
+        direct: 0.0005
+      }
+    }
+  },
+  Golden: {
+    Extended: {
+      value: 0.02,
+      commission: {
+        rented: 0.02,
+        direct: 0.02
+      }
+    },
+    Standard: {
+      value: 0.01,
+      commission: {
+        rented: 0.01,
+        direct: 0.01
+      }
+    },
+    Micro: {
+      value: 0.001,
+      commission: {
+        rented: 0,
+        direct: 0
+      }
+    },
+    Fixed: {
+      value: 0.01,
+      commission: {
+        rented: 0.01,
+        direct: 0.005
+      }
+    }
+  }
+};
 
+// Fixed Micro ads are the same value and commission for standard AND golden members
+clickValues['Standard'].FixedMicro = {
+  value: 0.001,
+  commission: {
+    rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
+    direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
+  }
+};
+clickValues['Golden'].FixedMicro = {
+  value: 0.001,
+  commission: {
+    rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
+    direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
+  }
+};
+
+// Mini ads are the same value and commission for standard AND golden members
+clickValues['Standard'].Mini = {
+  value: 0.005,
+  commission: {
+    rented: 0,
+    direct: 0
+  }
+};
+clickValues['Golden'].Mini = {
+  value: 0.005,
+  commission: {
+    rented: 0,
+    direct: 0
+  }
+};
+
+//Initially set all golden packs to be the same as the Golden values
+clickValues['Emerald'] = {};
+clickValues['Sapphire'] = {};
+clickValues['Platinum'] = {};
+clickValues['Diamond'] = {};
+clickValues['Ultimate'] = {};
+
+Object_merge(clickValues['Emerald'],clickValues['Golden']);
+Object_merge(clickValues['Sapphire'],clickValues['Golden']);
+Object_merge(clickValues['Platinum'],clickValues['Golden']);
+Object_merge(clickValues['Diamond'],clickValues['Golden']);
+Object_merge(clickValues['Ultimate'],clickValues['Golden']);
+
+
+
+//Now to do the golden-pack-specific settings::
+/*Standard Ads click value*/
+clickValues['Emerald'].Standard.value = 0.012;
+clickValues['Sapphire'].Standard.value = 0.012;
+clickValues['Platinum'].Standard.value = 0.015;
+clickValues['Diamond'].Standard.value = 0.015;
+clickValues['Ultimate'].Standard.value = 0.02;
 
 
 /**
@@ -1073,16 +1182,9 @@ var currentUser = new function()
     return this;
   };
 
-  this.ownClickValue = personalClickValue_default;
-  this.referralClickValue = referralClickValue_default;
-
-  if(this.accountType.isStandard){
-    this.ownClickValue = personalClickValue_standard;
-    this.referralClickValue = referralClickValue_standard
-  }
-  if(this.accountType.isUltimate){
-    this.ownClickValue = personalClickValue_ultimate;
-  }
+  this.ownClickValue = clickValues[this.accountType.verbose].Fixed.value;
+  this.rentedReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.rented;
+  this.directReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.direct;
 
   this.numberOfRefs = {
     Rented: getPref('numberOfRentedReferrals',defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
@@ -3465,6 +3567,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   arg_adCounts[dates_array[arg_dateIndex]]['regular'] = (arg_adCounts[dates_array[arg_dateIndex]]['regular'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0;
   arg_adCounts[dates_array[arg_dateIndex]]['mini'] = (arg_adCounts[dates_array[arg_dateIndex]]['mini'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0;
   arg_adCounts[dates_array[arg_dateIndex]]['fixed'] = (arg_adCounts[dates_array[arg_dateIndex]]['fixed'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] = (arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0;
   arg_adCounts[dates_array[arg_dateIndex]]['micro'] = (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0;
 
 
@@ -3493,6 +3596,12 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       text: "Fixed:",
       countsToTos37: true,
       value: 0.01
+    },
+    fixedMicro: {
+      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0,
+      text: "Fixed (Micro):",
+      countsToTos37: true,
+      value: 0.001
     },
     micro: {
       adCount: (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0,
@@ -3974,6 +4083,7 @@ if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
     regular: 0,
     mini: 0,
     fixed: 0,
+    fixedMicro: 0,
     micro: 0
   };
   insertAdCounterBox(0, adCountData, adCountChange_currentPageview);
@@ -4190,7 +4300,7 @@ function insertSidebar()
     }
     var numberOfDays = (endDay - startDay) + 1;
 
-    var tmp_income = (sidebarData['rentedClicks'][dates_array[endDay]].sum + sidebarData['directClicks'][dates_array[endDay]].sum) * currentUser.referralClickValue;
+    var tmp_income = (sidebarData['rentedClicks'][dates_array[endDay]].sum + sidebarData['directClicks'][dates_array[endDay]].sum) * currentUser.directReferralClickValue;
     var tmp_income_inclOwnClicks = tmp_income + (sidebarData['personalClicks'][dates_array[endDay]].sum * currentUser.ownClickValue);
     var tmp_expenses = sidebarData['recycleCost'][dates_array[endDay]].sum +
         sidebarData['renewalCost'][dates_array[endDay]].sum +
@@ -4208,16 +4318,16 @@ function insertSidebar()
     tmp += "<h6 title='Details about your income sources for "+header.toLowerCase()+"'> + Income</h6>";
     tmp += "<div class='sidebarDetails'>";
     tmp += "- Personal Clicks: " + sidebarData['personalClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['personalClicks'][dates_array[endDay]].sum * currentUser.ownClickValue).toFixed(3)+"<br>";
-    tmp += showThisIfUserHasRentedReferrals("- Rented Clicks: " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.referralClickValue).toFixed(3) + "<br>");
-    tmp += showThisIfUserHasDirectReferrals("- Direct Clicks: " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.referralClickValue).toFixed(3) + "<br>");
+    tmp += showThisIfUserHasRentedReferrals("- Rented Clicks: " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
+    tmp += showThisIfUserHasDirectReferrals("- Direct Clicks: " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
     tmp += "</div>";
 
     if(showProjected)
     {
       tmp += "<h6 title='Details about your income sources for "+header.toLowerCase()+", based on the projected values'> + Projected Income</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += showThisIfUserHasRentedReferrals("- Rented Clicks: " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.referralClickValue).toFixed(3) + "<br>");
-    tmp += showThisIfUserHasDirectReferrals("- Direct Clicks: " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.referralClickValue).toFixed(3) + "<br>");
+    tmp += showThisIfUserHasRentedReferrals("- Rented Clicks: " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
+    tmp += showThisIfUserHasDirectReferrals("- Direct Clicks: " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
       tmp += "</div>";
     }
 
