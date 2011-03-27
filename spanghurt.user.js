@@ -745,28 +745,28 @@ Object_merge(clickValues['Ultimate'],clickValues['Golden']);
 
 //Now to do the golden-pack-specific settings::
 /*Standard Ads click value*/
-clickValues['Emerald'].Standard.value = 0.012;
-clickValues['Sapphire'].Standard.value = 0.012;
-clickValues['Platinum'].Standard.value = 0.015;
-clickValues['Diamond'].Standard.value = 0.015;
-clickValues['Ultimate'].Standard.value = 0.02;
+clickValues['Emerald'].Standard.value   = 0.012;
+clickValues['Sapphire'].Standard.value  = 0.012;
+clickValues['Platinum'].Standard.value  = 0.015;
+clickValues['Diamond'].Standard.value   = 0.015;
+clickValues['Ultimate'].Standard.value  = 0.02;
 
 
 /*Fixed Ads click value - same as standard ads for golden & golden-pack members*/
-clickValues['Emerald'].Fixed.value = clickValues['Emerald'].Standard.value;
+clickValues['Emerald'].Fixed.value  = clickValues['Emerald'].Standard.value;
 clickValues['Sapphire'].Fixed.value = clickValues['Sapphire'].Standard.value;
 clickValues['Platinum'].Fixed.value = clickValues['Platinum'].Standard.value;
-clickValues['Diamond'].Fixed.value = clickValues['Diamond'].Standard.value;
+clickValues['Diamond'].Fixed.value  = clickValues['Diamond'].Standard.value;
 clickValues['Ultimate'].Fixed.value = clickValues['Ultimate'].Standard.value;
 
 /*Fixed Ads direct-click value - same as standard ads for golden & golden-pack members
 * Except Golden members*/
 clickValues['Standard'].Fixed.commission.direct = 0.0005;
-clickValues['Golden'].Fixed.commission.direct = 0.005;
-clickValues['Emerald'].Fixed.commission.direct = clickValues['Emerald'].Standard.commission.direct;
+clickValues['Golden'].Fixed.commission.direct   = 0.005;
+clickValues['Emerald'].Fixed.commission.direct  = clickValues['Emerald'].Standard.commission.direct;
 clickValues['Sapphire'].Fixed.commission.direct = clickValues['Sapphire'].Standard.commission.direct;
 clickValues['Platinum'].Fixed.commission.direct = clickValues['Platinum'].Standard.commission.direct;
-clickValues['Diamond'].Fixed.commission.direct = clickValues['Diamond'].Standard.commission.direct;
+clickValues['Diamond'].Fixed.commission.direct  = clickValues['Diamond'].Standard.commission.direct;
 clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standard.commission.direct;
 
 
@@ -3582,12 +3582,27 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   }
 
   // Similarly, check that each of the ad type counts are valid and/or/else reset to zero
-  arg_adCounts[dates_array[arg_dateIndex]]['extended'] = (arg_adCounts[dates_array[arg_dateIndex]]['extended'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['regular'] = (arg_adCounts[dates_array[arg_dateIndex]]['regular'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['mini'] = (arg_adCounts[dates_array[arg_dateIndex]]['mini'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['fixed'] = (arg_adCounts[dates_array[arg_dateIndex]]['fixed'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] = (arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['micro'] = (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['extended']    = (arg_adCounts[dates_array[arg_dateIndex]]['extended'] >= 0 )    ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['regular']     = (arg_adCounts[dates_array[arg_dateIndex]]['regular'] >= 0 )     ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['mini']        = (arg_adCounts[dates_array[arg_dateIndex]]['mini'] >= 0 )        ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['fixed']       = (arg_adCounts[dates_array[arg_dateIndex]]['fixed'] >= 0 )       ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro']  = (arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] >= 0 )  ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['micro']       = (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 )       ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0;
+
+
+  // If the date navigated to doesn't currently exist in the arg_adCountChange_currentPageview data, create the data object for it
+  if(!arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]){
+    arg_adCountChange_currentPageview[dates_array[arg_dateIndex]] = {};
+  }
+
+  //Check that each of the pageview ad counts exist, else assign 0 to it
+  //Note: when new dates are navigated to and the above code has to create a record for that date, these sub-objects will not exist
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['extended']   = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['extended']   || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['regular']    = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['regular']    || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['mini']       = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['mini']       || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixed']      = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixed']      || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixedMicro'] = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixedMicro'] || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['micro']      = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['micro']      || 0;
 
 
 
@@ -3647,7 +3662,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
         "<tr><td>"+ tmp_foo[tmp_label].text,
         "<button id='"+tmp_label+"AdCount_incrementButton' class='adCountIncrementButton'>+</button>",
         "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>",
-        "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((arg_adCountChange_currentPageview[tmp_label] > 0) ? "+"+arg_adCountChange_currentPageview[tmp_label]:arg_adCountChange_currentPageview[tmp_label])+")</span>",
+        "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label] > 0) ? "+"+arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]:arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label])+")</span>",
         "<button id='"+tmp_label+"AdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"
       ].join('</td><td>');
     }
@@ -3681,20 +3696,24 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   function addIncrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
   {
     var tmp_adCounts = {};
-//    console.info('function addDecrementListener() arguments: \n',JSON.stringify(arguments));
-
     Object_merge(tmp_adCounts, arg_oldAdCounts);
 
     var tmp_adCountChange = {};
-
     Object_merge(tmp_adCountChange, arg_tmp_adCountChange_currentPageview);
-    tmp_adCountChange[arg_adType] = parseInt(tmp_adCountChange[arg_adType]) + 1;
 
+    tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) + 1;
     tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) + 1;
-    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = (0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) ? 0 : tmp_adCounts[dates_array[arg_dateIndex]][arg_adType];
+
+    //If the adcount is less than zero, reset it to 0 (cannot click fewer than zero of any ad-type) and undo the change
+    // to the adcount for the current pageview
+    if(0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]){
+      tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = 0;
+      tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) - 1;
+    }
 
     document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function ()
     {
+      console.info('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
       console.info('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
       insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
@@ -3708,20 +3727,25 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   function addDecrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
   {
     var tmp_adCounts = {};
-//    console.info('function addDecrementListener() arguments: \n',JSON.stringify(arguments));
-
     Object_merge(tmp_adCounts, arg_oldAdCounts);
 
     var tmp_adCountChange = {};
     Object_merge(tmp_adCountChange, arg_tmp_adCountChange_currentPageview);
-    tmp_adCountChange[arg_adType] = parseInt(tmp_adCountChange[arg_adType]) - 1;
 
+    tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) - 1;
     tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) - 1;
-    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = (0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) ? 0 : tmp_adCounts[dates_array[arg_dateIndex]][arg_adType];
 
+    //If the adcount is less than zero, reset it to 0 (cannot click fewer than zero of any ad-type) and undo the change
+    // to the adcount for the current pageview
+    if(0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]){
+      tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = 0;
+      tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) + 1;
+    }
+    
     document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function ()
     {
-      console.info('tmp_adCountChange (on decrement click) = ',JSON.stringify(tmp_adCountChange));
+      console.info('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
+      console.info('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
       insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
@@ -4097,15 +4121,7 @@ if(currentPage.pageCode.match(/accSummary/i))
 if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 {
   var adCountData = getPref('ownAdCountTally',{}, { prefType: 'JSON' });
-  var adCountChange_currentPageview = {
-    extended: 0,
-    regular: 0,
-    mini: 0,
-    fixed: 0,
-    fixedMicro: 0,
-    micro: 0
-  };
-  insertAdCounterBox(0, adCountData, adCountChange_currentPageview);
+  insertAdCounterBox(0, adCountData, {});
 }
 
 
