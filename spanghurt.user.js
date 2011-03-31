@@ -2548,10 +2548,16 @@ var chartDataBars = new function()
           };
 //          console.info(arg_graphId+' - '+m+'\n','tmp_currentDate = ',tmp_currentDate,'\n','JSON.stringify(dataBarData['+tmp_currentDate+']) = '+JSON.stringify(dataBarData[tmp_currentDate]));
 
-          if('ch_cr' == arg_graphId || 'ch_cd' == arg_graphId || 'ch_cliques' == arg_graphId){
-//            console.info(dataBarData[tmp_currentDate].avg * 0.01);
-            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.referralClickValue * tmp_roundedTo) / tmp_roundedTo;
+          if('ch_cr' == arg_graphId){
+            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.rentedReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
           }
+          if('ch_cd' == arg_graphId){
+            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.directReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
+          }
+          if('ch_cliques' == arg_graphId){
+            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.ownClickValue * tmp_roundedTo) / tmp_roundedTo;
+          }
+
           if('ch_recycle' == arg_graphId){
             dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / 0.07 * tmp_roundedTo) / tmp_roundedTo;
           }
@@ -4033,7 +4039,11 @@ var referralListings_columns = new function()
       for(var columnName in columns){
         switch(columnName){
           case 'incomeCol':
-            tmp_value = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.referralClickValue).toFixed(3);
+              if(currentPage.pageCode.match(/referralListings_Rented/)){
+                tmp_value = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.rentedReferralClickValue).toFixed(3);
+              } else if(currentPage.pageCode.match(/referralListings_Direct/)){
+                tmp_value = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.directReferralClickValue).toFixed(3);
+              }
           break;
           case 'refSince_DHM':
             tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].referralSince));
@@ -4335,7 +4345,7 @@ function insertSidebar()
     }
     var numberOfDays = (endDay - startDay) + 1;
 
-    var tmp_income = (sidebarData['rentedClicks'][dates_array[endDay]].sum + sidebarData['directClicks'][dates_array[endDay]].sum) * currentUser.directReferralClickValue;
+    var tmp_income = (sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue) + (sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.directReferralClickValue);
     var tmp_income_inclOwnClicks = tmp_income + (sidebarData['personalClicks'][dates_array[endDay]].sum * currentUser.ownClickValue);
     var tmp_expenses = sidebarData['recycleCost'][dates_array[endDay]].sum +
         sidebarData['renewalCost'][dates_array[endDay]].sum +
