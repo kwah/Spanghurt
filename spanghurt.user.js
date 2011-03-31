@@ -4196,7 +4196,7 @@ function insertSidebar()
   //    [another time period....],
   //    [etc..]
   // ]
-  var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,14],[1,14]];
+  var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,9],[1,9]];
   var tmp_dataSet = JSON.parse(localStorage.getItem('graphData'));
   var tmp_currentDataset;
 
