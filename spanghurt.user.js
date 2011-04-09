@@ -5,6 +5,117 @@
 // @include        http*://www.neobux.com/*
 // ==/UserScript==
 
+var tl8strings = {};
+var tl8strings = {
+  'EN': {
+    " Days <small>(excl. Today)</small>" : " Days <small>(excl. Today)</small>",
+    " Days <small>(incl. Today)</small>" : " Days <small>(incl. Today)</small>",
+    " Days Ago and " : " Days Ago and ",
+    " Days Ago" : " Days Ago",
+    " [nb: the second value includes an estimate of your personal clicks]" : " [nb: the second value includes an estimate of your personal clicks]",
+    ", based on the projected values" : ", based on the projected values",
+    "15 days (The \\\"Base Rate\\\")" : "15 days (The \\\"Base Rate\\\")",
+    "150 days (25% discount)" : "150 days (25% discount)",
+    "240 days (30% discount)" : "240 days (30% discount)",
+    "30 days (5% discount)" : "30 days (5% discount)",
+    "60 days (10% discount)" : "60 days (10% discount)",
+    "90 days (18% discount)" : "90 days (18% discount)",
+    "AutoPay value" : "AutoPay value",
+    "Autopay" : "Autopay",
+    "Average Free Recycles: " : "Average Free Recycles: ",
+    "Avg. #Recycles: " : "Avg. #Recycles: ",
+    "Avg. Clicks: " : "Avg. Clicks: ",
+    "Avg. Expense: " : "Avg. Expense: ",
+    "Avg. Income: " : "Avg. Income: ",
+    "Avg. Transfer: " : "Avg. Transfer: ",
+    "Close" : "Close",
+    "Credited clicks" : "Credited clicks",
+    "Details about your expenses for " : "Details about your expenses for ",
+    "Details about your income sources for " : "Details about your income sources for ",
+    "Direct" : "Direct",
+    "Direct 'Real' Average" : "Direct 'Real' Average",
+    "Direct Average" : "Direct Average",
+    "Direct Clicks" : "Direct Clicks",
+    "Do you use autopay?" : "Do you use autopay?",
+    "Expenses" : "Expenses",
+    "Extended:" : "Extended:",
+    "Extension value" : "Extension value",
+    "Extensions" : "Extensions",
+    "Fixed (Micro):" : "Fixed (Micro):",
+    "Fixed:" : "Fixed:",
+    "For how long do you usually renew your referrals?" : "For how long do you usually renew your referrals?",
+    "Golden Pack" : "Golden Pack",
+    "Gross Income" : "Gross Income",
+    "How many direct referrals do you have?" : "How many direct referrals do you have?",
+    "How many rented referrals do you have?" : "How many rented referrals do you have?",
+    "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>" : "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>",
+    "Local Time" : "Local Time",
+    "Micro:" : "Micro:",
+    "Mini:" : "Mini:",
+    "Net Income" : "Net Income",
+    "Net" : "Net",
+    "Personal Clicks" : "Personal Clicks",
+    "Projected Gross Income" : "Projected Gross Income",
+    "Projected Income" : "Projected Income",
+    "Recycle value" : "Recycle value",
+    "Recycles" : "Recycles",
+    "Referrals" : "Referrals",
+    "Regular:" : "Regular:",
+    "Rented" : "Rented",
+    "Rented 'Real' Average" : "Rented 'Real' Average",
+    "Rented Average" : "Rented Average",
+    "Rented Clicks" : "Rented Clicks",
+    "Save Settings" : "Save Settings",
+    "Spanghurt Script Preferences" : "Spanghurt Script Preferences",
+    "Spanghurt! Initial Setup" : "Spanghurt! Initial Setup",
+    "Sum: " : "Sum: ",
+    "Summary Totals" : "Summary Totals",
+    "Summary of Income / Projected Income / Expenses / Profit for " : "Summary of Income / Projected Income / Expenses / Profit for ",
+    "The last " : "The last ",
+    "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it." : "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.",
+    "Total" : "Total",
+    "Today Only" : "Today Only",
+    "Total 'Real' Average" : "Total 'Real' Average",
+    "Total Average" : "Total Average",
+    "Total number of referrals" : "Total number of referrals",
+    "Totals between " : "Totals between ",
+    "Transfer value" : "Transfer value",
+    "What is the time difference between your time and the server's time?" : "What is the time difference between your time and the server's time?",
+    "Yesterday Only" : "Yesterday Only"
+  }
+};
+
+var tmp_translationStringsNeeded = {};
+tmp_translationStringsNeeded = JSON.parse(localStorage.getItem('translationStringsNeeded')) || {};
+
+var tl8_counter = 0;
+
+function tl8(arg_originalString)
+{
+  arg_originalString = (arg_originalString);
+  console.group();
+//  console.info('start translation of ',arg_originalString);
+
+  if('undefined' == typeof tl8strings[localStorage.getItem('neobuxLanguageCode')][arg_originalString])
+  {
+//    console.info('Error!\n\nTranslation string for "',arg_originalString, '" not found');
+    tmp_translationStringsNeeded[arg_originalString] = arg_originalString;
+    localStorage.setItem('translationStringsNeeded',JSON.stringify(tmp_translationStringsNeeded));
+
+    console.info('Record of the translation strings yet to be translated has been updated\n\n',arg_originalString);
+
+    tl8_counter++;
+    if(tl8_counter < 0){
+      console.info('arg_originalString = ', arg_originalString);
+      console.info('tmp_translationStringsNeeded[arg_originalString] = ',tmp_translationStringsNeeded[arg_originalString]);
+      console.info('JSON.stringify(tmp_translationStringsNeeded) = ',JSON.stringify(tmp_translationStringsNeeded));
+      console.info(JSON.parse(localStorage.getItem('translationStringsNeeded')));
+    }
+    return (arg_originalString);
+  }
+  return tl8strings[localStorage.getItem('neobuxLanguageCode')][arg_originalString];
+}
+
 
 /**
  * Compatibility functions
@@ -249,7 +360,7 @@ function ModalDialog(arg_dialogId) {
  */
 
 // Depending upon the storage method used, a true value may be stored as boolean or string type so shall test for both
-if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.getItem('setupComplete'))
+if(("true" !== localStorage.getItem('setupComplete') && true !== localStorage.getItem('setupComplete')))
 {
   var shadowBackdrop;
   var initialSetupDiv;
@@ -258,31 +369,31 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
   initialSetupDialog.create(
       'background-color: white; margin: 8em auto; padding: 2em; width: 30em;',
       '' +
-      '<strong>Spanghurt! Initial Setup</strong><br>' +
+      '<strong>'+tl8('Spanghurt! Initial Setup')+'</strong><br>' +
       '<br>' +
       '<hr>' +
-      "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.<br>" +
+      tl8('To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.')+"<br>" +
       '<hr>' +
       '<br>' +
-      'How many direct referrals do you have? <input id="initialSetup_directReferrals" size="4" value="0" type="text" /><br>' +
-      'How many rented referrals do you have? <input id="initialSetup_rentedReferrals" size="4" value="0" type="text" /><br>' +
-      'Do you use autopay? <input id="initialSetup_autopay" type="checkbox" /><br>' +
+      ''+tl8('How many direct referrals do you have?')+' <input id="initialSetup_directReferrals" size="4" value="0" type="text" /><br>' +
+      ''+tl8('How many rented referrals do you have?')+' <input id="initialSetup_rentedReferrals" size="4" value="0" type="text" /><br>' +
+      ''+tl8('Do you use autopay?')+' <input id="initialSetup_autopay" type="checkbox" /><br>' +
       '<br>' +
-      'For how long do you usually renew your referrals? <select id="initialSetup_normalRenewalLength">' +
-      '<option value="15">15 days (The "Base Rate")</option>' +
-      '<option value="30" selected="selected">30 days (5% discount)</option>' +
-      '<option value="60">60 days (10% discount)</option>' +
-      '<option value="90">90 days (18% discount)</option>' +
-      '<option value="150">150 days (25% discount)</option>' +
-      '<option value="240">240 days (30% discount)</option>' +
+      ''+tl8('For how long do you usually renew your referrals?')+' <select id="initialSetup_normalRenewalLength">' +
+      '<option value="15">'+tl8('15 days (The "Base Rate")')+'</option>' +
+      '<option value="30" selected="selected">'+tl8('30 days (5% discount)')+'</option>' +
+      '<option value="60">'+tl8('60 days (10% discount)')+'</option>' +
+      '<option value="90">'+tl8('90 days (18% discount)')+'</option>' +
+      '<option value="150">'+tl8('150 days (25% discount)')+'</option>' +
+      '<option value="240">'+tl8('240 days (30% discount)')+'</option>' +
       '</select> <br>' +
       '<br>' +
-      'What is the time difference between your time and the server\'s time? <input id="initialSetup_timeDifference" size="4" value="" type="text" /><br>' +
+      ''+tl8('What is the time difference between your time and the server\'s time?')+' <input id="initialSetup_timeDifference" size="4" value="" type="text" /><br>' +
       '<br>' +
-      "<small><i>If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>" +
+      '<small><i>'+tl8("If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>")+
       '<br>' +
-      '<input id="initialSetup_save" value="Save Settings" type="button"/>' +
-      '<input id="initialSetup_close" value="Close" type="button"/>' +
+      '<input id="initialSetup_save" value="'+tl8('Save Settings')+'" type="button"/>' +
+      '<input id="initialSetup_close" value="'+tl8('Close')+'" type="button"/>' +
       ''
       );
 
@@ -304,12 +415,12 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
         )
     {
 
-      if(confirm('Please check that this is what you have entered then click okay to save it or cancel to retry:\n\n' +
-          'Direct Referrals: ' + tmp_directRefs[1] + '\n' +
-          'Rented Referrals '+tmp_rentedRefs[1]+'\n' +
-          'Autopay On: '+tmp_autopay+'\n' +
-          'Length of Renewals: '+tmp_renewalLength+' days\n' +
-          'Time Difference: '+tmp_timeDifference[1]+' hrs')
+      if(confirm(tl8('Please check that this is what you have entered then click okay to save it or cancel to retry:')+'\n\n' +
+          tl8('Direct Referrals: ')   + tmp_directRefs[1] + '\n' +
+          tl8('Rented Referrals ')    + tmp_directRefs[1]+'\n' +
+          tl8('Autopay On: ')         + tmp_autopay+'\n' +
+          tl8('Length of Renewals: ') + tmp_renewalLength+'\n' +
+          tl8('Time Difference: ')    + tmp_timeDifference[1])
           )
       {
 
@@ -322,19 +433,19 @@ if("true" !== localStorage.getItem('setupComplete') && true !== localStorage.get
         localStorage.setItem('setupComplete', true);
 
 
-        alert('Settings saved! The script will run on the next Neobux page that you load.');
+        alert(tl8('Settings saved! The script will run on the next Neobux page that you load.'));
 
         initialSetupDialog.hide();
         
       }
     }
     else{
-      alert('There was an error with what you have entered. Please correct what you have entered and try again:\n\n' +
-          'Direct Referrals: ' + tmp_directRefs[1] + '\n' +
-          'Rented Referrals '+tmp_directRefs[1]+'\n' +
-          'Autopay On: '+tmp_autopay+'\n' +
-          'Length of Renewals: '+tmp_renewalLength+'\n' +
-          'Time Difference: '+tmp_timeDifference[1]);
+      alert(tl8('There was an error with what you have entered. Please correct what you have entered and try again:')+'\n\n' +
+          tl8('Direct Referrals: ')   + tmp_directRefs[1] + '\n' +
+          tl8('Rented Referrals ')    + tmp_directRefs[1]+'\n' +
+          tl8('Autopay On: ')         + tmp_autopay+'\n' +
+          tl8('Length of Renewals: ') + tmp_renewalLength+'\n' +
+          tl8('Time Difference: ')    + tmp_timeDifference[1]);
     }
 
   },false);
@@ -777,30 +888,6 @@ clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standa
  * @param arg_defaultValue The value to return if the value isn't found in storage.
  * @param arg_valueType Indicates the data type that the value will be stored as (where possible) / the data type that the stored value will be returned as. Useful for indicating JSON data. Defaults to string.
  **/
-/*function PREF(arg_prefName, arg_defaultValue, arg_valueType)
- {
- this.getPref = localStorage.getItem(arg_prefName, arg_defaultValue);
- this.setPref = localStorage.setItem(arg_prefName, arg_defaultValue);
- return this;
- }*/
-
-
-/*
- // helper function to create closures based on passed-in arguments:
- var bindGetterSetter = function(obj,p,properties)
- {
- obj.__defineGetter__(p, function() { return properties[p]; });
- obj.__defineSetter__(p, function(val) { properties[p]=val; return this; });
- };
-
- // http://stackoverflow.com/questions/377716/javascript-automatic-getter-setters-john-resig-book/378395#378395
- function USER( arg_properties ) {
-
- for (var prop in arg_properties) {
- bindGetterSetter(this, prop, arg_properties);
- }
- }
- */
 
 function getPref(arg_prefName, arg_defaultValue, arg_options)
 {
@@ -924,11 +1011,32 @@ var currentPage = new function()
 {
   function detectLanguageCode()
   {
-    if(document.body.textContent.match(/Change Language To Portuguese/i)) { setPref('neobuxLanguageCode', 'EN', {prefType: 'string'}); }
-    if(document.body.textContent.match(/Change Language To English/i)) { setPref('neobuxLanguageCode', 'PT', {prefType: 'string'}); }
+    var tmp_langCodes = {
+      'f-us': 'EN', // English
+      'f-pt': 'PT', // Portuguese
+      'f-es': 'ES', // Spanish
+      'f-gr': 'GR', // Greece
+      'f-fi': 'FI', // Finnish
+      'f-se': 'SE', //
+      'f-de': 'DE', //
+      'f-fr': 'FR'  // French
+    };
 
+    for(var tmp_langCode in tmp_langCodes){
+      if(tmp_langCodes.hasOwnProperty(tmp_langCode)){
+        if(document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class').match(tmp_langCode))
+        {
+          console.info("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
+          console.info('tmp_langCode = '+tmp_langCode);
+          setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], {prefType: 'string'});
+        }
+      }
+    } 
+
+    //Return the stored language code, defaulting to EN;
     return getPref('neobuxLanguageCode', 'EN', {prefType: 'string'});
-  }
+  };
+  
   this.languageCode = detectLanguageCode();
 
   function detectPageCode ()
@@ -2373,8 +2481,8 @@ var logo =
       elmnt_logoImage.style.cursor = 'pointer';
       elmnt_logoImage.border = "0";
       elmnt_logoImage.width = '16';
-      elmnt_logoImage.alt = 'Spanghurt Script Preferences';
-      elmnt_logoImage.title = 'Spanghurt Script Preferences';
+      elmnt_logoImage.alt = tl8('Spanghurt Script Preferences');
+      elmnt_logoImage.title = tl8('Spanghurt Script Preferences');
       elmnt_logoImage.src = 'http://kwah.org/neobux/script/images/logo.png';
 //      elmnt_logoImage.src = 'http://img262.imageshack.us/img262/3654/neobuxv3logolargered2.png';
       // img.src = 'http://img262.imageshack.us/img262/4965/neobuxv3logolargered3.png';
@@ -2670,21 +2778,21 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                ['Sum: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') ',0)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') ',0)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                ['Avg. Clicks: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') ',3)],
+                [tl8('Avg. Clicks: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') ',3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                ['Avg. Income: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avgIncome','(',') $',3)],
+                [tl8('Avg. Income: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avgIncome','(',') $',3)],
                 ''
               )
           );
@@ -2705,14 +2813,14 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                ['Sum: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                ['Avg. Expense: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
                 ''
               )
           );
@@ -2728,7 +2836,7 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                ['Avg. #Recycles: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avgRecycles','(',') ',3)],
+                [tl8('Avg. #Recycles: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avgRecycles','(',') ',3)],
                 ''
               )
           );
@@ -2741,14 +2849,14 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                ['Sum: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                ['Avg. Transfer: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                [tl8('Avg. Transfer: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
                 ''
               )
           );
@@ -2760,14 +2868,14 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                ['Sum: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') ',1)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','sum','(',') ',1)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                ['Average Free Recycles: ', dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') ',1)],
+                [tl8('Average Free Recycles: '), dataToOutputToDataBar(tmp_dataSet,this.dataBarIntervals[tmp_graphLength],'','avg','(',') ',1)],
                 ''
               )
           );
@@ -3615,37 +3723,37 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   var tmp_foo = {
     extended: {
       adCount: (arg_adCounts[dates_array[arg_dateIndex]]['extended'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0,
-      text: "Extended:",
+      text: tl8("Extended:"),
       countsToTos37: true,
       value: 0.02
     },
     regular: {
       adCount: (arg_adCounts[dates_array[arg_dateIndex]]['regular'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0,
-      text: "Regular:",
+      text: tl8("Regular:"),
       countsToTos37: true,
       value: 0.01
     },
     mini: {
       adCount: (arg_adCounts[dates_array[arg_dateIndex]]['mini'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0,
-      text: "Mini:",
+      text: tl8("Mini:"),
       countsToTos37: false,
       value: 0.005
     },
     fixed: {
       adCount: (arg_adCounts[dates_array[arg_dateIndex]]['fixed'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0,
-      text: "Fixed:",
+      text: tl8("Fixed:"),
       countsToTos37: true,
       value: 0.01
     },
     fixedMicro: {
       adCount: (arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0,
-      text: "Fixed (Micro):",
+      text: tl8("Fixed (Micro):"),
       countsToTos37: true,
       value: 0.001
     },
     micro: {
       adCount: (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0,
-      text: "Micro:",
+      text: tl8("Micro:"),
       countsToTos37: false,
       value: 0.001
     },
@@ -4150,6 +4258,31 @@ function insertSidebar()
     left: document.body.querySelectorAll('.verde')[0].parentNode.parentNode.parentNode.parentNode.parentNode
   };
 
+
+  // Time periods for the statistics sidebar where:
+  // 0=today, 1=1day ago, 14=14days ago etc
+  // [
+  //    [starting day, ending day],
+  //    [next time periods....],
+  //    [another time period....],
+  //    [etc..]
+  // ]
+  var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,9],[1,9]];
+  var tmp_dataSet = JSON.parse(localStorage.getItem('graphData'));
+  var tmp_currentDataset;
+
+  var sidebarData = {};
+  var currentSidebarTimePeriod;
+  var showProjected;
+
+  var tmp_sum = [], tmp_currentValue = [], tmp_average = [];
+  var tmp_currentDate;
+  var tmp_foobar;
+
+  var dataIsComplete = false;
+
+
+
   // // NOW CREATE THE ACTUAL SIDEBAR ////
   if(document.getElementById("sidebarContainer")) {
     document.getElementById("sidebarContainer").parentNode.removeChild(document.getElementById("sidebarContainer"));
@@ -4173,54 +4306,114 @@ function insertSidebar()
       ".grey { color: #aaa; }");
 
 
+  //Functions to quickly decide if info should be shown
   function showInfo(arg_toDisplay, arg_refType) { return (0 < currentUser.numberOfRefs[arg_refType]) ? arg_toDisplay : ''; }
-  function showThisIfUserHasRentedReferrals(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
-  function showThisIfUserHasDirectReferrals(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct) ? arg_toDisplay : ''; }
-  function showThisIfUserHasReferrals(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct || 0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
+  /*Show if user has rented referrals*/
+  function SIRR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
+  /*Show if user has direct referrals*/
+  function SIDR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct) ? arg_toDisplay : ''; }
+  /*Show if user has referrals*/
+  function SIR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct || 0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
 
   function outputIfExists(arg_varToOutput,arg_textToDisplayOtherwise)
   {
     try { return arg_varToOutput; }
     catch(e) { return arg_textToDisplayOtherwise; }
   }
-  console.info('JSON.stringify(currentUser.numberOfRefs)',JSON.stringify(currentUser.numberOfRefs));
+
+
+
+  function graphShortCodeToReadableDescription(arg_shortCode)
+  {
+    var tmp_headerValue = '';
+    switch(arg_shortCode)
+    {
+      case 'personalClicks':
+        tmp_headerValue = tl8('Local Time');
+        break;
+      case 'directClicks':
+      //fall through
+      case 'rentedClicks':
+        tmp_headerValue = tl8('Credited clicks');
+        break;
+      case 'recycleCost':
+        tmp_headerValue = tl8('Recycle value');
+        break;
+      case 'renewalCost':
+        tmp_headerValue = tl8('Extension value');
+        break;
+      case 'autopayCost':
+        tmp_headerValue = tl8('AutoPay value');
+        break;
+      case 'transfersToRentalBalance':
+        tmp_headerValue = tl8('Transfer value');
+        break;
+      case 'referralEarnings':
+        tmp_headerValue = tl8('Extension value');
+        break;
+      case 'referralProfit':
+        tmp_headerValue = tl8('Extension value');
+        break;
+      case 'automaticRecycles':
+        tmp_headerValue = tl8('Referrals');
+        break;
+      case 'transferToPackBalance':
+        tmp_headerValue = tl8('Transfer value');
+        break;
+      case 'extensions_631To720':
+      //fall through
+      case 'extensions_541To630':
+      //fall through
+      case 'extensions_451To540':
+      //fall through
+      case 'extensions_361To450':
+      //fall through
+      case 'extensions_271To360':
+      //fall through
+      case 'extensions_181To270':
+      //fall through
+      case 'extensions_91To180':
+      //fall through
+      case 'extensions_0To90':
+      //fall through
+      case 'extensions':
+        //fall through
+        tmp_headerValue = tl8('Total number of referrals');
+        break;
+    }
+    return tmp_headerValue;
+  }
+
+
   var tmp = "";
   tmp += "<span class='sidebarContent'>";
   tmp += "<span class='sidebarHeader'>";
-  tmp += "<h4 class='bold'>Statistics Summary</h4>";
-  tmp += "<i>Rented: " + currentUser.numberOfRefs.Rented + " / Direct: " + currentUser.numberOfRefs.Direct + "</i><br>";
-  tmp += "<i>Total: " + (currentUser.numberOfRefs.Rented + currentUser.numberOfRefs.Direct) + "</i>";
+  tmp += "<h4 class='bold'>"+tl8('Statistics Summary')+"</h4>";
+  tmp += "<i>"+tl8('Rented')+": " + currentUser.numberOfRefs.Rented + " / "+tl8('Direct')+": " + currentUser.numberOfRefs.Direct + "</i><br>";
+  tmp += "<i>"+tl8('Total')+": " + (currentUser.numberOfRefs.Rented + currentUser.numberOfRefs.Direct) + "</i>";
   tmp += " </span>";
 
 
-  // Time periods for the statistics sidebar where:
-  // 0=today, 1=1day ago, 14=14days ago etc
-  // [
-  //    [starting day, ending day],
-  //    [next time periods....],
-  //    [another time period....],
-  //    [etc..]
-  // ]
-  var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,9],[1,9]];
-  var tmp_dataSet = JSON.parse(localStorage.getItem('graphData'));
-  var tmp_currentDataset;
-
-  var sidebarData = {};
-  var currentSidebarTimePeriod;
-  var showProjected;
-
-  for(var i=0; i<sidebarTimePeriods.length; i++){
+  for(var i=0; i < sidebarTimePeriods.length; i++)
+  {
     currentSidebarTimePeriod = sidebarTimePeriods[i];
+
+    /**
+     * CHECK IF THE CURRENTLY SELECTED TIME PERIOD IS VALID
+     * IF NOT, CONTINUE TO THE NEXT SIDEBAR TIME PERIOD
+     **/
     if(!(0 <= currentSidebarTimePeriod[0]) || !(0 <= currentSidebarTimePeriod[1])) {
-      console.info("Error!\n\n", "Sidebar Timeperiod #"+i+' is not numerical. Moving onto next time period');
+      console.info("Error!\n\n", "Sidebar Timeperiod #" + i + ' is not numerical. Moving onto next time period');
       continue;
     }
     if(currentSidebarTimePeriod[0] > currentSidebarTimePeriod[1]) {
-      console.info("Error!\n\n", "Sidebar Timeperiod #"+i+' is not in the correct order (end day is earlier than the start day). Moving onto next time period');
+      console.info("Error!\n\n", "Sidebar Timeperiod #" + i + ' is not in the correct order (end day is earlier than the start day). Moving onto next time period');
       continue;
     }
+    //Default showing the projected values for the current time period to false and only enable it if required
     showProjected = false;
 
+    //Fix the order of the time periods if the order is malformed
     if(currentSidebarTimePeriod[0] <= currentSidebarTimePeriod[1])
     {
       startDay = currentSidebarTimePeriod[0];
@@ -4230,74 +4423,12 @@ function insertSidebar()
       endDay = currentSidebarTimePeriod[0];
     }
 
-    var tmp_sum = [], tmp_currentValue = [], tmp_average = [];
-    var tmp_currentDate;
-    var tmp_foobar;
-
-    var dataIsComplete = false;
-
 
     for(var j in tmp_dataSet)
     {
       if(tmp_dataSet.hasOwnProperty(j)){
 
-        var tmp_headerValue;
-        switch(j)
-        {
-          case 'personalClicks':
-            tmp_headerValue = 'Local Time';
-          break;
-          case 'directClicks':
-          //fall through
-          case 'rentedClicks':
-            tmp_headerValue = 'Credited clicks';
-          break;
-          case 'recycleCost':
-            tmp_headerValue = 'Recycle value';
-          break;
-          case 'renewalCost':
-            tmp_headerValue = 'Extension value';
-          break;
-          case 'autopayCost':
-            tmp_headerValue = 'AutoPay value';
-          break;
-          case 'transfersToRentalBalance':
-            tmp_headerValue = 'Transfer value';
-          break;
-          case 'referralEarnings':
-            tmp_headerValue = 'Extension value';
-          break;
-          case 'referralProfit':
-            tmp_headerValue = 'Extension value';
-          break;
-          case 'automaticRecycles':
-            tmp_headerValue = 'Referrals';
-          break;
-          case 'transferToPackBalance':
-            tmp_headerValue = 'Transfer value';
-          break;
-          case 'extensions_631To720':
-          //fall through
-          case 'extensions_541To630':
-          //fall through
-          case 'extensions_451To540':
-          //fall through
-          case 'extensions_361To450':
-          //fall through
-          case 'extensions_271To360':
-          //fall through
-          case 'extensions_181To270':
-          //fall through
-          case 'extensions_91To180':
-          //fall through
-          case 'extensions_0To90':
-          //fall through
-          case 'extensions':
-          //fall through
-            tmp_headerValue = 'Total number of referrals';
-          break;
-        }
-
+        var tmp_headerValue = graphShortCodeToReadableDescription(j);
         tmp_currentDataset = tmp_dataSet[j][tmp_headerValue];
 
 
@@ -4334,19 +4465,19 @@ function insertSidebar()
 
 //    console.info('sidebarData = ',sidebarData);
 
-    var header = "Totals between "+startDay+" Days Ago and "+(endDay+1)+" Days Ago";
+    var header = tl8("Totals between ") + startDay + tl8(" Days Ago and ") + (endDay+1) + tl8(" Days Ago");
 
     if(0 == startDay) {
-      header = "The last "+(endDay+1)+" Days <small>(incl. Today)</small>";
+      header = tl8("The last ") + (endDay+1) + tl8(" Days <small>(incl. Today)</small>");
     }
     if(1 == startDay) {
-      header = "The last "+(endDay+1)+" Days <small>(excl. Today)</small>";
+      header = tl8("The last ") + (endDay+1) + tl8(" Days <small>(excl. Today)</small>");
     }
 
     if(startDay == endDay) {
-      if(0 == endDay) { header = "Today Only"; showProjected = true; }
-      else if(1 == endDay) { header = "Yesterday Only"; }
-      else { header = startDay + "Days Ago"; }
+      if(0 == endDay) { header = tl8("Today Only"); showProjected = true; }
+      else if(1 == endDay) { header = tl8("Yesterday Only"); }
+      else { header = startDay + tl8("Days Ago"); }
     }
     var numberOfDays = (endDay - startDay) + 1;
 
@@ -4360,51 +4491,51 @@ function insertSidebar()
 
     tmp += "<h5 class='bold grey'>[ "+header+" ]</h5>";
     if(!dataIsComplete) {
-      tmp += "<span style='font-colour:pink;'>Incomplete</span><br>";
+      tmp += "<span style='font-colour:pink;'>" + tl8('Incomplete') + "</span><br>";
     }
-    tmp += "<span class='bold h5_subHead'>&nbsp; - Net : $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) +"</span>";
+    tmp += "<span class='bold h5_subHead'>&nbsp; - "+tl8('Net')+" : $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) +"</span>";
     tmp += "<hr width= '155px' height='1px' color='#cccccc'/>";
 
-    tmp += "<h6 title='Details about your income sources for "+header.toLowerCase()+"'> + Income</h6>";
+    tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+"'> + Income</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += "- Personal Clicks: " + sidebarData['personalClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['personalClicks'][dates_array[endDay]].sum * currentUser.ownClickValue).toFixed(3)+"<br>";
-    tmp += showThisIfUserHasRentedReferrals("- Rented Clicks: " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
-    tmp += showThisIfUserHasDirectReferrals("- Direct Clicks: " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
+    tmp += "- "+tl8('Personal Clicks')+": " + sidebarData['personalClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['personalClicks'][dates_array[endDay]].sum * currentUser.ownClickValue).toFixed(3)+"<br>";
+    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
     tmp += "</div>";
 
     if(showProjected)
     {
-      tmp += "<h6 title='Details about your income sources for "+header.toLowerCase()+", based on the projected values'> + Projected Income</h6>";
+      tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+tl8(', based on the projected values')+"'> + "+tl8('Projected Income')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += showThisIfUserHasRentedReferrals("- Rented Clicks: " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
-    tmp += showThisIfUserHasDirectReferrals("- Direct Clicks: " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
+    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
       tmp += "</div>";
     }
 
-    tmp += "<h6 title='Details about your expenses for "+header.toLowerCase()+"'> + Expenses</h6>";
+    tmp += "<h6 title='"+tl8('Details about your expenses for ')+header.toLowerCase()+"'> + "+tl8('Expenses')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += "- Recycles: $" + sidebarData['recycleCost'][dates_array[endDay]].sum.toFixed(2) + " / " + (sidebarData['recycleCost'][dates_array[endDay]].sum / currentUser.recycleFee).toFixed(0) + "<br>";
-    tmp += "- Extensions: $" + sidebarData['renewalCost'][dates_array[endDay]].sum.toFixed(2) + "<br>";
-    tmp += "- Autopay: $" + sidebarData['autopayCost'][dates_array[endDay]].sum.toFixed(3) + " / " + (sidebarData['autopayCost'][dates_array[endDay]].sum / currentUser.autopayFee) + "<br>";
-    tmp += "- Golden Pack: $" + (numberOfDays * currentUser.accountType['cost'] / 365).toFixed(3) + "<br>";
+    tmp += "- "+tl8('Recycles')+": $" + sidebarData['recycleCost'][dates_array[endDay]].sum.toFixed(2) + " / " + (sidebarData['recycleCost'][dates_array[endDay]].sum / currentUser.recycleFee).toFixed(0) + "<br>";
+    tmp += "- "+tl8('Extensions')+": $" + sidebarData['renewalCost'][dates_array[endDay]].sum.toFixed(2) + "<br>";
+    tmp += "- "+tl8('Autopay')+": $" + sidebarData['autopayCost'][dates_array[endDay]].sum.toFixed(3) + " / " + (sidebarData['autopayCost'][dates_array[endDay]].sum / currentUser.autopayFee) + "<br>";
+    tmp += "- "+tl8('Golden Pack')+": $" + (numberOfDays * currentUser.accountType['cost'] / 365).toFixed(3) + "<br>";
     tmp += "</div>";
 
     tmp += "<h6 title='Some statistics for clicks made "+header.toLowerCase()+"'> + Stats</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += showThisIfUserHasRentedReferrals("- Rented Average: " + (sidebarData['rentedClicks'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Rented'] * numberOfDays)).toFixed(3) + "<br>");
-    tmp += showThisIfUserHasRentedReferrals("- Rented 'Real' Average: " + "---" + "<br>");
-    tmp += showThisIfUserHasDirectReferrals("- Direct Average: " + (sidebarData['directClicks'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Direct'] * numberOfDays)).toFixed(3) + "<br>");
-    tmp += showThisIfUserHasDirectReferrals("- Direct 'Real' Average: " + "---" + "<br>");
-    tmp += showThisIfUserHasRentedReferrals(showThisIfUserHasDirectReferrals("- Total Average: " + ((sidebarData['rentedClicks'][dates_array[endDay]].sum + sidebarData['directClicks'][dates_array[endDay]].sum)/((currentUser.numberOfRefs['Rented'] + currentUser.numberOfRefs['Direct']) * numberOfDays)).toFixed(3) + "<br>"));
-    tmp += showThisIfUserHasRentedReferrals(showThisIfUserHasDirectReferrals("- Total 'Real' Average: " + "---" + "<br>"));
+    tmp += SIRR("- "+tl8('Rented Average')+": " + (sidebarData['rentedClicks'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Rented'] * numberOfDays)).toFixed(3) + "<br>");
+    tmp += SIRR("- "+tl8("Rented 'Real' Average")+": " + "---" + "<br>");
+    tmp += SIDR("- "+tl8('Direct Average')+": " + (sidebarData['directClicks'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Direct'] * numberOfDays)).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8("Direct 'Real' Average")+": " + "---" + "<br>");
+    tmp += SIRR(SIDR("- "+tl8('Total Average')+": " + ((sidebarData['rentedClicks'][dates_array[endDay]].sum + sidebarData['directClicks'][dates_array[endDay]].sum)/((currentUser.numberOfRefs['Rented'] + currentUser.numberOfRefs['Direct']) * numberOfDays)).toFixed(3) + "<br>"));
+    tmp += SIRR(SIDR("- "+tl8("Total 'Real' Average")+": " + "---" + "<br>"));
     tmp += "</div>";
 
-    tmp += "<h6 title='Summary of Income / Projected Income / Expenses / Profit for "+header.toLowerCase()+" [nb: the second value includes an estimate of your personal clicks]'> + Summary Totals</h6>";
+    tmp += "<h6 title='"+tl8('Summary of Income / Projected Income / Expenses / Profit for ')+header.toLowerCase()+tl8(' [nb: the second value includes an estimate of your personal clicks]')+"'> + "+tl8('Summary Totals')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += "- Gross Income: $" + tmp_income.toFixed(3) + " / $" + tmp_income_inclOwnClicks.toFixed(3) + "<br>";
-    if(showProjected) { tmp += "- Projected Gross Income: $" + "---" + "<br>"; }
-    tmp += "- Expenses: $" + (tmp_expenses).toFixed(3) + "<br>";
-    tmp += "- Net Income: $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
+    tmp += "- "+tl8('Gross Income')+": $" + tmp_income.toFixed(3) + " / $" + tmp_income_inclOwnClicks.toFixed(3) + "<br>";
+    if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + "---" + "<br>"; }
+    tmp += "- "+tl8('Expenses')+": $" + (tmp_expenses).toFixed(3) + "<br>";
+    tmp += "- "+tl8('Net Income')+": $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
     tmp += "</div>";
   }
 
@@ -4439,3 +4570,13 @@ if(currentPage.pageCode.match(/referralStatistics/))
 
 
 widenPages.generic();
+
+
+
+if(tl8_counter>0){
+  console.info("NOTE!!\n\nUntranslated strings on this page!!");
+  console.info(localStorage.getItem('translationStringsNeeded'));
+}
+
+
+console.info(getPref('neobuxLanguageCode', 'EN', {prefType: 'string'}));
