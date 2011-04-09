@@ -68,6 +68,7 @@ var tl8strings = {
     "Save Settings" : "Save Settings",
     "Spanghurt Script Preferences" : "Spanghurt Script Preferences",
     "Spanghurt! Initial Setup" : "Spanghurt! Initial Setup",
+    "Statistics Summary" : "Statistics Summary",
     "Sum: " : "Sum: ",
     "Summary Totals" : "Summary Totals",
     "Summary of Income / Projected Income / Expenses / Profit for " : "Summary of Income / Projected Income / Expenses / Profit for ",
@@ -102,7 +103,7 @@ function tl8(arg_originalString)
     tmp_translationStringsNeeded[arg_originalString] = arg_originalString;
     localStorage.setItem('translationStringsNeeded',JSON.stringify(tmp_translationStringsNeeded));
 
-    console.info('Record of the translation strings yet to be translated has been updated\n\n',arg_originalString);
+    console.info('Record of the translation strings yet to be translated has been updated\n\n missing string = '+arg_originalString);
 
     tl8_counter++;
     if(tl8_counter < 0){
