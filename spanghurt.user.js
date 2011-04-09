@@ -3796,8 +3796,11 @@ function addClickStatsToGoldenGraph(){
       return "<b>" + this.series.name + "</b><br/>" + this.x + ": " + w0 + this.y + " " + w;
     }}, legend: {enabled: L, layout: "horizontal", symbolWidth: 5, style: {left: "auto", bottom: "5px", right: "5px", top: "auto", font: "normal 12px Verdana, sans-serif"}}, plotOptions: {line: {lineWidth: 2, marker: {enabled: 1, symbol: "circle", radius: 3, states: {hover: {enabled: 1, radius: 5}}}}}, series: O, credits: {enabled: 0}});
 
+
+    /*start extra stuff added to the function*/
     var newElmnt = document.createElement('div');
     console.info('O[0].data: ', O[0].data);
+    
     var disp_clicks = "Clicks:";
     var disp_sum = "Sums:";
     var disp_avg = "Avgs:";
@@ -3814,10 +3817,12 @@ function addClickStatsToGoldenGraph(){
 
 //    for (var i = 0; i < O[0].data.length; i++) {
 //      sum[i] = clicks[i] + sum[i-1] | clicks[i];
-    for (var i = O[0].data.length - 1; 0 <= i; i--) {
-      sum[i] = clicks[i] + sum[i+1] | clicks[i];
-      avg[i] = (sum[i] / ((O[0].data.length - i)+1)).toFixed(1);
+    for (var i = O[0].data.length - 1; 0 <= i; i--)
+    {
+      sum[i] = ('undefined' !== typeof sum[i+1]) ? clicks[i] + sum[i+1] : clicks[i];
+      avg[i] = (sum[i] / (O[0].data.length - i)).toFixed(1);
 
+//      console.info('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
 //      console.info('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
     }
 
