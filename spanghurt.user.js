@@ -4048,6 +4048,30 @@ var referralListings_columns = new function()
 //       ', '+diff_secs+'s'+
        ']';
   }
+  function dateToD(arg_date)
+  {
+    var oneSecond = 1000;
+    var oneMinute = oneSecond * 60;
+    var oneHour = oneMinute * 60;
+    var oneDay = oneHour * 24;
+
+    var now = new Date();
+    var t_diff = new Date(arg_date) - now;
+
+    var future = (0 < t_diff);
+    var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
+
+    var diff_days = Math.floor(remaining_time / oneDay);
+    remaining_time -= diff_days * oneDay;
+
+    if(isNaN(diff_days)){
+      return '--';
+    }
+    
+    return '['+
+       diff_days+'d' +
+       ']';
+  }
 
   function nextPaymentStringToDate(arg_string)
   {
@@ -4107,11 +4131,11 @@ var referralListings_columns = new function()
         colSuffix: '',
         colHeaderText: 'D/H/M Next Payment'
       },
-      lastClick_DHM: {
+      lastClick_D: {
         colType: 'new',
         colPrefix: '',
         colSuffix: '',
-        colHeaderText: 'D/H/M Last Click'
+        colHeaderText: 'D Last Click'
       },
       textifyFlag: {
         colType: 'new',
@@ -4167,8 +4191,8 @@ var referralListings_columns = new function()
                 nextPaymentStringToDate(tmp_referralsData[tmp_currentID].nextPayment)
                 );
           break;
-          case 'lastClick_DHM':
-            tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].lastClick));
+          case 'lastClick_D':
+            tmp_value = dateToD(new Date(tmp_referralsData[tmp_currentID].lastClick));
           break;
           case 'textifyFlag':
             tmp_value = tmp_referralsData[tmp_currentID].flag.split('')[0];
