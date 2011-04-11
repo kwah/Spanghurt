@@ -15,12 +15,14 @@ var tl8strings = {
     " Days Ago" : " Days Ago",
     " [nb: the second value includes an estimate of your personal clicks]" : " [nb: the second value includes an estimate of your personal clicks]",
     ", based on the projected values" : ", based on the projected values",
-    "15 days (The \\\"Base Rate\\\")" : "15 days (The \\\"Base Rate\\\")",
+    "15 days (The \"Base Rate\")" : "15 days (The \"Base Rate\")",
     "150 days (25% discount)" : "150 days (25% discount)",
     "240 days (30% discount)" : "240 days (30% discount)",
     "30 days (5% discount)" : "30 days (5% discount)",
     "60 days (10% discount)" : "60 days (10% discount)",
     "90 days (18% discount)" : "90 days (18% discount)",
+    "Amanhã" : "Amanhã",
+    "Aujourd'hui" : "Aujourd'hui",
     "AutoPay value" : "AutoPay value",
     "Autopay" : "Autopay",
     "Average Free Recycles: " : "Average Free Recycles: ",
@@ -29,15 +31,18 @@ var tl8strings = {
     "Avg. Expense: " : "Avg. Expense: ",
     "Avg. Income: " : "Avg. Income: ",
     "Avg. Transfer: " : "Avg. Transfer: ",
+    "Ayer" : "Ayer",
     "Close" : "Close",
     "Credited clicks" : "Credited clicks",
+    "Demain" : "Demain",
     "Details about your expenses for " : "Details about your expenses for ",
     "Details about your income sources for " : "Details about your income sources for ",
-    "Direct" : "Direct",
     "Direct 'Real' Average" : "Direct 'Real' Average",
     "Direct Average" : "Direct Average",
     "Direct Clicks" : "Direct Clicks",
+    "Direct" : "Direct",
     "Do you use autopay?" : "Do you use autopay?",
+    "Eilen" : "Eilen",
     "Expenses" : "Expenses",
     "Extended:" : "Extended:",
     "Extension value" : "Extension value",
@@ -45,16 +50,25 @@ var tl8strings = {
     "Fixed (Micro):" : "Fixed (Micro):",
     "Fixed:" : "Fixed:",
     "For how long do you usually renew your referrals?" : "For how long do you usually renew your referrals?",
+    "Gestern" : "Gestern",
     "Golden Pack" : "Golden Pack",
     "Gross Income" : "Gross Income",
+    "Heute" : "Heute",
+    "Hier" : "Hier",
+    "Hoje" : "Hoje",
     "How many direct referrals do you have?" : "How many direct referrals do you have?",
     "How many rented referrals do you have?" : "How many rented referrals do you have?",
+    "Hoy" : "Hoy",
+    "Huomenna" : "Huomenna",
     "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>" : "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>",
     "Local Time" : "Local Time",
+    "Mañana" : "Mañana",
     "Micro:" : "Micro:",
     "Mini:" : "Mini:",
+    "Morgen" : "Morgen",
     "Net Income" : "Net Income",
     "Net" : "Net",
+    "Ontem" : "Ontem",
     "Personal Clicks" : "Personal Clicks",
     "Projected Gross Income" : "Projected Gross Income",
     "Projected Income" : "Projected Income",
@@ -62,10 +76,10 @@ var tl8strings = {
     "Recycles" : "Recycles",
     "Referrals" : "Referrals",
     "Regular:" : "Regular:",
-    "Rented" : "Rented",
     "Rented 'Real' Average" : "Rented 'Real' Average",
     "Rented Average" : "Rented Average",
     "Rented Clicks" : "Rented Clicks",
+    "Rented" : "Rented",
     "Save Settings" : "Save Settings",
     "Spanghurt Script Preferences" : "Spanghurt Script Preferences",
     "Spanghurt! Initial Setup" : "Spanghurt! Initial Setup",
@@ -75,20 +89,27 @@ var tl8strings = {
     "Summary of Income / Projected Income / Expenses / Profit for " : "Summary of Income / Projected Income / Expenses / Profit for ",
     "The last " : "The last ",
     "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it." : "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.",
-    "Total" : "Total",
     "Today Only" : "Today Only",
+    "Today" : "Today",
+    "Tomorrow" : "Tomorrow",
     "Total 'Real' Average" : "Total 'Real' Average",
     "Total Average" : "Total Average",
     "Total number of referrals" : "Total number of referrals",
+    "Total" : "Total",
     "Totals between " : "Totals between ",
     "Transfer value" : "Transfer value",
+    "Tänään" : "Tänään",
     "What is the time difference between your time and the server's time?" : "What is the time difference between your time and the server's time?",
-    "Yesterday Only" : "Yesterday Only"
+    "Yesterday Only" : "Yesterday Only",
+    "Yesterday" : "Yesterday",
+    "Αύριο" : "Αύριο",
+    "Σήμερα" : "Σήμερα",
+    "Χθες" : "Χθες"
   }
 };
 
 var tmp_translationStringsNeeded = {};
-tmp_translationStringsNeeded = JSON.parse(localStorage.getItem('translationStringsNeeded')) || {};
+//tmp_translationStringsNeeded = JSON.parse(localStorage.getItem('translationStringsNeeded')) || {};
 
 var tl8_counter = 0;
 
@@ -1574,7 +1595,7 @@ var chartData = new function ()
         for(var j = 0; j < currentDataset[2].length; j++)
         {
           //If the current date isn't represented as a date, assume that it is a localised version of today/yesterday/tomorrow etc and potentially needs translating
-          if(!currentDataset[2][j].match('2011/')) { tl8(currentDataset[2][j]); }
+          if(!currentDataset[2][j].match(/[0-9]{4}\/[0-9]{2}\/[0-9]{2}/)) { tl8(currentDataset[2][j]); }
           tmp_currentDate = currentDataset[2][j].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
           tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName][tmp_currentDate] = currentDataset[5][i].data[j];
         }
@@ -2652,7 +2673,7 @@ var chartDataBars = new function()
     {
       for (var j in tmp_dataSet)
       {
-        console.info('j = '+j)
+//        console.info('j = '+j)
         for (var i = 0; i < dataBarIntervals[tmp_graphLength].length; i++) {
           tmp_maxInterval = (dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
         }
@@ -4324,12 +4345,19 @@ function insertSidebar()
 
   var tmp_foo = document.querySelectorAll('span.f_b');
 
-  var projectedAverage = {
-    'Rented': tmp_foo[4].textContent,
-    'Direct': tmp_foo[2].textContent
-  };
+  sidebarData.projectedClicks = {};
+  sidebarData.projectedClicks['Rented'] = currentUser.numberOfRefs.Rented * parseFloat(tmp_foo[4].textContent);
+  sidebarData.projectedClicks['Direct'] = currentUser.numberOfRefs.Direct * parseFloat(tmp_foo[2].textContent);
+  sidebarData.projectedClicks['Total'] = sidebarData.projectedClicks['Rented'] + sidebarData.projectedClicks['Direct'];
 
+  console.info('sidebarData.projectedClicks = ',sidebarData.projectedClicks);
 
+  sidebarData.projectedIncome = {};
+  sidebarData.projectedIncome['Rented'] = sidebarData.projectedClicks['Rented'] * currentUser.rentedReferralClickValue;
+  sidebarData.projectedIncome['Direct'] = sidebarData.projectedClicks['Direct'] * currentUser.directReferralClickValue;
+  sidebarData.projectedIncome['Total'] = sidebarData.projectedIncome['Rented'] + sidebarData.projectedIncome['Direct'];
+
+  console.info('sidebarData.projectedIncome = ',sidebarData.projectedIncome);
 
   // // NOW CREATE THE ACTUAL SIDEBAR ////
   if(document.getElementById("sidebarContainer")) {
@@ -4555,8 +4583,8 @@ function insertSidebar()
     {
       tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+tl8(', based on the projected values')+"'> + "+tl8('Projected Income')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += SIRR("- "+tl8('Rented Clicks')+": " + (currentUser.numberOfRefs.Rented * projectedAverage['Rented']) + " / $"+((currentUser.numberOfRefs.Rented * projectedAverage['Rented']) * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
-    tmp += SIDR("- "+tl8('Direct Clicks')+": " + (currentUser.numberOfRefs.Direct * projectedAverage['Direct']) + " / $"+((currentUser.numberOfRefs.Direct * projectedAverage['Direct']) * currentUser.directReferralClickValue).toFixed(3) + "<br>");
+    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['projectedClicks'].Rented + " / $"+(sidebarData['projectedIncome'].Rented).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['projectedClicks'].Direct + " / $"+(sidebarData['projectedClicks'].Direct).toFixed(3) + "<br>");
       tmp += "</div>";
     }
 
@@ -4581,7 +4609,7 @@ function insertSidebar()
     tmp += "<h6 title='"+tl8('Summary of Income / Projected Income / Expenses / Profit for ')+header.toLowerCase()+tl8(' [nb: the second value includes an estimate of your personal clicks]')+"'> + "+tl8('Summary Totals')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
     tmp += "- "+tl8('Gross Income')+": $" + tmp_income.toFixed(3) + " / $" + tmp_income_inclOwnClicks.toFixed(3) + "<br>";
-    if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + "---" + "<br>"; }
+    if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + (sidebarData['projectedIncome'].Total) + "<br>"; }
     tmp += "- "+tl8('Expenses')+": $" + (tmp_expenses).toFixed(3) + "<br>";
     tmp += "- "+tl8('Net Income')+": $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
     tmp += "</div>";
@@ -4618,7 +4646,7 @@ if(currentPage.pageCode.match(/referralStatistics/))
     insertSidebar();
   } catch(e)
   {
-    alert("ERROR!\n\n  insertSidebar(); failed\n\n",e);
+    alert("ERROR!\n\n  insertSidebar(); failed\n\n"+e);
   }
 }
 
