@@ -95,11 +95,14 @@ var tl8_counter = 0;
 function tl8(arg_originalString)
 {
   arg_originalString = (arg_originalString);
-  console.group();
-//  console.info('start translation of ',arg_originalString);
 
+//  console.info('start translation of ',arg_originalString);
+  if('undefined' == typeof tl8strings[localStorage.getItem('neobuxLanguageCode')]){
+    tl8strings[localStorage.getItem('neobuxLanguageCode')] = {};
+  }
   if('undefined' == typeof tl8strings[localStorage.getItem('neobuxLanguageCode')][arg_originalString])
   {
+    console.group();
 //    console.info('Error!\n\nTranslation string for "',arg_originalString, '" not found');
     tmp_translationStringsNeeded[arg_originalString] = arg_originalString;
     localStorage.setItem('translationStringsNeeded',JSON.stringify(tmp_translationStringsNeeded));
@@ -113,6 +116,7 @@ function tl8(arg_originalString)
       console.info('JSON.stringify(tmp_translationStringsNeeded) = ',JSON.stringify(tmp_translationStringsNeeded));
       console.info(JSON.parse(localStorage.getItem('translationStringsNeeded')));
     }
+    console.groupEnd();
     return (arg_originalString);
   }
   return tl8strings[localStorage.getItem('neobuxLanguageCode')][arg_originalString];
@@ -198,7 +202,7 @@ function pageCodeDebugLog()
 function errorLog()
 {
   if (2 >= arguments.length) {
-    console.group();
+//    console.group();
   }
 //  if('undefined' !== typeof GM_log) {
 //    if (1 == arguments.length) {
@@ -212,7 +216,7 @@ function errorLog()
     if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
   }
   if (2 >= arguments.length) {
-    console.groupEnd();
+//    console.groupEnd();
   }
 }
 
@@ -448,7 +452,7 @@ if(("true" !== localStorage.getItem('setupComplete') && true !== localStorage.ge
         alert(tl8('Settings saved! The script will run on the next Neobux page that you load.'));
 
         initialSetupDialog.hide();
-        
+
       }
     }
     else{
@@ -1108,12 +1112,12 @@ var currentPage = new function()
           setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], {prefType: 'string'});
         }
       }
-    } 
+    }
 
     //Return the stored language code, defaulting to EN;
     return getPref('neobuxLanguageCode', 'EN', {prefType: 'string'});
   };
-  
+
   this.languageCode = detectLanguageCode();
 
   function detectPageCode ()
@@ -1547,6 +1551,11 @@ var chartData = new function ()
     var tmp_currentDatasetName;
     var tmp_currentDate;
 
+    // english | pt | es | greek | FI | SE | DE
+    var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+    var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+    var tl8_tomorrow = /tomorrow/i;
+
     var tmp_dataGrabbedFromCurrentPage = this.dataGrabbedFromCurrentPage();
 
     for (var _i in tmp_dataGrabbedFromCurrentPage)
@@ -1564,7 +1573,9 @@ var chartData = new function ()
 
         for(var j = 0; j < currentDataset[2].length; j++)
         {
-          tmp_currentDate = currentDataset[2][j].replace(/today/i,TODAY_STRING).replace(/yesterday/i,YESTERDAY_STRING).replace(/tomorrow/i,TOMORROW_STRING);
+          //If the current date isn't represented as a date, assume that it is a localised version of today/yesterday/tomorrow etc and potentially needs translating
+          if(!currentDataset[2][j].match('2011/')) { tl8(currentDataset[2][j]); }
+          tmp_currentDate = currentDataset[2][j].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
           tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName][tmp_currentDate] = currentDataset[5][i].data[j];
         }
       }
@@ -1592,7 +1603,7 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
   try{
     chartData.init();
   } catch(e) {
-    alert("ERROR!\n\n chartData.init() failed");
+    alert("ERROR!\n\n chartData.init() failed\n\n",e);
   }
 }
 
@@ -2024,7 +2035,7 @@ function insertLocalServerTime()
 try {
   insertLocalServerTime();
 } catch(e) {
-  alert("ERROR!\n\n insertLocalServerTime(); failed");
+  alert("ERROR!\n\n insertLocalServerTime(); failed\n\n",e);
 }
 
 
@@ -2435,7 +2446,7 @@ if(0 < location.href.indexOf('ss3=1') || 0 < location.href.indexOf('ss3=2')) {
     referralListings.init();
   } catch(e)
   {
-    alert("ERROR!\n\n referralListings.init() failed");
+    alert("ERROR!\n\n referralListings.init() failed\n\n",e);
   }
 }
 
@@ -2591,7 +2602,7 @@ var logo =
 try {
   logo.init();
 } catch(e) {
-  alert("ERROR!\n\n logo.init(); failed");
+  alert("ERROR!\n\n logo.init(); failed\n\n",e);
 }
 
 
@@ -2616,9 +2627,10 @@ var chartDataBars = new function()
 
 
   var dataBarIntervals = {
-    10: [0,1,2,3,4,5,6,7,8,9],
-//    10: [4,6,9],
+//    10: [0,1,2,3,4,5,6,7,8,9],
+    10: [4,6,9],
     15: [4,9,14],
+//    15: [0,1,2,3,4],
     90: [29,59,89]
   };
 
@@ -2635,7 +2647,7 @@ var chartDataBars = new function()
     var tmp_currentValue;
 
 
-    // The extensions due graphs needs special handling. 
+    // The extensions due graphs needs special handling.
     if (!friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/))
     {
       for (var j in tmp_dataSet)
@@ -2651,9 +2663,9 @@ var chartDataBars = new function()
           tmp_currentDate = dates_array[m];
           tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
 
-          if(arg_graphId == 'ch_cr' && false){
-            console.info(tmp_currentDate);
-            console.info(tmp_currentValue);
+          if(arg_graphId == 'ch_cr' && m<3 || false){
+//            console.info(tl8(tmp_currentDate));
+//            console.info(tl8(tmp_currentValue));
           }
 
           tmp_sum[m] = tmp_sum[m - 1] + tmp_currentValue || tmp_currentValue;
@@ -2675,7 +2687,7 @@ var chartDataBars = new function()
             dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.ownClickValue * tmp_roundedTo) / tmp_roundedTo;
           }
           if ('ch_recycle' == arg_graphId) {
-            dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / 0.07 * tmp_roundedTo) / tmp_roundedTo;
+            dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / currentUser.recycleFee * tmp_roundedTo) / tmp_roundedTo;
           }
         }
       }
@@ -3245,12 +3257,12 @@ if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/refe
   try {
     chartDataBars.init();
   } catch(e) {
-    alert("ERROR!\n\n chartDataBars.init(); failed");
+    alert("ERROR!\n\n chartDataBars.init(); failed\n\n",e);
   }
   try {
     exportTabs.init();
   } catch(e) {
-    alert("ERROR!\n\n  exportTabs.init(); failed");
+    alert("ERROR!\n\n  exportTabs.init(); failed\n\n",e);
   }
 
 }
@@ -3785,7 +3797,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       ].join('</td><td>');
     }
   }
-  
+
   tmp_totalsContainerHTML += "</table>";
   elmnt_totalsContainer.innerHTML = tmp_totalsContainerHTML;
 
@@ -3841,7 +3853,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       }, 0);
     },false);
   }
-  
+
   function addDecrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
   {
     var tmp_adCounts = {};
@@ -3859,7 +3871,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = 0;
       tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) + 1;
     }
-    
+
     document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function ()
     {
       console.info('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
@@ -3912,7 +3924,7 @@ function addClickStatsToGoldenGraph(){
     /*start extra stuff added to the function*/
     var newElmnt = document.createElement('div');
     console.info('O[0].data: ', O[0].data);
-    
+
     var disp_clicks = "Clicks:";
     var disp_sum = "Sums:";
     var disp_avg = "Avgs:";
@@ -3954,7 +3966,7 @@ function addClickStatsToGoldenGraph(){
         '</table>';
 
     newElmnt.style.padding = '0 1.5em 1em';
-    
+
     document.getElementById(x).style.minHeight = '130px';
     document.getElementById(x).style.height = '';
 //    document.getElementById(x).style.minWidth = '280px';
@@ -4070,7 +4082,7 @@ var referralListings_columns = new function()
     if(isNaN(diff_days)){
       return '--';
     }
-    
+
     return '['+
        diff_days+'d' +
        ']';
@@ -4310,6 +4322,14 @@ function insertSidebar()
   var dataIsComplete = false;
 
 
+  var tmp_foo = document.querySelectorAll('span.f_b');
+
+  var projectedAverage = {
+    'Rented': tmp_foo[4].textContent,
+    'Direct': tmp_foo[2].textContent
+  };
+
+
 
   // // NOW CREATE THE ACTUAL SIDEBAR ////
   if(document.getElementById("sidebarContainer")) {
@@ -4535,8 +4555,8 @@ function insertSidebar()
     {
       tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+tl8(', based on the projected values')+"'> + "+tl8('Projected Income')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['rentedClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['rentedClicks'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
-    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['directClicks'][dates_array[endDay]].sum + " / $"+(sidebarData['directClicks'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
+    tmp += SIRR("- "+tl8('Rented Clicks')+": " + (currentUser.numberOfRefs.Rented * projectedAverage['Rented']) + " / $"+((currentUser.numberOfRefs.Rented * projectedAverage['Rented']) * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8('Direct Clicks')+": " + (currentUser.numberOfRefs.Direct * projectedAverage['Direct']) + " / $"+((currentUser.numberOfRefs.Direct * projectedAverage['Direct']) * currentUser.directReferralClickValue).toFixed(3) + "<br>");
       tmp += "</div>";
     }
 
@@ -4598,7 +4618,7 @@ if(currentPage.pageCode.match(/referralStatistics/))
     insertSidebar();
   } catch(e)
   {
-    console.info("ERROR!\n\n  insertSidebar(); failed");
+    alert("ERROR!\n\n  insertSidebar(); failed\n\n",e);
   }
 }
 
@@ -4607,7 +4627,7 @@ if(currentPage.pageCode.match(/referralStatistics/))
     widenPages.generic();
   } catch(e)
   {
-    console.info("ERROR!\n\n widenPages.generic(); failed");
+    alert("ERROR!\n\n widenPages.generic(); failed\n\n"+e);
   }
 
 
