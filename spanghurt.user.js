@@ -674,7 +674,7 @@ Neobux.accountDefaults =
       {'minRefs': 1251, 'cost': 0.0070},
       {'minRefs': 1751, 'cost': 0.0075}
     ],
-    'Pioneer': [
+    'Ultimate': [
       {'minRefs': 0, 'cost': 0.0060},
       {'minRefs': 1251, 'cost': 0.0065},
       {'minRefs': 1501, 'cost': 0.0070}
