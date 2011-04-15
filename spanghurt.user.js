@@ -948,6 +948,9 @@ clickValues['Platinum'] = {};
 clickValues['Diamond'] = {};
 clickValues['Ultimate'] = {};
 
+
+// The golden-pack prices are all based on the golden values so merge those into these and
+//   tweak just the parts that are different
 Object_merge(clickValues['Emerald'],clickValues['Golden']);
 Object_merge(clickValues['Sapphire'],clickValues['Golden']);
 Object_merge(clickValues['Platinum'],clickValues['Golden']);
@@ -2299,6 +2302,14 @@ var referralListings = new function()
 
 //      console.info('cr: ',cr,'\n\n','pr: ',pr);
 
+      /**
+       * Check how many referrals are being shown per page:  If the user is ultimate and has more than 100 referrals showing, minigraphs will not be displayed
+       * If the user has fewer than 10 referrals, the option to select the # of referrals is not present, thus refsPerPage must be set manually
+      */
+      var refsPerPageSelector = document.getElementById('rlpp');
+      var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
+
+      
       /* Ultimate only stuff, based on the ultimate minigraphs */
       // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
       if(currentUser.accountType.showUltimateFeatures && 300 >= refsPerPage)
@@ -2435,12 +2446,6 @@ var referralListings = new function()
 
   this.init = function ()
   {
-    /**
-     * Check how many referrals are being shown per page:  If the user is ultimate and has more than 100 referrals showing, minigraphs will not be displayed
-     * If the user has fewer than 10 referrals, the option to select the # of referrals is not present, thus refsPerPage must be set manually
-    */
-    var refsPerPageSelector = document.getElementById('rlpp');
-    var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
 
     var storedReferralData = getPref('referrals',{},{ prefType:'JSON' });
     var referralData;
