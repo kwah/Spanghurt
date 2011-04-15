@@ -2738,50 +2738,51 @@ var chartDataBars = new function()
     // The extensions due graphs needs special handling.
     if (!friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/))
     {
-//      for (var j in tmp_dataSet)
-//      {
-      var j = graphShortCodeToReadableDescription(friendlyNameLookup[arg_graphId]);
+      for (var j in tmp_dataSet)
+      {
+        /*NB: The for ( in ) breaks if more than one language has been used for viewing Neobux graphs.. */
+//      var j = graphShortCodeToReadableDescription(friendlyNameLookup[arg_graphId]);
 //        console.info('j = '+j);
 //        console.info('tmp_dataSet = '+tmp_dataSet);
 
-      for (var i = 0; i < dataBarIntervals[tmp_graphLength].length; i++) {
-        tmp_maxInterval = (dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
+        for (var i = 0; i < dataBarIntervals[tmp_graphLength].length; i++) {
+          tmp_maxInterval = (dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
+        }
+
+        var tmp_roundedTo = 10000;
+        for (var m = 0; m <= tmp_maxInterval; m++)
+        {
+          tmp_currentDate = dates_array[m];
+          tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
+
+          if(arg_graphId == 'ch_cr' && m<3 || false){
+  //            console.info(tl8(tmp_currentDate));
+  //            console.info(tl8(tmp_currentValue));
+          }
+
+          tmp_sum[m] = tmp_sum[m - 1] + tmp_currentValue || tmp_currentValue;
+          tmp_average[m] = tmp_sum[m] / (m + 1);
+
+          dataBarData[tmp_currentDate] = {
+            'value': Math.round(tmp_currentValue * tmp_roundedTo) / tmp_roundedTo,
+            'sum': Math.round(tmp_sum[m] * tmp_roundedTo) / tmp_roundedTo,
+            'avg': Math.round(tmp_average[m] * tmp_roundedTo) / tmp_roundedTo
+          };
+
+          if ('ch_cr' == arg_graphId) {
+            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.rentedReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
+          }
+          if ('ch_cd' == arg_graphId) {
+            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.directReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
+          }
+          if ('ch_cliques' == arg_graphId) {
+            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.ownClickValue * tmp_roundedTo) / tmp_roundedTo;
+          }
+          if ('ch_recycle' == arg_graphId) {
+            dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / currentUser.recycleFee * tmp_roundedTo) / tmp_roundedTo;
+          }
+        }
       }
-
-      var tmp_roundedTo = 10000;
-      for (var m = 0; m <= tmp_maxInterval; m++)
-      {
-        tmp_currentDate = dates_array[m];
-        tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
-
-        if(arg_graphId == 'ch_cr' && m<3 || false){
-//            console.info(tl8(tmp_currentDate));
-//            console.info(tl8(tmp_currentValue));
-        }
-
-        tmp_sum[m] = tmp_sum[m - 1] + tmp_currentValue || tmp_currentValue;
-        tmp_average[m] = tmp_sum[m] / (m + 1);
-
-        dataBarData[tmp_currentDate] = {
-          'value': Math.round(tmp_currentValue * tmp_roundedTo) / tmp_roundedTo,
-          'sum': Math.round(tmp_sum[m] * tmp_roundedTo) / tmp_roundedTo,
-          'avg': Math.round(tmp_average[m] * tmp_roundedTo) / tmp_roundedTo
-        };
-
-        if ('ch_cr' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.rentedReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
-        }
-        if ('ch_cd' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.directReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
-        }
-        if ('ch_cliques' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.ownClickValue * tmp_roundedTo) / tmp_roundedTo;
-        }
-        if ('ch_recycle' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / currentUser.recycleFee * tmp_roundedTo) / tmp_roundedTo;
-        }
-      }
-//      }
     }
 
     return dataBarData;
