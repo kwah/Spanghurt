@@ -1624,7 +1624,7 @@ if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/refer
   try{
     chartData.init();
   } catch(e) {
-    alert("ERROR!\n\n chartData.init() failed\n\n",e);
+    alert("ERROR!\n\n chartData.init() failed\n\n"+e);
   }
 }
 
@@ -2056,7 +2056,7 @@ function insertLocalServerTime()
 try {
   insertLocalServerTime();
 } catch(e) {
-  alert("ERROR!\n\n insertLocalServerTime(); failed\n\n",e);
+  alert("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
 }
 
 
@@ -2467,7 +2467,7 @@ if(0 < location.href.indexOf('ss3=1') || 0 < location.href.indexOf('ss3=2')) {
     referralListings.init();
   } catch(e)
   {
-    alert("ERROR!\n\n referralListings.init() failed\n\n",e);
+    alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
   }
 }
 
@@ -2623,7 +2623,7 @@ var logo =
 try {
   logo.init();
 } catch(e) {
-  alert("ERROR!\n\n logo.init(); failed\n\n",e);
+  alert("ERROR!\n\n logo.init(); failed\n\n"+e);
 }
 
 
@@ -2633,6 +2633,68 @@ var profitGraph = new function()
 {
 
 };
+
+
+function graphShortCodeToReadableDescription(arg_shortCode)
+{
+  var tmp_headerValue = '';
+  switch(arg_shortCode)
+  {
+    case 'personalClicks':
+      tmp_headerValue = tl8('Local Time');
+      break;
+    case 'directClicks':
+    //fall through
+    case 'rentedClicks':
+      tmp_headerValue = tl8('Credited clicks');
+      break;
+    case 'recycleCost':
+      tmp_headerValue = tl8('Recycle value');
+      break;
+    case 'renewalCost':
+      tmp_headerValue = tl8('Extension value');
+      break;
+    case 'autopayCost':
+      tmp_headerValue = tl8('AutoPay value');
+      break;
+    case 'transfersToRentalBalance':
+      tmp_headerValue = tl8('Transfer value');
+      break;
+    case 'referralEarnings':
+      tmp_headerValue = tl8('Extension value');
+      break;
+    case 'referralProfit':
+      tmp_headerValue = tl8('Extension value');
+      break;
+    case 'automaticRecycles':
+      tmp_headerValue = tl8('Referrals');
+      break;
+    case 'transferToPackBalance':
+      tmp_headerValue = tl8('Transfer value');
+      break;
+    case 'extensions_631To720':
+    //fall through
+    case 'extensions_541To630':
+    //fall through
+    case 'extensions_451To540':
+    //fall through
+    case 'extensions_361To450':
+    //fall through
+    case 'extensions_271To360':
+    //fall through
+    case 'extensions_181To270':
+    //fall through
+    case 'extensions_91To180':
+    //fall through
+    case 'extensions_0To90':
+    //fall through
+    case 'extensions':
+      //fall through
+      tmp_headerValue = tl8('Total number of referrals');
+      break;
+  }
+  return tmp_headerValue;
+}
 
 
 var chartDataBars = new function()
@@ -2671,47 +2733,50 @@ var chartDataBars = new function()
     // The extensions due graphs needs special handling.
     if (!friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/))
     {
-      for (var j in tmp_dataSet)
+//      for (var j in tmp_dataSet)
+//      {
+      var j = graphShortCodeToReadableDescription(friendlyNameLookup[arg_graphId]);
+//        console.info('j = '+j);
+//        console.info('tmp_dataSet = '+tmp_dataSet);
+
+      for (var i = 0; i < dataBarIntervals[tmp_graphLength].length; i++) {
+        tmp_maxInterval = (dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
+      }
+
+      var tmp_roundedTo = 10000;
+      for (var m = 0; m <= tmp_maxInterval; m++)
       {
-//        console.info('j = '+j)
-        for (var i = 0; i < dataBarIntervals[tmp_graphLength].length; i++) {
-          tmp_maxInterval = (dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
-        }
+        tmp_currentDate = dates_array[m];
+        tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
 
-        var tmp_roundedTo = 10000;
-        for (var m = 0; m <= tmp_maxInterval; m++)
-        {
-          tmp_currentDate = dates_array[m];
-          tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
-
-          if(arg_graphId == 'ch_cr' && m<3 || false){
+        if(arg_graphId == 'ch_cr' && m<3 || false){
 //            console.info(tl8(tmp_currentDate));
 //            console.info(tl8(tmp_currentValue));
-          }
+        }
 
-          tmp_sum[m] = tmp_sum[m - 1] + tmp_currentValue || tmp_currentValue;
-          tmp_average[m] = tmp_sum[m] / (m + 1);
+        tmp_sum[m] = tmp_sum[m - 1] + tmp_currentValue || tmp_currentValue;
+        tmp_average[m] = tmp_sum[m] / (m + 1);
 
-          dataBarData[tmp_currentDate] = {
-            'value': Math.round(tmp_currentValue * tmp_roundedTo) / tmp_roundedTo,
-            'sum': Math.round(tmp_sum[m] * tmp_roundedTo) / tmp_roundedTo,
-            'avg': Math.round(tmp_average[m] * tmp_roundedTo) / tmp_roundedTo
-          };
+        dataBarData[tmp_currentDate] = {
+          'value': Math.round(tmp_currentValue * tmp_roundedTo) / tmp_roundedTo,
+          'sum': Math.round(tmp_sum[m] * tmp_roundedTo) / tmp_roundedTo,
+          'avg': Math.round(tmp_average[m] * tmp_roundedTo) / tmp_roundedTo
+        };
 
-          if ('ch_cr' == arg_graphId) {
-            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.rentedReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
-          }
-          if ('ch_cd' == arg_graphId) {
-            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.directReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
-          }
-          if ('ch_cliques' == arg_graphId) {
-            dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.ownClickValue * tmp_roundedTo) / tmp_roundedTo;
-          }
-          if ('ch_recycle' == arg_graphId) {
-            dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / currentUser.recycleFee * tmp_roundedTo) / tmp_roundedTo;
-          }
+        if ('ch_cr' == arg_graphId) {
+          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.rentedReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
+        }
+        if ('ch_cd' == arg_graphId) {
+          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.directReferralClickValue * tmp_roundedTo) / tmp_roundedTo;
+        }
+        if ('ch_cliques' == arg_graphId) {
+          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[m] * currentUser.ownClickValue * tmp_roundedTo) / tmp_roundedTo;
+        }
+        if ('ch_recycle' == arg_graphId) {
+          dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / currentUser.recycleFee * tmp_roundedTo) / tmp_roundedTo;
         }
       }
+//      }
     }
 
     return dataBarData;
@@ -3278,12 +3343,12 @@ if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/refe
   try {
     chartDataBars.init();
   } catch(e) {
-    alert("ERROR!\n\n chartDataBars.init(); failed\n\n",e);
+    alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
   }
   try {
     exportTabs.init();
   } catch(e) {
-    alert("ERROR!\n\n  exportTabs.init(); failed\n\n",e);
+    alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
   }
 
 }
@@ -4346,16 +4411,16 @@ function insertSidebar()
   var tmp_foo = document.querySelectorAll('span.f_b');
 
   sidebarData.projectedClicks = {};
-  sidebarData.projectedClicks['Rented'] = currentUser.numberOfRefs.Rented * parseFloat(tmp_foo[4].textContent);
-  sidebarData.projectedClicks['Direct'] = currentUser.numberOfRefs.Direct * parseFloat(tmp_foo[2].textContent);
-  sidebarData.projectedClicks['Total'] = sidebarData.projectedClicks['Rented'] + sidebarData.projectedClicks['Direct'];
+  sidebarData.projectedClicks['Rented'] = (currentUser.numberOfRefs.Rented * parseFloat(tmp_foo[4].textContent));
+  sidebarData.projectedClicks['Direct'] = (currentUser.numberOfRefs.Direct * parseFloat(tmp_foo[2].textContent));
+  sidebarData.projectedClicks['Total'] = (sidebarData.projectedClicks['Rented'] + sidebarData.projectedClicks['Direct']);
 
   console.info('sidebarData.projectedClicks = ',sidebarData.projectedClicks);
 
   sidebarData.projectedIncome = {};
-  sidebarData.projectedIncome['Rented'] = sidebarData.projectedClicks['Rented'] * currentUser.rentedReferralClickValue;
-  sidebarData.projectedIncome['Direct'] = sidebarData.projectedClicks['Direct'] * currentUser.directReferralClickValue;
-  sidebarData.projectedIncome['Total'] = sidebarData.projectedIncome['Rented'] + sidebarData.projectedIncome['Direct'];
+  sidebarData.projectedIncome['Rented'] = (sidebarData.projectedClicks['Rented'] * currentUser.rentedReferralClickValue);
+  sidebarData.projectedIncome['Direct'] = (sidebarData.projectedClicks['Direct'] * currentUser.directReferralClickValue);
+  sidebarData.projectedIncome['Total'] = (sidebarData.projectedIncome['Rented'] + sidebarData.projectedIncome['Direct']);
 
   console.info('sidebarData.projectedIncome = ',sidebarData.projectedIncome);
 
@@ -4395,69 +4460,6 @@ function insertSidebar()
   {
     try { return arg_varToOutput; }
     catch(e) { return arg_textToDisplayOtherwise; }
-  }
-
-
-
-  function graphShortCodeToReadableDescription(arg_shortCode)
-  {
-    var tmp_headerValue = '';
-    switch(arg_shortCode)
-    {
-      case 'personalClicks':
-        tmp_headerValue = tl8('Local Time');
-        break;
-      case 'directClicks':
-      //fall through
-      case 'rentedClicks':
-        tmp_headerValue = tl8('Credited clicks');
-        break;
-      case 'recycleCost':
-        tmp_headerValue = tl8('Recycle value');
-        break;
-      case 'renewalCost':
-        tmp_headerValue = tl8('Extension value');
-        break;
-      case 'autopayCost':
-        tmp_headerValue = tl8('AutoPay value');
-        break;
-      case 'transfersToRentalBalance':
-        tmp_headerValue = tl8('Transfer value');
-        break;
-      case 'referralEarnings':
-        tmp_headerValue = tl8('Extension value');
-        break;
-      case 'referralProfit':
-        tmp_headerValue = tl8('Extension value');
-        break;
-      case 'automaticRecycles':
-        tmp_headerValue = tl8('Referrals');
-        break;
-      case 'transferToPackBalance':
-        tmp_headerValue = tl8('Transfer value');
-        break;
-      case 'extensions_631To720':
-      //fall through
-      case 'extensions_541To630':
-      //fall through
-      case 'extensions_451To540':
-      //fall through
-      case 'extensions_361To450':
-      //fall through
-      case 'extensions_271To360':
-      //fall through
-      case 'extensions_181To270':
-      //fall through
-      case 'extensions_91To180':
-      //fall through
-      case 'extensions_0To90':
-      //fall through
-      case 'extensions':
-        //fall through
-        tmp_headerValue = tl8('Total number of referrals');
-        break;
-    }
-    return tmp_headerValue;
   }
 
 
@@ -4583,8 +4585,8 @@ function insertSidebar()
     {
       tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+tl8(', based on the projected values')+"'> + "+tl8('Projected Income')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['projectedClicks'].Rented + " / $"+(sidebarData['projectedIncome'].Rented).toFixed(3) + "<br>");
-    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['projectedClicks'].Direct + " / $"+(sidebarData['projectedClicks'].Direct).toFixed(3) + "<br>");
+    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['projectedClicks'].Rented.toFixed(2) + " / $"+(sidebarData['projectedIncome'].Rented).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['projectedClicks'].Direct.toFixed(2) + " / $"+(sidebarData['projectedClicks'].Direct).toFixed(3) + "<br>");
       tmp += "</div>";
     }
 
@@ -4609,7 +4611,7 @@ function insertSidebar()
     tmp += "<h6 title='"+tl8('Summary of Income / Projected Income / Expenses / Profit for ')+header.toLowerCase()+tl8(' [nb: the second value includes an estimate of your personal clicks]')+"'> + "+tl8('Summary Totals')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
     tmp += "- "+tl8('Gross Income')+": $" + tmp_income.toFixed(3) + " / $" + tmp_income_inclOwnClicks.toFixed(3) + "<br>";
-    if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + (sidebarData['projectedIncome'].Total) + "<br>"; }
+    if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + (sidebarData['projectedIncome'].Total.toFixed(3)) + "<br>"; }
     tmp += "- "+tl8('Expenses')+": $" + (tmp_expenses).toFixed(3) + "<br>";
     tmp += "- "+tl8('Net Income')+": $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
     tmp += "</div>";

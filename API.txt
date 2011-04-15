@@ -1,0 +1,185 @@
+//An attempt at defining some form of API to try and get some structure into the script.
+
+
+/*ACTUAL*/
+currentUser
+  accountType
+    cost
+    isStandard
+    isUltimate
+    numerical
+    showUltimateFeatures
+    verbose
+  autopayFee
+  directReferralClickValue
+  numberOfReferrals
+    Rented
+    Direct
+  preferences
+    columnPrefixes
+    numeriseDates
+    shortFormatTimer
+    showColumn
+    shrinkColumnContents
+    timePeriods
+    flag_textify 
+  ownClickValue
+  recycleFee
+  rentedReferralClickValue
+  username
+
+
+/*DESIRED*/
+currentUser
+  accountType
+    cost
+    numerical
+    override_showUltimateFeatures
+  clickValues
+    own
+      extended
+      regular
+      mini
+      fixed
+      fixedMicro
+      micro
+    rented
+    direct
+  feesCosts
+    autopay
+    expiredReferral
+    initialRent
+    recycle
+    extensions
+      15
+      30
+      60
+      90
+      150
+      240
+
+
+accountCache //should use getters to reload value from storage each time it is requested?
+  ownClicks //According to the view ads page box, user-supplied
+    {dateTime}
+      extended
+      regular
+      mini
+      fixed
+      fixedMicro
+      micro
+  graphs
+    {dateTime}
+      ownClicks
+      referralClicks
+        rented
+        direct
+      recycleFees
+      automaticRecycles
+      extensions
+      autopay
+      transfers
+        toRentalBalance
+        toGoldenPackBalance
+      extensionsDue
+  referrals
+    {referralId}
+      referralType
+      referralSince
+      lastSeen
+      goldenGraphClickData
+        {dateTime}
+          creditedClicks
+          actualClicks
+      ultimateClickData
+        {dateTime}
+          creditedClicks
+      referralListingsData
+        {dateTime}
+          nextPayment
+          lastClick
+          totalClicks
+          average
+          realAverage
+  self
+    registrationDate
+    {dateTime}
+      totalClicks
+      goldenMembershipExpirationDate
+      goldenPackMembershipExpirationDate
+      numberOfReferrals
+        Rented
+        Direct
+      seenAdvertisementsTotal
+        self
+        referrals
+      account
+        accountType
+        mainBalance
+        rentalBalance
+        goldenPackBalance
+        received
+        directPurchases
+        exposureClicks
+        NeoPoints
+
+
+preferences
+  preferredExtensionType
+  referralListingsColumns
+    {columnId}
+      columnHeader
+      valuePrefix
+      valueSuffix
+      shrinkText
+      numeriseDates
+      shortFormat
+      textify
+      existingColumn
+      hide
+      columnIndex
+  statisticsSidebar
+    alignment
+    timePeriods
+      startDate
+      endDate
+      actualOrIdealExtensions
+  widenAllPages
+
+
+
+
+referralListings()
+{
+  extractDataFromPage()
+  cacheDataToStorage()
+
+  hideAllColumns(){
+    //hide all columns from the table that are referenced in preferences.referralListingsColumns so that they can be
+    //   shown/added in the correct order
+    // -> nb: currently undecided between remove & hide
+  }
+
+  addColumns(){
+    //go through each column in preferences.referralListingsColumns according to
+    //   preferences.referralListingsColumns.{columnId}.columnIndex where the smallest index(es) are added first
+    //
+    //insert {prefix}{value}{suffix} into cell
+    //act upon:: hide = true; shrinkText = true; numeriseDates = true (and shortFormatTimer = true); textify = true;
+  }
+
+  addGoldenGraphHandlers(){
+    //overwrite the blue (i) button to trigger:
+    //   storage of referral's clicks, display of graph data bars
+  }
+  init(){
+    //call extractDataFromPage() and cacheDataToStorage()
+    //go through (preferences.referralListingsColumns) and add ID values to each <td> for the existing columns
+    //
+    //Trigger the call of hideAllColumns() and addColumns() and addGoldenGraphHandlers() ??
+    // -> init() function not expected to actually trigger the actions??
+    // For now: no, methods much be called separately.
+  }
+}
+
+
