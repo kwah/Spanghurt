@@ -1259,7 +1259,9 @@ var currentPage = new function()
 
 };
 
+console.info('checkpoint #1');
 console.info('currentPage.pageCode = ',currentPage.pageCode);
+console.info('checkpoint #2');
 
 function extractNumberOfRefs()
 {
@@ -1354,8 +1356,9 @@ function extractNumberOfRefs()
 
 }
 
+console.info('checkpoint #3');
 extractNumberOfRefs();
-
+console.info('checkpoint #4');
 
 /**
  * :Object used for holding information about the account that the current user of the script is logged into
@@ -1469,7 +1472,9 @@ var currentUser = new function()
   };
 };
 
+console.info('checkpoint #5');
 debugLog('currentUser', currentUser);
+console.info('checkpoint #6');
 
 var chartData = new function ()
 {
