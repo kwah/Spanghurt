@@ -4387,7 +4387,7 @@ function insertSidebar()
   // Location to insert the sidebar (right hand side)
   var locationToInsertSidebar = {
     right: docEvaluate("//td[@width='729']").snapshotItem(0).parentNode,
-    left: document.body.querySelectorAll('.verde')[0].parentNode.parentNode.parentNode.parentNode.parentNode || document.body.children[1].children[1].children[0].children[0].children[0]
+    left: document.body.children[1].children[1].children[0].children[0].children[0]
   };
 
 
