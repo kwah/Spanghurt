@@ -32,9 +32,7 @@ currentUser
 /*DESIRED*/
 currentUser
   accountType
-    cost
-    numerical
-    override_showUltimateFeatures
+  override_showUltimateFeatures
   clickValues
     own
       extended
@@ -57,6 +55,10 @@ currentUser
       90
       150
       240
+  numberOfReferrals
+    Direct
+    Rented
+  username
 
 
 accountCache //should use getters to reload value from storage each time it is requested?
@@ -70,7 +72,8 @@ accountCache //should use getters to reload value from storage each time it is r
       micro
   graphs
     {dateTime}
-      ownClicks
+      ownClicks_localTime
+      ownClicks_serverTime
       referralClicks
         rented
         direct
@@ -101,7 +104,7 @@ accountCache //should use getters to reload value from storage each time it is r
           totalClicks
           average
           realAverage
-  self
+  user
     registrationDate
     {dateTime}
       totalClicks
@@ -111,7 +114,7 @@ accountCache //should use getters to reload value from storage each time it is r
         Rented
         Direct
       seenAdvertisementsTotal
-        self
+        user
         referrals
       account
         accountType
@@ -125,7 +128,7 @@ accountCache //should use getters to reload value from storage each time it is r
 
 
 preferences
-  preferredExtensionType
+  preferredExtensionLength
   referralListingsColumns
     {columnId}
       columnHeader
