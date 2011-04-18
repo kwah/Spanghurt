@@ -962,6 +962,9 @@ clickValues['Platinum'] = {};
 clickValues['Diamond'] = {};
 clickValues['Ultimate'] = {};
 
+
+// The golden-pack prices are all based on the golden values so merge those into these and
+//   tweak just the parts that are different
 Object_merge(clickValues['Emerald'],clickValues['Golden']);
 Object_merge(clickValues['Sapphire'],clickValues['Golden']);
 Object_merge(clickValues['Platinum'],clickValues['Golden']);
@@ -3126,7 +3129,6 @@ var chartDataBars = new function()
           dataBarData[tmp_currentDate].averageRenewals = Math.round((tmp_average[m] / currentUser.renewalFees) * tmp_roundedTo) / tmp_roundedTo;
         }
       }
-//      }
     }
 
     return dataBarData;
@@ -4767,7 +4769,7 @@ function insertSidebar()
   // Location to insert the sidebar (right hand side)
   var locationToInsertSidebar = {
     right: docEvaluate("//td[@width='729']").snapshotItem(0).parentNode,
-    left: document.body.querySelectorAll('.verde')[0].parentNode.parentNode.parentNode.parentNode.parentNode
+    left: document.body.children[1].children[1].children[0].children[0].children[0]
   };
 
 
