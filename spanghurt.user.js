@@ -4573,7 +4573,7 @@ var referralListings_columns = new function()
 
     /* nb: bugfix - occasionally neobux displafs displays a negative # of hours for the next payment date which breaks the regex */
 //    var spliced = arg_string.match(/([0-9]+).*([0-9]{2}):([0-9]{2})/);
-    var spliced = arg_string.match(/([0-9]+)[^-]*(-?[0-9]{1,2}):([0-9]{2})/);
+    var spliced = arg_string.match(/([0-9]+)[^-]*(-?[0-9]{2}):([0-9]{2})/);
     var tmp_days = spliced[1]*1;
     var tmp_hours = spliced[2]*1;
     var tmp_mins = spliced[3]*1;
