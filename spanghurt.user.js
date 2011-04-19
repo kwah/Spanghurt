@@ -1160,7 +1160,13 @@ var currentPage = new function()
 
   function detectPageCode ()
   {
-    if(testAgainstUrlPath(['forum'])) { return 'viewingForums'; }
+    if(testAgainstUrlPath(['forum'])) {
+      if(testAgainstUrlParameters(['u_x_u=replymsg']))  { return 'viewingForums_replyingToThread'; }
+      if(testAgainstUrlParameters(['u_x_u=editmsg']))   { return 'viewingForums_editingMessage'; }
+      if(testAgainstUrlParameters(['u_x_u=newtopic']))  { return 'viewingForums_creatingTopic'; }
+      if(testAgainstUrlParameters(['u_x_u=newpoll']))   { return 'viewingForums_creatingPoll'; }
+      return 'viewingForums';
+    }
 
     if(testAgainstUrlPath(['c']))
     {
@@ -2389,15 +2395,6 @@ function insertLocalServerTime()
   this.insertClock(this.GetServerTimeOffset(),getPref('AdResetTime_hours',0, {prefType:'string'}));
   this.insertClickGuide();
 
-}
-
-
-try {
-  if (!currentPage.pageCode.match(/viewingAdvertisement/i)){
-    insertLocalServerTime();
-  }
-} catch(e) {
-  alert("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
 }
 
 
@@ -4972,6 +4969,14 @@ function insertSidebar()
 }
 
 
+
+
+///
+// Start Code that actually tries to run stuff
+///
+
+var tmp_iframePages = /viewingAdvertisement|viewingForums_editingMessage|viewingForums_creatingTopic|viewingForums_creatingPoll/i;
+
 if(currentPage.pageCode.match(/referralListings_Rented/))
 {
   widenPages.referralListings();
@@ -5004,6 +5009,15 @@ if(currentPage.pageCode.match(/accSummary/i))
 {
   widenPages.accountSummary();
 }
+
+try {
+  if (!currentPage.pageCode.match(tmp_iframePages) && (top === self)){
+    insertLocalServerTime();
+  }
+} catch(e) {
+  alert("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
+}
+
 
 
 if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
@@ -5061,7 +5075,7 @@ if(currentPage.pageCode.match(/referralStatistics/))
 
 try
 {
-  if (!currentPage.pageCode.match(/viewingAdvertisement/i)){
+  if (!currentPage.pageCode.match(tmp_iframePages) && (top === self)){
     widenPages.generic();
   }
 }
