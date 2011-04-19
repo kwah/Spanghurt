@@ -1143,7 +1143,7 @@ var currentPage = new function()
 
     for(var tmp_langCode in tmp_langCodes){
       if(tmp_langCodes.hasOwnProperty(tmp_langCode)){
-        if(document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class').match(tmp_langCode))
+        if(document.querySelectorAll('.band2').length > 0 && document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class').match(tmp_langCode))
         {
 //          console.info("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
 //          console.info('tmp_langCode = '+tmp_langCode);
@@ -1962,16 +1962,6 @@ var chartData = new function ()
 };
 
 
-if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/referralStatistics/))
-{
-  try{
-    chartData.init();
-  } catch(e) {
-    alert("ERROR!\n\n chartData.init() failed\n\n"+e);
-  }
-}
-
-
 function insertLocalServerTime()
 {
 
@@ -2134,6 +2124,11 @@ function insertLocalServerTime()
 
   this.insertClock = function(arg_timeOffset,arg_adResetOffset)
   {
+    //If the image logo cannot be found, either find an alternate place to insert it
+    //   or abort insertion.
+    if(document.querySelectorAll('img#logo').length <= 0){
+      return;
+    }
     locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode;
     if(locationToInsertTimeString)
     {
@@ -2390,6 +2385,7 @@ function insertLocalServerTime()
 
   };
 
+
   this.insertClock(this.GetServerTimeOffset(),getPref('AdResetTime_hours',0, {prefType:'string'}));
   this.insertClickGuide();
 
@@ -2397,7 +2393,9 @@ function insertLocalServerTime()
 
 
 try {
-  insertLocalServerTime();
+  if (!currentPage.pageCode.match(/viewingAdvertisement/i)){
+    insertLocalServerTime();
+  }
 } catch(e) {
   alert("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
 }
@@ -2910,8 +2908,14 @@ var logo =
   {
     // Inserts the logo for the script into the page
 
+
     // the language icon in upper right of page
     var xpathResults_logoLocation = docEvaluate('//ul[@id="menu"]/li[@id="menuli"]/parent::ul/parent::td');
+
+    // If the location to insert the logo cannot be found, exit the function
+    if(xpathResults_logoLocation.snapshotLength <= 0){
+      return
+    }
 
     if (1 == xpathResults_logoLocation.snapshotLength)
     {
@@ -2957,7 +2961,9 @@ var logo =
 
   addClickEvent: function(arg_clickFunction)
   {
-    document.getElementById('spanghurtLogo').addEventListener('click',function() { arg_clickFunction(); },false);
+    if(document.getElementById('spanghurtLogo')){
+      document.getElementById('spanghurtLogo').addEventListener('click',function() { arg_clickFunction(); },false);
+    }
   },
 
   init: function()
@@ -2967,13 +2973,6 @@ var logo =
   }
 
 };
-
-try {
-  logo.init();
-} catch(e) {
-  alert("ERROR!\n\n logo.init(); failed\n\n"+e);
-}
-
 
 
 
@@ -3724,22 +3723,6 @@ var exportTabs = new function()
 
 };
 
-
-
-
-if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/referralStatistics/i)) {
-  try {
-    chartDataBars.init();
-  } catch(e) {
-    alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
-  }
-  try {
-    exportTabs.init();
-  } catch(e) {
-    alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
-  }
-
-}
 
 
 
@@ -4721,46 +4704,6 @@ var referralListings_columns = new function()
   }
 };
 
-if(currentPage.pageCode.match(/referralListings_Rented/))
-{
-  widenPages.referralListings();
-
-
-  var settings = {};
-  var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
-  var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
-  var tmp_currentRow;
-
-  var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
-
-  var colIndexes = {
-    refID: 3,
-    refSince: 5
-  };
-  var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
-  console.info(tmp_referralsData);
-
-
-  //referralListings_columns.init();
-  referralListings_columns.mainLoop();
-
-//  referralListingsNewColumnsTest();
-  addClickStatsToGoldenGraph();
-
-}
-
-if(currentPage.pageCode.match(/accSummary/i))
-{
-  widenPages.accountSummary();
-}
-
-
-if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
-{
-  var adCountData = getPref('ownAdCountTally',{}, { prefType: 'JSON' });
-  insertAdCounterBox(0, adCountData, {});
-}
-
 
 function insertSidebar()
 {
@@ -5029,6 +4972,82 @@ function insertSidebar()
 }
 
 
+if(currentPage.pageCode.match(/referralListings_Rented/))
+{
+  widenPages.referralListings();
+
+
+  var settings = {};
+  var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
+  var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
+  var tmp_currentRow;
+
+  var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
+
+  var colIndexes = {
+    refID: 3,
+    refSince: 5
+  };
+  var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
+  console.info(tmp_referralsData);
+
+
+  //referralListings_columns.init();
+  referralListings_columns.mainLoop();
+
+//  referralListingsNewColumnsTest();
+  addClickStatsToGoldenGraph();
+
+}
+
+if(currentPage.pageCode.match(/accSummary/i))
+{
+  widenPages.accountSummary();
+}
+
+
+if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
+{
+  var adCountData = getPref('ownAdCountTally',{}, { prefType: 'JSON' });
+  insertAdCounterBox(0, adCountData, {});
+}
+
+
+
+if(currentPage.pageCode.match(/accSummary/) || currentPage.pageCode.match(/referralStatistics/))
+{
+  try{
+    chartData.init();
+  } catch(e) {
+    alert("ERROR!\n\n chartData.init() failed\n\n"+e);
+  }
+}
+
+
+try {
+  logo.init();
+}
+catch(e) {
+  alert("ERROR!\n\n logo.init(); failed\n\n"+e);
+}
+
+
+
+if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/referralStatistics/i)) {
+  try {
+    chartDataBars.init();
+  } catch(e) {
+    alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
+  }
+  try {
+    exportTabs.init();
+  } catch(e) {
+    alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
+  }
+
+}
+
+
 if(currentPage.pageCode.match(/referralStatistics/))
 {
   try
@@ -5040,11 +5059,13 @@ if(currentPage.pageCode.match(/referralStatistics/))
   }
 }
 
-  try
-  {
+try
+{
+  if (!currentPage.pageCode.match(/viewingAdvertisement/i)){
     widenPages.generic();
-  } catch(e)
-  {
+  }
+}
+catch(e) {
     alert("ERROR!\n\n widenPages.generic(); failed\n\n"+e);
   }
 
