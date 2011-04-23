@@ -180,6 +180,13 @@ if('undefined' === typeof GM_addStyle){
   }
 }
 
+/**
+ * @param arg_input
+ * @return boolean
+ */
+function isArray(arg_input){
+  return !!arg_input.constructor.toString().match(/array/i);
+}
 
 /**
  * Logging functions
@@ -1212,13 +1219,13 @@ var currentPage = new function()
         {
 //          debugLog("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
 //          debugLog('tmp_langCode = '+tmp_langCode);
-          setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], {prefType: 'string'});
+          setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], { prefType: 'string' });
         }
       }
     }
 
     //Return the stored language code, defaulting to EN;
-    return getPref('neobuxLanguageCode', 'EN', {prefType: 'string'});
+    return getPref('neobuxLanguageCode', 'EN', { prefType: 'string' });
   };
 
   this.languageCode = detectLanguageCode();
@@ -1450,9 +1457,9 @@ extractNumberOfRefs();
 
 function getUsername() {
   if(document.getElementById('t_conta')) {
-    setPref('username', document.getElementById('t_conta').textContent, {prefType:'string'});
+    setPref('username', document.getElementById('t_conta').textContent, { prefType: 'string' });
   }
-  var tmp_username = getPref('username', 'unknownUsername', {prefType:'string'}) || 'failedToGetUsername';
+  var tmp_username = getPref('username', 'unknownUsername', { prefType: 'string' }) || 'failedToGetUsername';
 
   return tmp_username;
 }
@@ -1461,21 +1468,26 @@ function getUsername() {
 function getMembershipType()
 {
   var xpath_elmt_accountBadge = '//div[@class="tag"][last()]';
-  var elmt_accountBadge = document.evaluate(xpath_elmt_accountBadge,
+  var elmt_accountBadge = document.evaluate(
+      xpath_elmt_accountBadge,
       document,
       null,
       XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
       null);
 
   var tmp_membershipType_name = '';
-  if(elmt_accountBadge.snapshotLength > 0) {
-    var tmp_membershipType_name = elmt_accountBadge.snapshotItem(0).textContent.match(/\w+/);
-    setPref('membershipType', tmp_membershipType_name, {prefType:'string'});
+  if (elmt_accountBadge.snapshotLength > 0)
+  {
+    var tmp_membershipType_name = elmt_accountBadge.snapshotItem(
+        0).textContent.match(
+        /\w+/);
+    setPref('membershipType', tmp_membershipType_name, { prefType: 'string' });
   }
-  tmp_membershipType_name = getPref('membershipType', 'unableToFetchNameFromStorage', {prefType:'string'});
+  tmp_membershipType_name = getPref('membershipType','unableToFetchNameFromStorage',{ prefType: 'string' });
 
   return tmp_membershipType_name;
-};
+}
+;
 
 function getClickValues(arg_memberType) 
 {
@@ -1680,96 +1692,110 @@ var userAccount = new function ()
 };
 
 
-var accountCache = new function()
+var tmp_blankAccountCache = new function()
 {
-  this.ownClicks = {
-    dateTime: {
-      extended: 0,
-      regular: 0,
-      mini: 0,
-      fixed: 0,
-      fixedMicro: 0,
-      micro: 0
-    }
+  var tmp_currentDateTime = new Date();
+  var tmp_currentDate = tmp_currentDateTime.getFullYear() + '/' +
+      padZeros(tmp_currentDateTime.getMonth()+1, 2) + '/' +
+      padZeros(tmp_currentDateTime.getDate(), 2);
+
+  this.ownClicks = {}
+  this.graphs = {};
+  this.referrals = { };
+  this.user = {};
+
+  this.ownClicks[tmp_currentDate] =
+  {
+    extended: 0,
+    regular: 0,
+    mini: 0,
+    fixed: 0,
+    fixedMicro: 0,
+    micro: 0
   };
-  this.graphs = {
-    dateTime: {
-      ownClicks_localTime: 0,
-      ownClicks_serverTime: 0,
-      referralClicks: {
-        rented: 0,
-        direct: 0
-      },
-      recycleFees: 0,
-      automaticRecycles: 0,
-      extensions: 0,
-      autopay: 0,
-      transfers: {
-        toRentalBalance: 0,
-        toGoldenPackBalance: 0
-      },
-      extensionsDue: 0
-    }
+
+  this.graphs[tmp_currentDate] = {
+    ownClicks_localTime: 0,
+    ownClicks_serverTime: 0,
+    referralClicks: {
+      rented: 0,
+      direct: 0
+    },
+    recycleFees: 0,
+    automaticRecycles: 0,
+    extensions: 0,
+    autopay: 0,
+    transfers: {
+      toRentalBalance: 0,
+      toGoldenPackBalance: 0
+    },
+    extensionsDue: 0
   };
-  this.referrals = {
-    referralId: {
+
+  function createBlankReferral()
+  {
+    var tmp_blankReferral = {
       referralType: "R",
-      referralSince: "2011/01/01 00:01",
+      referralSince: "2001/01/01 00:01",
       lastSeen: 0,
-      goldenGraphClickData: {
-        dateTime: {
-          creditedClicks: 0,
-          actualClicks: 0
-        }
-      },
-      ultimateClickData:{
-        dateTime: {
-          creditedClicks: 0
-        }
-      },
-      referralListingsData: {
-        dateTime: {
-          nextPayment: 0,
-          lastClick: 0,
-          totalClicks: 0,
-          average: 0,
-          realAverage: 0
-        }
-      }
-    }
-  };
-  this.user = {
-    registrationDate: 0,
-    dateTime: {
-      totalClicks: 0,
-      goldenMembershipExpirationDate: 0,
-      goldenPackMembershipExpirationDate: 0,
-      numberOfReferrals: {
-        Rented: 0,
-        Direct: 0
-      },
-      seenAdvertisementsTotal: {
-        user: 0,
-        referrals: 0
-      },
-      account: {
-        accountType: 0,
-        mainBalance: 0,
-        rentalBalance: 0,
-        goldenPackBalance: 0,
-        received: 0,
-        directPurchases: 0,
-        exposureClicks: 0,
-        NeoPoints: 0
-      }
+      goldenGraphClickData: { },
+      ultimateClickData: { },
+      referralListingsData: { }
+    };
+    tmp_blankReferral.goldenGraphClickData[tmp_currentDate] = {
+      creditedClicks: 0,
+      actualClicks: 0
+    };
+    tmp_blankReferral.ultimateClickData[tmp_currentDate] = {
+      creditedClicks: 0
+    };
+    tmp_blankReferral.referralListingsData[tmp_currentDate] = {
+        nextPayment: 0,
+        lastClick: 0,
+        totalClicks: 0,
+        average: 0,
+        realAverage: 0
+    };
+    return tmp_blankReferral;
+  }
+
+  this.user.registrationDate = 0;
+  this.user[tmp_currentDate] = {
+    totalClicks: 0,
+    goldenMembershipExpirationDate: 0,
+    goldenPackMembershipExpirationDate: 0,
+    numberOfReferrals: {
+      Rented: 0,
+      Direct: 0
+    },
+    seenAdvertisementsTotal: {
+      user: 0,
+      referrals: 0
+    },
+    account: {
+      accountType: 0,
+      mainBalance: 0,
+      rentalBalance: 0,
+      goldenPackBalance: 0,
+      received: 0,
+      directPurchases: 0,
+      exposureClicks: 0,
+      NeoPoints: 0
     }
   }
 };
 
+var storedAccountCache = getPref('accountCache', tmp_blankAccountCache, { prefType: 'JSON' });
+var accountCache = {};
+
+Object_merge(accountCache, tmp_blankAccountCache);
+Object_merge(accountCache,storedAccountCache);
+
+debugLog(accountCache);
 
 var preferences = new function()
 {
-  this.preferredExtensionLength = getPref('renewalsLength',90, {prefType: 'string' });
+  this.preferredExtensionLength = getPref('renewalsLength',90, { prefType: 'string' });
 }
 
 var currentUser = new function()
@@ -1802,9 +1828,9 @@ var currentUser = new function()
 
 
   if(document.getElementById('t_conta')) {
-    this.username = setPref('username', document.getElementById('t_conta').textContent, {prefType:'string'});
+    this.username = setPref('username', document.getElementById('t_conta').textContent, { prefType: 'string' });
   } else {
-    this.username = getPref('username', 'unknownUsername', {prefType:'string'});
+    this.username = getPref('username', 'unknownUsername', { prefType: 'string' });
   }
 
   this.accountType = new function ()
@@ -1824,16 +1850,14 @@ var currentUser = new function()
             "numerical": i,
             'verbose': Neobux.possibleAccTypes[i]
           };
-
-          setPref('accountType', tmp_accountType, {prefType:'JSON'});
-
+          setPref('accountType', tmp_accountType, { prefType: 'JSON' });
         }
       }
     }
 
     // If the accountType info was on the page, the stored copy will have been updated
     // (else we'll just be grabbing the cached version)
-    tmp_accountType = getPref('accountType',{numerical:0, verbose:'unknown'},{prefType: 'JSON'});
+    tmp_accountType = getPref('accountType',{numerical:0, verbose:'unknown'},{ prefType: 'JSON' });
 
     this.numerical = tmp_accountType.numerical;
     this.verbose = tmp_accountType.verbose;
@@ -1842,7 +1866,7 @@ var currentUser = new function()
     this.isUltimate = 6 === tmp_accountType.numerical;
     this.isStandard = 0 === tmp_accountType.numerical;
 
-    this.cost = getPref('accountTypeCost',Neobux.accountDefaults.goldenPackCost[this.verbose], {prefType:'float'});
+    this.cost = getPref('accountTypeCost',Neobux.accountDefaults.goldenPackCost[this.verbose], { prefType: 'float' });
 
     return this;
   };
@@ -1861,7 +1885,7 @@ var currentUser = new function()
   this.autopayFee = getPerAutoPayFee(this.accountType,this.numberOfRefs.Rented);
 
 
-  this.renewalsLength = getPref('renewalsLength',90, {prefType: 'string' });
+  this.renewalsLength = getPref('renewalsLength',90, { prefType: 'string' });
   this.renewalFees = getRenewalFees(this.accountType.verbose, this.numberOfRefs.Rented, this.renewalsLength);
 
   this.preferences = new function ()
@@ -1884,6 +1908,406 @@ var currentUser = new function()
 };
 
 debugLog('currentUser', currentUser);
+
+function getGraphData()
+{
+  // Decode evalString using the w(i) function from the Neobux page
+  function U(arg_a) {
+    return arg_a * 10;
+  }
+
+  function u0(arg_a) {
+    return String.fromCharCode(U(arg_a));
+  }
+
+  // function w(_i) {
+  function NeobuxDecodeEvalString(arg_input)
+  {
+    var k = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var o = "";
+    var c1, c2, c3, e1, e2, e3, e4;
+    var j = 0;
+    arg_input = arg_input.replace(/[^A-Za-z0-9\+\/=]/g, "");
+    do {
+      e1 = k.indexOf(arg_input.charAt(j++));
+      e2 = k.indexOf(arg_input.charAt(j++));
+      e3 = k.indexOf(arg_input.charAt(j++));
+      e4 = k.indexOf(arg_input.charAt(j++));
+      c1 = e1 << 2 | e2 >> 4;
+      c2 = (e2 & 15) << 4 | e3 >> 2;
+      c3 = (e3 & 3) << 6 | e4;
+      o = o + u0(c1 / 10);
+      if (64 != e3)
+      {
+        o = o + u0(c2 / 10);
+      }
+      if (64 != e4)
+      {
+        o = o + u0(c3 / 10);
+      }
+    } while (j < arg_input.length);
+
+    return o;
+  }
+
+
+  var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
+  //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snapshotLength
+
+  for(var i=0; i<xpathResults_graphData.snapshotLength; i++)
+  {
+    //debugLog(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval/g).length);
+    if(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval\(w\('/g)) {
+      /**
+     *  If only one matching <script> ... </script> tag found, it is the correct one
+     * Now extract data::
+     */
+
+    /**
+     * First, remove instances of the word 'eval' and then split it up based on
+     * these rules ::
+     * eval(w('
+     * ')); eval(w('
+     */
+      var evals = xpathResults_graphData.snapshotItem(i).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
+    }
+  }
+
+  var graphData = new Array();
+
+  // Cycle through each individual eval (ie, graph / graphNumber)
+  for (var graphNumber = 0, length = evals.length - 1; graphNumber < length; graphNumber++)
+  {
+    // logger('graphNumber = '+graphNumber);
+    var evalString = evals[graphNumber];
+
+    // Decode evalString using the w(i) function from the Neobux page
+    var decodedEvalString = NeobuxDecodeEvalString(evalString);
+    eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
+  }
+
+  return graphData;
+}
+
+console.info(getGraphData());
+
+var tmp_blankAccountCache = new function()
+{
+  var tmp_currentDateTime = new Date();
+  var tmp_currentDate = tmp_currentDateTime.getFullYear() + '/' +
+      padZeros(tmp_currentDateTime.getMonth()+1, 2) + '/' +
+      padZeros(tmp_currentDateTime.getDate(), 2);
+
+  this.ownClicks = {};
+  this.graphs = {};
+  this.referrals = { };
+  this.user = {};
+
+  this.ownClicks[tmp_currentDate] =
+  {
+    extended: 0,
+    regular: 0,
+    mini: 0,
+    fixed: 0,
+    fixedMicro: 0,
+    micro: 0
+  };
+
+  this.graphs[tmp_currentDate] = {
+    ownClicks_localTime: 0,
+    ownClicks_serverTime: 0,
+    referralClicks: {
+      rented: 0,
+      direct: 0
+    },
+    recycleFees: 0,
+    automaticRecycles: 0,
+    extensions: 0,
+    autopay: 0,
+    transfers: {
+      toRentalBalance: 0,
+      toGoldenPackBalance: 0
+    },
+    extensionsDue: 0
+  };
+
+  function createBlankReferral()
+  {
+    var tmp_blankReferral = {
+      referralType: "R",
+      referralSince: "2001/01/01 00:01",
+      lastSeen: 0,
+      goldenGraphClickData: { },
+      ultimateClickData: { },
+      referralListingsData: { }
+    };
+    tmp_blankReferral.goldenGraphClickData[tmp_currentDate] = {
+      creditedClicks: 0,
+      actualClicks: 0
+    };
+    tmp_blankReferral.ultimateClickData[tmp_currentDate] = {
+      creditedClicks: 0
+    };
+    tmp_blankReferral.referralListingsData[tmp_currentDate] = {
+        nextPayment: 0,
+        lastClick: 0,
+        totalClicks: 0,
+        average: 0,
+        realAverage: 0
+    };
+    return tmp_blankReferral;
+  }
+
+  this.user.registrationDate = 0;
+  this.user[tmp_currentDate] = {
+    totalClicks: 0,
+    goldenMembershipExpirationDate: 0,
+    goldenPackMembershipExpirationDate: 0,
+    numberOfReferrals: {
+      Rented: 0,
+      Direct: 0
+    },
+    seenAdvertisementsTotal: {
+      user: 0,
+      referrals: 0
+    },
+    account: {
+      accountType: 0,
+      mainBalance: 0,
+      rentalBalance: 0,
+      goldenPackBalance: 0,
+      received: 0,
+      directPurchases: 0,
+      exposureClicks: 0,
+      NeoPoints: 0
+    }
+  }
+};
+
+var storedAccountCache = getPref('accountCache', tmp_blankAccountCache, { prefType: 'JSON' });
+var accountCache = {};
+
+Object_merge(accountCache, tmp_blankAccountCache);
+Object_merge(accountCache,storedAccountCache);
+
+//console.info(accountCache);
+
+
+function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
+{
+  var tmp_currentGraph = '';
+  var tmp_accountCache = arg_accountCache;
+
+  var GRAPH_ID = 0;
+  var DATES = 2;
+  var DATA = 5;
+
+  // english | pt | es | greek | FI | SE | DE
+  var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+  var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+  var tl8_tomorrow = /tomorrow/i;
+
+  var tmp_currentDate = '';
+
+  for(var tmp_graphData in arg_rawGraphData){
+    if(arg_rawGraphData.hasOwnProperty(tmp_graphData))
+    {
+      tmp_currentGraph = arg_rawGraphData[tmp_graphData];
+      switch(tmp_currentGraph[0])
+      {
+        case 'ch_cliques':
+            //Number of clicks done personally, that contribute to TOS#3.7 as reported by the graph
+            if(1 === tmp_currentGraph[DATA].length)
+            {
+              // Only server time clicks are being shown, thus both
+              //   server time and local time values are identical
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].ownClicks_localTime = tmp_currentGraph[DATA][0].data[i];
+                arg_accountCache.graphs[tmp_currentDate].ownClicks_serverTime = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+            else if(2 === tmp_currentGraph[DATA].length)
+            {
+              // First one is local time
+              // Second one is server time
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].ownClicks_localTime = tmp_currentGraph[DATA][0].data[i];
+                arg_accountCache.graphs[tmp_currentDate].ownClicks_serverTime = tmp_currentGraph[DATA][1].data[i];
+              }
+            }
+        break;
+        case 'ch_cr':
+            //Number of rented referrals' clicks credited to you
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                if(!arg_accountCache.graphs[tmp_currentDate].referralClicks) {
+                  arg_accountCache.graphs[tmp_currentDate].referralClicks = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].referralClicks.rented = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_cd':
+            //Number of direct referrals' clicks credited to you
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                if(!arg_accountCache.graphs[tmp_currentDate].referralClicks) {
+                  arg_accountCache.graphs[tmp_currentDate].referralClicks = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].referralClicks.direct = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_recycle':
+            //Amount spent on recycling referrals
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].recycleFees = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_trar':
+            //Number of referrals recycled automatically for free
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].automaticRecycles = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_extensions':
+            //Amount spent on extending (renewing) referrals
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].extensions = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_autopay':
+            //Amount spent on autopay
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].autopay = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_trrb':
+            //Transfers to rental balance
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                if(!arg_accountCache.graphs[tmp_currentDate].transfers) {
+                  arg_accountCache.graphs[tmp_currentDate].transfers = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].transfers.toRentalBalance = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_trpb':
+            //Transfers to rental balance
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                if(!arg_accountCache.graphs[tmp_currentDate].transfers) {
+                  arg_accountCache.graphs[tmp_currentDate].transfers = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].transfers.toGoldenPackBalance = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_ext_schedule8':
+        //fall-through
+        case 'ch_ext_schedule7':
+        //fall-through
+        case 'ch_ext_schedule6':
+        //fall-through
+        case 'ch_ext_schedule5':
+        //fall-through
+        case 'ch_ext_schedule4':
+        //fall-through
+        case 'ch_ext_schedule3':
+        //fall-through
+        case 'ch_ext_schedule2':
+        //fall-through
+        case 'ch_ext_schedule1':
+            //Number of referrals due to expire
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].extensionsDue = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+      }
+    }
+  }
+  return tmp_accountCache;
+}
+
+accountCache = convertRawGraphDataToCacheFormat(getGraphData(), accountCache);
+setPref('accountCache', accountCache, { prefType: 'JSON' });
 
 var chartData = new function ()
 {
@@ -1973,7 +2397,7 @@ var chartData = new function ()
 
   this.getStoredGraphData = function()
   {
-    return getPref('graphData', {}, {prefType: 'JSON'});
+    return getPref('graphData', {}, { prefType: 'JSON' });
   };
 
 
@@ -2071,20 +2495,20 @@ function insertLocalServerTime()
 
 
     localMidnight = setTime(new Date(dateToday),[0,0,0]);
-    setPref('localMidnight', localMidnight.toString(), {prefType:'string'});
+    setPref('localMidnight', localMidnight.toString(), { prefType: 'string' });
 
     /* If server time is five hours behind (-5), Neobux's midnight will be five hours AFTER local midnight
       && vice versa, thus need to minus the offset
       NB, the offset might move the day to tomorrow/yesterday so will need to reset the date to 'today' */
     neoMidnight = new Date(new Date(localMidnight).getTime() - offsetMS);
     neoMidnight = new Date(neoMidnight.setDate(localMidnight.getDate()));
-    setPref('neoMidnight', neoMidnight.toString(), {prefType:'string'});
+    setPref('neoMidnight', neoMidnight.toString(), { prefType: 'string' });
 
 
-    AdResetTime_hours = getPref('AdResetTime_hours',0, {prefType:'string'}) * 1000 * 60 * 60;
+    AdResetTime_hours = getPref('AdResetTime_hours',0, { prefType: 'string' }) * 1000 * 60 * 60;
     adResetTime = new Date(new Date(localMidnight).getTime() + AdResetTime_hours);
     adResetTime = new Date(adResetTime.setDate(localMidnight.getDate()));
-    setPref('adResetTime', adResetTime.toString(), {prefType:'string'});
+    setPref('adResetTime', adResetTime.toString(), { prefType: 'string' });
 
 
     var timeOffset_text = '';
@@ -2145,7 +2569,7 @@ function insertLocalServerTime()
         var serverTimeDifference = (ServerTime - LocalTime) / (one_hour);
         serverTimeDifference = Math.floor(serverTimeDifference * 1000) / 1000;
 
-        setPref('serverTimeOffset', serverTimeDifference, { prefType:'string' } );
+        setPref('serverTimeOffset', serverTimeDifference, { prefType: 'string' } );
 
 
         var adResetTimeString = locationOfTimeString.snapshotItem(0).textContent;
@@ -2160,7 +2584,7 @@ function insertLocalServerTime()
         //      debugLog(tmp_ART);
 
         var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
-        setPref('AdResetTime_hours', AdResetTimeDifference, { prefType:'string' } );
+        setPref('AdResetTime_hours', AdResetTimeDifference, { prefType: 'string' } );
 
         break;
       }
@@ -2183,11 +2607,11 @@ function insertLocalServerTime()
     var IsMatch = RegExp_AdPage.test(CurrentUrl);
 
     // If it is the ads page AND the script should automatically detect the offset,
-    if (IsMatch && getPref("AutoDetectTimeOffset", true, {prefType:'string'})) {
+    if (IsMatch && getPref("AutoDetectTimeOffset", true, { prefType: 'string' })) {
       this.FetchAndSetTimeOffset();
     }
 
-    return getPref('serverTimeOffset', 0, {prefType:'float'});
+    return getPref('serverTimeOffset', 0, { prefType: 'float' });
   };
 
 
@@ -2457,7 +2881,7 @@ function insertLocalServerTime()
   };
 
 
-  this.insertClock(this.GetServerTimeOffset(),getPref('AdResetTime_hours',0, {prefType:'string'}));
+  this.insertClock(this.GetServerTimeOffset(),getPref('AdResetTime_hours',0, { prefType: 'string' }));
   this.insertClickGuide();
 
 }
@@ -2850,7 +3274,7 @@ var referralListings = new function()
 
   this.init = function ()
   {
-    var storedReferralData = getPref('referrals',{},{ prefType:'JSON' });
+    var storedReferralData = getPref('referrals',{},{ prefType: 'JSON' });
     var referralData;
 
     var tmp_referralDataFromListingsPage = { mtx:'' };
@@ -2864,7 +3288,7 @@ var referralListings = new function()
       // Merge the newly fetched data with the stored data
       referralData = Object_merge(storedReferralData,tmp_referralsOnCurrentPage);
 
-      setPref('referrals',referralData,{ prefType:'JSON' });
+      setPref('referrals',referralData,{ prefType: 'JSON' });
     }
   }
 };
@@ -3131,7 +3555,7 @@ var chartDataBars = new function()
   this.getDataBarData = function(arg_graphId)
   {
     var tmp_graphLength = graphLengthLookup[arg_graphId];
-    var tmp_dataSet = getPref('graphData', {}, {prefType:'JSON'})[friendlyNameLookup[arg_graphId]];
+    var tmp_dataSet = getPref('graphData', {}, { prefType: 'JSON' })[friendlyNameLookup[arg_graphId]];
     var tmp_currentDayData;
     var dataBarData = {};
     var tmp_sum = [];
@@ -3661,9 +4085,9 @@ var exportTabs = new function()
     }
   }
 
-  //  debugLog(dataToExportFormat('csv',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
-  //  debugLog(dataToExportFormat('tsv',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
-  //  debugLog(dataToExportFormat('text',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+  //  debugLog(dataToExportFormat('csv',getPref('graphData',{},{ prefType: 'JSON' })['rentedClicks']['Credited clicks'],4));
+  //  debugLog(dataToExportFormat('tsv',getPref('graphData',{},{ prefType: 'JSON' })['rentedClicks']['Credited clicks'],4));
+  //  debugLog(dataToExportFormat('text',getPref('graphData',{},{ prefType: 'JSON' })['rentedClicks']['Credited clicks'],4));
 
 
   this.init = function()
@@ -3676,7 +4100,7 @@ var exportTabs = new function()
       if(document.getElementById(tmp_currentGraphId))
       {
 
-        var tmp_dataSet = getPref('graphData',{},{prefType:'JSON'});
+        var tmp_dataSet = getPref('graphData',{},{ prefType: 'JSON' });
         _currentGraph = tmp_dataSet[friendlyNameLookup[tmp_currentGraphId]];
 
         var referenceNode = document.getElementById(tmp_currentGraphId);
@@ -3743,7 +4167,7 @@ var exportTabs = new function()
             tmp_headerValue = 'Total number of referrals';
             break;
         }
-        tmp_currentDataset = getPref('graphData',{},{prefType:'JSON'})[friendlyNameLookup[tmp_currentGraphId]][tmp_headerValue];
+        tmp_currentDataset = getPref('graphData',{},{ prefType: 'JSON' })[friendlyNameLookup[tmp_currentGraphId]][tmp_headerValue];
 
 
         if(tmp_currentGraphId.match(/ch_ext_schedule/))
@@ -5167,6 +5591,6 @@ if(tl8_counter>0){
 }
 
 
-debugLog(getPref('neobuxLanguageCode', 'EN', {prefType: 'string'}));
+debugLog(getPref('neobuxLanguageCode', 'EN', { prefType: 'string' }));
 
 
