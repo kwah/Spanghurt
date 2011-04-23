@@ -115,13 +115,11 @@ var tl8_counter = 0;
 
 function tl8(arg_originalString)
 {
-  arg_originalString = (arg_originalString);
-
 //  console.info('start translation of ',arg_originalString);
-  if('undefined' == typeof tl8strings[localStorage.getItem('neobuxLanguageCode')]){
+  if('undefined' === typeof tl8strings[localStorage.getItem('neobuxLanguageCode')]){
     tl8strings[localStorage.getItem('neobuxLanguageCode')] = {};
   }
-  if('undefined' == typeof tl8strings[localStorage.getItem('neobuxLanguageCode')][arg_originalString])
+  if('undefined' === typeof tl8strings[localStorage.getItem('neobuxLanguageCode')][arg_originalString])
   {
     console.group();
 //    console.info('Error!\n\nTranslation string for "',arg_originalString, '" not found');
@@ -188,6 +186,7 @@ if('undefined' === typeof GM_addStyle){
  */
 function debugLog()
 {
+  addToLoggerBox(arguments);
   if (2 >= arguments.length) {
     console.group();
   }
@@ -209,6 +208,7 @@ function debugLog()
 
 function pageCodeDebugLog()
 {
+  addToLoggerBox(arguments);
   if (2 >= arguments.length) {
     console.group();
   }
@@ -222,6 +222,8 @@ function pageCodeDebugLog()
 
 function errorLog()
 {
+  addToLoggerBox("ERROR!\n");
+  addToLoggerBox(arguments);
   if (2 >= arguments.length) {
 //    console.group();
   }
@@ -323,6 +325,9 @@ function Object_merge(arg_oldObj, arg_newObj)
  *  importantMessage.show();
  * and
  *  importantMessage.hide();
+ *
+ * Depends on:
+ *  GM_addStyle()
  */
 function ModalDialog(arg_dialogId) {
   this.create = function (arg_Css, arg_innerHTML)
@@ -340,7 +345,7 @@ function ModalDialog(arg_dialogId) {
       shadowBackdrop.parentNode.removeChild(shadowBackdrop);
     }
 
-    GM_addStyle('#shadowBackdrop_'+arg_dialogId+' { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; }');
+    GM_addStyle('#shadowBackdrop_'+arg_dialogId+' { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; z-index: 2; }');
 
     shadowBackdrop = document.createElement('div');
     shadowBackdrop.id = 'shadowBackdrop_'+arg_dialogId;
@@ -353,7 +358,7 @@ function ModalDialog(arg_dialogId) {
     document.body.appendChild(shadowBackdrop);
 
 
-    GM_addStyle('#modalDialogWrapper_'+arg_dialogId+' { height: 100%; left: 0; position: absolute; top: 0; width: 100%; }');
+    GM_addStyle('#modalDialogWrapper_'+arg_dialogId+' { height: 100%; left: 0; position: absolute; top: 0; width: 100%; z-index: 3;  }');
     GM_addStyle('#modalDialogElement_'+arg_dialogId+' { '+tmp_cssText+' }');
 
     var modalDialogWrapper = document.getElementById('modalDialogWrapper_'+arg_dialogId);
@@ -381,16 +386,76 @@ function ModalDialog(arg_dialogId) {
   {
     document.getElementById('shadowBackdrop_'+arg_dialogId).style.display = '';
     document.getElementById('modalDialogWrapper_'+arg_dialogId).style.display = '';
+    return this;
   };
   this.hide = function()
   {
     document.getElementById('shadowBackdrop_'+arg_dialogId).style.display = 'none';
     document.getElementById('modalDialogWrapper_'+arg_dialogId).style.display = 'none';
+    return this;
   };
   return this;
 }
 
 
+
+//////
+
+var loggerBox = new ModalDialog('loggerBox');
+loggerBox.create(
+    'background-color: white; margin: 3em; padding: 2em; width: 30em; z-index:3;',
+    '' +
+        '<button id="loggerBox_Close" style="float: right;">Close</button>' +
+        '<button id="loggerBox_Clear" style="float: right;">Clear</button>' +
+        '<h4>Debugging Output</h4>' +
+        '<div style="background-color:lightgrey; height:40em; overflow: auto;">'+
+        '<ul id="loggerBox_Output">' +
+        '<li>&nbsp;</li>' +
+        '</ul>' +
+        '</div>');
+
+//loggerBox.show();
+
+document.getElementById('loggerBox_Clear').addEventListener('click',function() {
+  var tmpLoggerOutput = document.getElementById('loggerBox_Output');
+  for(var i=0, tmp_loggerOutputLength = tmpLoggerOutput.children.length; i<tmp_loggerOutputLength; i++){
+    tmpLoggerOutput.removeChild(tmpLoggerOutput.children[0]);
+  }
+},false);
+
+document.getElementById('loggerBox_Close').addEventListener('click',function() {
+  loggerBox.hide();
+},false);
+
+
+
+function addToLoggerBox(arg_message)
+{
+  var tmp_message = '';
+  for(var j = 0; j < arguments.length; j++ )
+  {
+    switch(typeof arguments[j])
+    {
+      case 'object':
+        tmp_message += "\n<br>" + JSON.stringify(arguments[j]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      break;
+      default:
+        tmp_message += arguments[j].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      break;
+    }
+    tmp_message += (j=== (arguments.length-1)) ? '' : '\n<br>';
+  }
+
+  var tmpLoggerOutput = document.getElementById('loggerBox_Output');
+  var tmp_now = new Date();
+  tmpLoggerOutput.innerHTML += "\n<li>" +
+      "<small><i>" +
+        tmp_now.toTimeString().match(/[0-9]+:[0-9]+:[0-9]+/)[0] + "." + tmp_now.getMilliseconds() +
+      " " + tmp_now.toTimeString().match(/[a-z]+\+?\-?[0-9]+/i)[0] +
+      "</i></small>: "+
+        tmp_message+
+      "</li>";
+}
 
 /**
  * Initial Setup of the script
@@ -608,7 +673,7 @@ for(var accountType in tmp_NeobuxAccountTypeDetails){
 }
 */
 
-console.info(tmp_NeobuxAccountTypeDetails);
+debugLog(tmp_NeobuxAccountTypeDetails);
 
 Neobux.accountDefaults =
 {
@@ -1109,7 +1174,7 @@ function testAgainstUrlParameters(arg_urlVarTests)
     }
   }
 
-  // console.info('Found the following within the URL:',arg_urlVarTests);
+  // debugLog('Found the following within the URL:',arg_urlVarTests);
   return true;
 }
 function testAgainstUrlPath(arg_urlTests)
@@ -1122,7 +1187,7 @@ function testAgainstUrlPath(arg_urlTests)
     }
   }
 
-//  console.info('Found the following within the URL:',arg_urlTests);
+//  debugLog('Found the following within the URL:',arg_urlTests);
   return true;
 }
 
@@ -1145,8 +1210,8 @@ var currentPage = new function()
       if(tmp_langCodes.hasOwnProperty(tmp_langCode)){
         if(document.querySelectorAll('.band2').length > 0 && document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class').match(tmp_langCode))
         {
-//          console.info("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
-//          console.info('tmp_langCode = '+tmp_langCode);
+//          debugLog("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
+//          debugLog('tmp_langCode = '+tmp_langCode);
           setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], {prefType: 'string'});
         }
       }
@@ -1282,7 +1347,7 @@ var currentPage = new function()
 
 };
 
-console.info('currentPage.pageCode = ',currentPage.pageCode);
+debugLog('currentPage.pageCode = ',currentPage.pageCode);
 
 function extractNumberOfRefs()
 {
@@ -1296,7 +1361,7 @@ function extractNumberOfRefs()
     } else {
       _pageRefType = 'Direct';
     }
-// console.info('_pageRefType = ',_pageRefType);
+// debugLog('_pageRefType = ',_pageRefType);
     var tmp_numberOfRefs = null;
     var noOfRefsString = docEvaluate('//td[@class="f_r"]/descendant::span[@class="f_b"]');
 
@@ -1328,7 +1393,7 @@ function extractNumberOfRefs()
     }
 
     // Now store the number of detected referrals if numberOfRefs is not false
-//    console.info('tmp_numberOfRefs = ',tmp_numberOfRefs);
+//    debugLog('tmp_numberOfRefs = ',tmp_numberOfRefs);
     if(0 <= tmp_numberOfRefs){
       setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'text' });
     }
@@ -1369,7 +1434,7 @@ function extractNumberOfRefs()
 
       for(var j=0; j<tmp_lookupArray.length; j++){
         if(tmp_currentTd.textContent.match(tmp_lookupArray[j][0])) {
-//          console.info(tmp_lookupArray[j][1].replace(/{value}/, displayTextContent(tmp_nextTd)));
+//          debugLog(tmp_lookupArray[j][1].replace(/{value}/, displayTextContent(tmp_nextTd)));
         }
       }
     }
@@ -1722,7 +1787,7 @@ var currentUser = new function()
     {
       currentTest = defaultAutopayValues[j];
 
-//      console.info('currentTest.minRefs = '+currentTest.minRefs+'\n'+
+//      debugLog('currentTest.minRefs = '+currentTest.minRefs+'\n'+
 //          'totalRentedRefs = '+totalRentedRefs+'\n'+
 //          'currentTest.cost = '+currentTest.cost);
 
@@ -1870,7 +1935,7 @@ var chartData = new function ()
     //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snapshotLength
 
     for(var i=0; i<xpathResults_graphData.snapshotLength; i++){
-      //console.info(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval/g).length);
+      //debugLog(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval/g).length);
       if(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval\(w\('/g)) {
         /**
        *  If only one matching <script> ... </script> tag found, it is the correct one
@@ -1898,7 +1963,7 @@ var chartData = new function ()
       // Decode evalString using the w(i) function from the Neobux page
       var decodedEvalString = NeobuxDecodeEvalString(evalString);
 
-//        console.info(decodedEvalString);
+//        debugLog(decodedEvalString);
 
       eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
     }
@@ -2067,7 +2132,7 @@ function insertLocalServerTime()
           minute: parseInt(dateTimeString[5], 10)
         };
 
-        //      console.info(tmp_CST);
+        //      debugLog(tmp_CST);
 
         var ServerDateTime = new Date(dateToday);
         ServerDateTime.setFullYear(tmp_CST.year, (tmp_CST.month - 1), tmp_CST.day);
@@ -2092,7 +2157,7 @@ function insertLocalServerTime()
           minute: parseInt(adResetTimeString[2], 10)
         };
 
-        //      console.info(tmp_ART);
+        //      debugLog(tmp_ART);
 
         var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
         setPref('AdResetTime_hours', AdResetTimeDifference, { prefType:'string' } );
@@ -2141,7 +2206,7 @@ function insertLocalServerTime()
       var localTime = formatTime(dateToday);
       var serverTime = (0 <= this.GetServerTimeOffset() || 0 >= this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
 
-  //  console.info('Local: ' + localTime + ' Server: ' + serverTime);
+  //  debugLog('Local: ' + localTime + ' Server: ' + serverTime);
 
       if(document.getElementById('containerDiv_timer')) {
         //document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
@@ -2161,11 +2226,11 @@ function insertLocalServerTime()
       }
 
 
-//      console.info('Local Midnight ',padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2),
+//      debugLog('Local Midnight ',padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2),
 //          'Server Midnight ',padZeros(neoMidnight.getHours(),2)+':'+padZeros(neoMidnight.getMinutes(),2),
 //          'Ad Reset Time ',padZeros(adResetTime.getHours(),2)+':'+padZeros(adResetTime.getMinutes(),2));
 //
-//      console.info(localMidnight,neoMidnight,adResetTime);
+//      debugLog(localMidnight,neoMidnight,adResetTime);
     }
   };
 
@@ -2176,8 +2241,8 @@ function insertLocalServerTime()
     var localMidnightToAdResetTime = (adResetTime - localMidnight) / (1000 * 60 * 60);
     var localMidnightToNeobuxMidnight = (neoMidnight - localMidnight) / (1000 * 60 * 60);
 
-    //    console.info(localMidnightToAdResetTime);
-    //    console.info(localMidnightToNeobuxMidnight);
+    //    debugLog(localMidnightToAdResetTime);
+    //    debugLog(localMidnightToNeobuxMidnight);
 
 
     var _timePeriods = [];
@@ -2206,7 +2271,7 @@ function insertLocalServerTime()
     switch(tmp_displayOrder)
     {
       case 1:
-  //      console.info('localMidnightToAdResetTime < localMidnightToNeobuxMidnight');
+  //      debugLog('localMidnightToAdResetTime < localMidnightToNeobuxMidnight');
 
         localMidnightToFirstEvent = localMidnightToAdResetTime;
         FirstEventToSecondEvent = localMidnightToNeobuxMidnight - localMidnightToAdResetTime;
@@ -2235,7 +2300,7 @@ function insertLocalServerTime()
       break;
       case 2:
 
-  //      console.info('localMidnightToAdResetTime > localMidnightToNeobuxMidnight');
+  //      debugLog('localMidnightToAdResetTime > localMidnightToNeobuxMidnight');
 
         localMidnightToFirstEvent = localMidnightToNeobuxMidnight;
         FirstEventToSecondEvent = localMidnightToAdResetTime - localMidnightToNeobuxMidnight;
@@ -2264,7 +2329,7 @@ function insertLocalServerTime()
       break;
       case 3:
 
-  //      console.info('localMidnightToAdResetTime == localMidnightToNeobuxMidnight');
+  //      debugLog('localMidnightToAdResetTime == localMidnightToNeobuxMidnight');
 
         localMidnightToFirstEvent = localMidnightToAdResetTime;
         FirstEventToSecondEvent = 24 - (localMidnightToFirstEvent);
@@ -2296,7 +2361,7 @@ function insertLocalServerTime()
     location.href = "javascript:void(window.neoMidnight = new Date('"+neoMidnight.toString()+"'))";
     location.href = "javascript:void(window.localMidnight = new Date('"+localMidnight.toString()+"'))";
 
-    //    console.info(_timePeriods);
+    //    debugLog(_timePeriods);
 
     location.href = "javascript:(" + function () {
 
@@ -2319,7 +2384,7 @@ function insertLocalServerTime()
 
         document.getElementById('containerDiv_timer').style.left = '-1000px';
         document.getElementById('containerDiv_timer').style.backgroundColor = 'black';
-        console.info("Cannot show the clicking guide graph because graphs are unavailable on this page. Try the account summary page or referral statistics page.");
+        debugLog("Cannot show the clicking guide graph because graphs are unavailable on this page. Try the account summary page or referral statistics page.");
       }
       else
       {
@@ -2554,7 +2619,7 @@ var referralListings = new function()
     // NB: How often a new dateTime is created vs. an existing one is updated will need a setting
     // Meanwhile, will create a new one on every page load / running of the script
 
-//    console.info('restructureData:\n\n','arg_referralListingsData',arg_referralListingsData);
+//    debugLog('restructureData:\n\n','arg_referralListingsData',arg_referralListingsData);
 
     var tmp_referrals = {};
     var tmp_currentDateTime = new Date();
@@ -2564,7 +2629,7 @@ var referralListings = new function()
     for(var i = 0; i < arg_referralListingsData.length; i++)
     {
 //      console.group();
-//      console.info('i',i);
+//      debugLog('i',i);
 
     /**
      * ## referralSince and lastClick ##
@@ -2630,8 +2695,8 @@ var referralListings = new function()
         return arg_string.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]);
       }
 
-      console.info('cr: ',cr,'\n\n','pr: ',pr);
-      console.info('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
+      debugLog('cr: ',cr,'\n\n','pr: ',pr);
+      debugLog('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
 
 
       tmp_referrals[cr_ID].lastSeen = tmp_currentDateTime.toString();
@@ -2773,12 +2838,12 @@ var referralListings = new function()
 
       } /* END calculating stats for minigraph clicks */
 
-      //console.info(JSON.stringify(tmp_referrals));
+      //debugLog(JSON.stringify(tmp_referrals));
 //      console.groupEnd();
 
     } /* End of for(var i = 0; i < arg_referralListingsData.length; i++) {} loop  */
 
-//    console.info('restructureData:\n\n','tmp_referrals',tmp_referrals);
+//    debugLog('restructureData:\n\n','tmp_referrals',tmp_referrals);
     return tmp_referrals;
   }
 
@@ -2836,7 +2901,7 @@ function PREFERENCE_INPUT_FIELD(arg_inputType, arg_preferenceId, arg_label, arg_
       '<br>';
 
   tmp_container.innerHTML = tmp_innerHTML;
-  console.info(tmp_container.innerHTML);
+  debugLog(tmp_container.innerHTML);
 
   return tmp_container.innerHTML;
 
@@ -2966,7 +3031,9 @@ var logo =
   init: function()
   {
     this.insert();
-    this.addClickEvent(preferencesDialog.show);
+
+//    this.addClickEvent(preferencesDialog.show);
+    this.addClickEvent(loggerBox.show)
   }
 
 };
@@ -3080,8 +3147,8 @@ var chartDataBars = new function()
 //      for (var j in tmp_dataSet)
 //      {
       var j = graphShortCodeToReadableDescription(friendlyNameLookup[arg_graphId]);
-//        console.info('j = '+j);
-//        console.info('tmp_dataSet = '+tmp_dataSet);
+//        debugLog('j = '+j);
+//        debugLog('tmp_dataSet = '+tmp_dataSet);
 
       for (var i = 0; i < dataBarIntervals[tmp_graphLength].length; i++) {
         tmp_maxInterval = (dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
@@ -3094,8 +3161,8 @@ var chartDataBars = new function()
         tmp_currentValue = tmp_dataSet[j][tmp_currentDate];
 
         if(arg_graphId == 'ch_cr' && m<3 || false){
-//            console.info(tl8(tmp_currentDate));
-//            console.info(tl8(tmp_currentValue));
+//            debugLog(tl8(tmp_currentDate));
+//            debugLog(tl8(tmp_currentValue));
         }
 
         tmp_sum[m] = tmp_sum[m - 1] + tmp_currentValue || tmp_currentValue;
@@ -3120,9 +3187,10 @@ var chartDataBars = new function()
           dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[m] / currentUser.recycleFee * tmp_roundedTo) / tmp_roundedTo;
         }
         if ('ch_extensions' == arg_graphId) {
-          dataBarData[tmp_currentDate].idealRenewals = Math.round((currentUser.numberOfRefs.Rented / currentUser.renewalsLength) * tmp_roundedTo) / tmp_roundedTo;
-          dataBarData[tmp_currentDate].idealRenewalsCost = Math.round((m+1) * (dataBarData[tmp_currentDate].idealRenewals * currentUser.renewalFees) * tmp_roundedTo) / tmp_roundedTo;
-          dataBarData[tmp_currentDate].averageRenewals = Math.round((tmp_average[m] / currentUser.renewalFees) * tmp_roundedTo) / tmp_roundedTo;
+          dataBarData[tmp_currentDate].numberOfRenewals_actualAvg = (tmp_average[m] / currentUser.renewalFees);
+          dataBarData[tmp_currentDate].idealNumberOfRenewals_avg = (currentUser.numberOfRefs.Rented / currentUser.renewalsLength);
+          dataBarData[tmp_currentDate].idealRenewalsCost_avg = (dataBarData[tmp_currentDate].idealNumberOfRenewals_avg * currentUser.renewalFees);
+          dataBarData[tmp_currentDate].idealRenewalsCost_sum = (m+1) * (dataBarData[tmp_currentDate].idealNumberOfRenewals_avg * currentUser.renewalFees);
         }
       }
     }
@@ -3163,7 +3231,7 @@ var chartDataBars = new function()
         }
         return arg_dataBarTitle+ tmp_dataBarDataToOutput.join(' ');
       }catch(e){
-        console.info('ERROR! \n',e);
+        errorLog('ERROR! \n',e);
         return 'error in calculations';
       }
     }
@@ -3259,21 +3327,28 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                [tl8('Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','averageRenewals','(',') ',2)],
+                [tl8('Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','numberOfRenewals_actualAvg','(',') ',2)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                [tl8('Ideal Avg. (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewals','(',') ',2)],
+                [tl8('Ideal Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealNumberOfRenewals_avg','(',') ',2)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                [tl8('Ideal Sum ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost','(',') $',3)],
+                [tl8('Ideal Avg. Expense ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost_avg','(',') $',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avgIncome',
+                [tl8('Ideal Sum ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost_sum','(',') $',3)],
                 ''
               )
           );
@@ -3534,7 +3609,7 @@ var exportTabs = new function()
 
   function dataToExportFormat(arg_format, arg_data, arg_length)
   {
-    //    console.info('dataToExportFormat arguments: ',arguments);
+    //    debugLog('dataToExportFormat arguments: ',arguments);
     var tmp_valuesArray = [];
     var tmp_valuesToExportArray = [];
     var exportString = '';
@@ -3550,7 +3625,7 @@ var exportTabs = new function()
       for(var tmp_j = 0; tmp_j < maxCount; tmp_j++)
       {
         tmp_currentDate = dates_array[tmp_j];
-        //      console.info('tmp_currentDate = ',tmp_currentDate);
+        //      debugLog('tmp_currentDate = ',tmp_currentDate);
         if('undefined' !== typeof arg_data[tmp_currentDate]) {
           tmp_valuesArray.push([tmp_currentDate,arg_data[tmp_currentDate]]);
         }
@@ -3579,16 +3654,16 @@ var exportTabs = new function()
           break;
       }
     }catch(e){
-      console.info("ERROR!\n#" +
+      errorLog("ERROR!\n#" +
           'tmp_currentGraphId = ',tmp_currentGraphId,"\n" +
           "Error details: \n",e);
       return 'Error retrieving data';
     }
   }
 
-  //  console.info(dataToExportFormat('csv',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
-  //  console.info(dataToExportFormat('tsv',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
-  //  console.info(dataToExportFormat('text',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+  //  debugLog(dataToExportFormat('csv',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+  //  debugLog(dataToExportFormat('tsv',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
+  //  debugLog(dataToExportFormat('text',getPref('graphData',{},{prefType:'JSON'})['rentedClicks']['Credited clicks'],4));
 
 
   this.init = function()
@@ -3606,7 +3681,7 @@ var exportTabs = new function()
 
         var referenceNode = document.getElementById(tmp_currentGraphId);
 
-        //        console.info('tmp_currentGraphId: ',tmp_currentGraphId,'\n',
+        //        debugLog('tmp_currentGraphId: ',tmp_currentGraphId,'\n',
         //            '_currentGraph: ',_currentGraph,'\n',
         //            'referenceNode: ',referenceNode);
 
@@ -3675,10 +3750,10 @@ var exportTabs = new function()
         {}
         else
         {
-          //      console.info('tmp_currentDataset: ',tmp_currentDataset)
-          //        console.info(dataToExportFormat('csv',tmp_currentDataset,4));
-          //        console.info(dataToExportFormat('tsv',tmp_currentDataset,4));
-          //        console.info(dataToExportFormat('text',tmp_currentDataset,4));
+          //      debugLog('tmp_currentDataset: ',tmp_currentDataset)
+          //        debugLog(dataToExportFormat('csv',tmp_currentDataset,4));
+          //        debugLog(dataToExportFormat('tsv',tmp_currentDataset,4));
+          //        debugLog(dataToExportFormat('text',tmp_currentDataset,4));
 
           try
           {
@@ -3691,12 +3766,12 @@ var exportTabs = new function()
 
             referenceNode.parentNode.insertBefore(exportTabsWrapper,referenceNode);
 
-//            console.info('tmp_currentGraphId = ',tmp_currentGraphId);
+//            debugLog('tmp_currentGraphId = ',tmp_currentGraphId);
 
             var exportTabTypes = ['CSV','TSV','Text'];
             for(var i=0; i<exportTabTypes.length; i++)
             {
-//              console.info('tmp_currentGraphId = ',tmp_currentGraphId,'\n','exportTabTypes[i] = ',exportTabTypes[i]);
+//              debugLog('tmp_currentGraphId = ',tmp_currentGraphId,'\n','exportTabTypes[i] = ',exportTabTypes[i]);
               var exportTabElement = EXPORT_TAB(exportTabTypes[i].toLowerCase(),
                     exportTabTypes[i],
                     tmp_headerValue,
@@ -3711,7 +3786,7 @@ var exportTabs = new function()
 
             }
           } catch(e) {
-            console.info("ERROR!\nCannot add export tabs.\n\nFull error message:\n",e)
+            errorLog("ERROR!\nCannot add export tabs.\n\nFull error message:\n",e)
           }
         }
       }
@@ -4057,11 +4132,11 @@ mk_ch2("ch_cliques",
 
 var convertRefListingsToUl = function(){
 
-  console.info(localStorage);
+  debugLog(localStorage);
 
   var referrals = JSON.parse(localStorage.getItem('referrals'))
 
-  console.info(referrals);
+  debugLog(referrals);
 
 
   function to_ul (obj) {
@@ -4073,13 +4148,13 @@ var convertRefListingsToUl = function(){
       {
           if(obj.hasOwnProperty(i))
           {
-              //console.info(i);
+              //debugLog(i);
               li = document.createElement ("li");
               // if the child has a 'folder' prop on its own, call me again
               if ('object' == typeof obj[i]) {
                   li.appendChild (to_ul (obj[i]));
               } else {
-                  // console.info(document.createTextNode(i));
+                  // debugLog(document.createTextNode(i));
                   li.appendChild(document.createTextNode(i + ' = ' + obj[i]));
               }
               ul.appendChild(li);
@@ -4093,7 +4168,7 @@ var convertRefListingsToUl = function(){
   this.init = function() {
     var tmp_ul = to_ul(referrals);
 
-    console.info(tmp_ul);
+    debugLog(tmp_ul);
 
 //    document.body.innerHTML = "";
     document.body.appendChild(tmp_ul);
@@ -4297,8 +4372,8 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
 
     document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function ()
     {
-      console.info('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
-      console.info('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
+      debugLog('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
+      debugLog('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
       insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
@@ -4328,8 +4403,8 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
 
     document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function ()
     {
-      console.info('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
-      console.info('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
+      debugLog('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
+      debugLog('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
       insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
@@ -4353,7 +4428,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
 function addClickStatsToGoldenGraph(){
   function mk_ch_ref(x, o, w0, w, O, L, m)
   {
-    console.info(arguments);
+    debugLog(arguments);
     if (0 == m)
     {
       n = [0, 0, 0];
@@ -4377,7 +4452,7 @@ function addClickStatsToGoldenGraph(){
 
     /*start extra stuff added to the function*/
     var newElmnt = document.createElement('div');
-    console.info('O[0].data: ', O[0].data);
+    debugLog('O[0].data: ', O[0].data);
 
     var disp_clicks = "Clicks:";
     var disp_sum = "Sums:";
@@ -4400,8 +4475,8 @@ function addClickStatsToGoldenGraph(){
       sum[i] = ('undefined' !== typeof sum[i+1]) ? clicks[i] + sum[i+1] : clicks[i];
       avg[i] = (sum[i] / (O[0].data.length - i)).toFixed(1);
 
-//      console.info('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
-//      console.info('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
+//      debugLog('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
+//      debugLog('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
     }
 
     //for (var i = O[0].data.length - 1; i >= 0; i--) {
@@ -4433,7 +4508,7 @@ function addClickStatsToGoldenGraph(){
   GM_addStyle(".refGraphDatabar { border-collapse: collapse; }" +
       ".refGraphDatabar tbody tr td { font-size: x-small; padding:0 1px; border: 1px solid black; }");
 
-//  console.info('mk_ch_ref.toString() : ',mk_ch_ref.toString());
+//  debugLog('mk_ch_ref.toString() : ',mk_ch_ref.toString());
   var script = document.createElement("script");
   script.setAttribute('type','text/javascript');
   script.text = mk_ch_ref.toString();
@@ -4447,7 +4522,7 @@ var referralListings_columns = new function()
   {
     var tmp_newColumn;
 
-//    console.info(arg_colId);
+//    debugLog(arg_colId);
     var tmp_existingCol = document.getElementById(arg_colId);
     if(tmp_existingCol) {
       tmp_existingCol.parentNode.removeChild(tmp_existingCol);
@@ -4479,36 +4554,36 @@ var referralListings_columns = new function()
 
     var now = new Date();
 
-//    console.info('now: ',now,'\nother date: ',arg_date);
+//    debugLog('now: ',now,'\nother date: ',arg_date);
 
     var t_diff = new Date(arg_date) - now;
-//    console.info('t_diff = '+t_diff);
+//    debugLog('t_diff = '+t_diff);
 
 
     var future = (0 < t_diff);
     var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
 
-//    console.info('remaining_time: ',remaining_time);
+//    debugLog('remaining_time: ',remaining_time);
 
     var diff_days = Math.floor(remaining_time / oneDay);
     remaining_time -= diff_days * oneDay;
 
-//    console.info('diff_days: ',diff_days,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_days: ',diff_days,'\nremaining_time: ',remaining_time);
 
     var diff_hrs = Math.floor(remaining_time / oneHour);
     remaining_time -= diff_hrs * oneHour;
 
-//    console.info('diff_hrs: ',diff_hrs,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_hrs: ',diff_hrs,'\nremaining_time: ',remaining_time);
 
     var diff_mins = Math.floor(remaining_time / oneMinute);
     remaining_time -= diff_mins * oneMinute;
 
-//    console.info('diff_mins: ',diff_mins,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_mins: ',diff_mins,'\nremaining_time: ',remaining_time);
 
     var diff_secs = Math.floor(remaining_time / oneSecond);
     remaining_time -= diff_secs * oneSecond;
 
-//    console.info('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
 
    return '['+
        diff_days+'d'+
@@ -4545,7 +4620,7 @@ var referralListings_columns = new function()
   function nextPaymentStringToDate(arg_string)
   {
     arg_string = arg_string.toString();
-//    console.info('nextPaymentStringToDate: \n','arg_string : ',arg_string);
+//    debugLog('nextPaymentStringToDate: \n','arg_string : ',arg_string);
     var onesec = 1000;
     var onemin = onesec * 60;
     var onehr = onemin * 60;
@@ -4563,7 +4638,7 @@ var referralListings_columns = new function()
         (tmp_hours * onehr) +
         (tmp_mins * onemin) );
 
-//    console.info(tmp_days+'d, '+tmp_hours+'h, '+tmp_mins+'m');
+//    debugLog(tmp_days+'d, '+tmp_hours+'h, '+tmp_mins+'m');
     return tmp_date;
 
   }
@@ -4629,7 +4704,7 @@ var referralListings_columns = new function()
 //      if(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan') == (colCount-1){
         tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
 //      }
-//      console.info(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan'));
+//      debugLog(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan'));
     }
 
     for(var i=0; i<referralRows.length; i++){
@@ -4676,7 +4751,7 @@ var referralListings_columns = new function()
                 ''
                 );
           }catch(e) {
-            console.info('error with new column - '+columnName+' ::\n',e);
+            errorLog('error with new column - '+columnName+' ::\n',e);
           }
         }
       }
@@ -4697,7 +4772,7 @@ var referralListings_columns = new function()
       refSince: 5
     };
     var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
-    console.info(tmp_referralsData);
+    debugLog(tmp_referralsData);
   }
 };
 
@@ -4743,14 +4818,14 @@ function insertSidebar()
   sidebarData.projectedClicks['Direct'] = (currentUser.numberOfRefs.Direct * parseFloat(tmp_foo[2].textContent));
   sidebarData.projectedClicks['Total'] = (sidebarData.projectedClicks['Rented'] + sidebarData.projectedClicks['Direct']);
 
-  console.info('sidebarData.projectedClicks = ',sidebarData.projectedClicks);
+  debugLog('sidebarData.projectedClicks = ',sidebarData.projectedClicks);
 
   sidebarData.projectedIncome = {};
   sidebarData.projectedIncome['Rented'] = (sidebarData.projectedClicks['Rented'] * currentUser.rentedReferralClickValue);
   sidebarData.projectedIncome['Direct'] = (sidebarData.projectedClicks['Direct'] * currentUser.directReferralClickValue);
   sidebarData.projectedIncome['Total'] = (sidebarData.projectedIncome['Rented'] + sidebarData.projectedIncome['Direct']);
 
-  console.info('sidebarData.projectedIncome = ',sidebarData.projectedIncome);
+  debugLog('sidebarData.projectedIncome = ',sidebarData.projectedIncome);
 
   // // NOW CREATE THE ACTUAL SIDEBAR ////
   if(document.getElementById("sidebarContainer")) {
@@ -4809,11 +4884,11 @@ function insertSidebar()
      * IF NOT, CONTINUE TO THE NEXT SIDEBAR TIME PERIOD
      **/
     if(!(0 <= currentSidebarTimePeriod[0]) || !(0 <= currentSidebarTimePeriod[1])) {
-      console.info("ERROR!\n\n", "Sidebar Timeperiod #" + i + ' is not numerical. Moving onto next time period');
+      errorLog("ERROR!\n\n", "Sidebar Timeperiod #" + i + ' is not numerical. Moving onto next time period');
       continue;
     }
     if(currentSidebarTimePeriod[0] > currentSidebarTimePeriod[1]) {
-      console.info("Error!\n\n", "Sidebar Timeperiod #" + i + ' is not in the correct order (end day is earlier than the start day). Moving onto next time period');
+      errorLog("Error!\n\n", "Sidebar Timeperiod #" + i + ' is not in the correct order (end day is earlier than the start day). Moving onto next time period');
       continue;
     }
     //Default showing the projected values for the current time period to false and only enable it if required
@@ -4840,7 +4915,7 @@ function insertSidebar()
 
 //        console.group();
         if(!sidebarData[j]) { sidebarData[j] = {}; }
-//        console.info('j: ',j,'\n','sidebarData[j]: ',sidebarData[j]);
+//        debugLog('j: ',j,'\n','sidebarData[j]: ',sidebarData[j]);
         for(var m=startDay; m<=endDay; m++)
         {
           tmp_currentDate = dates_array[m];
@@ -4863,13 +4938,13 @@ function insertSidebar()
             'sum': tmp_sum[m],
             'avg': tmp_average[m]
           };
-          //          console.info('JSON.stringify(dataBarData['+tmp_currentDate+']) = '+JSON.stringify(dataBarData[tmp_currentDate]));
+          //          debugLog('JSON.stringify(dataBarData['+tmp_currentDate+']) = '+JSON.stringify(dataBarData[tmp_currentDate]));
         }
 //        console.groupEnd();
       }
     }
 
-//    console.info('sidebarData = ',sidebarData);
+//    debugLog('sidebarData = ',sidebarData);
 
     var header = tl8("Totals between ") + startDay + tl8(" Days Ago and ") + (endDay+1) + tl8(" Days Ago");
 
@@ -4955,7 +5030,7 @@ function insertSidebar()
   wrapperTD.appendChild(sidebarContainer);
 
   var statsSidebarPosition = getPref('statsSidebarPosition','right',{ prefType: 'text' });
-  console.info('statsSidebarPosition = ',statsSidebarPosition,'\n','locationToInsertSidebar[statsSidebarPosition] = ',locationToInsertSidebar[statsSidebarPosition]);
+  debugLog('statsSidebarPosition = ',statsSidebarPosition,'\n','locationToInsertSidebar[statsSidebarPosition] = ',locationToInsertSidebar[statsSidebarPosition]);
 
   if('right' === statsSidebarPosition) {
 //    sidebarContainer.setAttribute('onmouseover','document.getElementById("sidebarContainer").style.opacity = "1";');
@@ -4994,7 +5069,7 @@ if(currentPage.pageCode.match(/referralListings_Rented/))
     refSince: 5
   };
   var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
-  console.info(tmp_referralsData);
+  debugLog(tmp_referralsData);
 
 
   //referralListings_columns.init();
@@ -5087,9 +5162,11 @@ catch(e) {
 
 
 if(tl8_counter>0){
-  console.info("NOTE!!\n\nUntranslated strings on this page!!");
-  console.info(localStorage.getItem('translationStringsNeeded'));
+  debugLog("NOTE!!\n\nUntranslated strings on this page!!");
+  debugLog(localStorage.getItem('translationStringsNeeded'));
 }
 
 
-console.info(getPref('neobuxLanguageCode', 'EN', {prefType: 'string'}));
+debugLog(getPref('neobuxLanguageCode', 'EN', {prefType: 'string'}));
+
+
