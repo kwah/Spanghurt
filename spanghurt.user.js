@@ -2387,6 +2387,8 @@ function insertLocalServerTime()
   var adResetTime;
   var AdResetTime_hours;
 
+  var locationToInsertTimeString;
+
   function setTime(arg_dateTime,arg_time)
   {
     arg_dateTime.setHours(arg_time[0]);
@@ -2439,7 +2441,6 @@ function insertLocalServerTime()
 
   };
 
-
   // Calculate and return the size of the time difference/offset
   this.FetchAndSetTimeOffset = function()
   {
@@ -2451,10 +2452,7 @@ function insertLocalServerTime()
       // var dateTimeString = '2009/06/07 20:46'; (assuming format yyyy/mm/dd hh:dd )
       var dateTimeString = locationOfTimeString.snapshotItem(tmp_i).textContent.match(/([\d]{4})\/([\d]{2})\/([\d]{2}) ([\d]{2}):([\d]{2})/) || -1;
 
-      if (-1 === dateTimeString) {
-        /* do nothing */
-      }
-      else
+      if (0 < dateTimeString.length)
       {
         // NB: parseInt("08") == 0 so must definition of base 10 required
         // CST = Current Server Time
@@ -2480,7 +2478,7 @@ function insertLocalServerTime()
         var serverTimeDifference = (ServerTime - LocalTime) / (one_hour);
         serverTimeDifference = Math.floor(serverTimeDifference * 1000) / 1000;
 
-        setPref('serverTimeOffset', serverTimeDifference, { prefType: 'string' } );
+        setPref('serverTimeOffset', serverTimeDifference, { prefType: 'string' });
 
 
         var adResetTimeString = locationOfTimeString.snapshotItem(0).textContent;
@@ -2495,7 +2493,7 @@ function insertLocalServerTime()
         //      debugLog(tmp_ART);
 
         var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
-        setPref('AdResetTime_hours', AdResetTimeDifference, { prefType: 'string' } );
+        setPref('AdResetTime_hours', AdResetTimeDifference, { prefType: 'string' });
 
         break;
       }
@@ -2503,13 +2501,12 @@ function insertLocalServerTime()
     }
   };
 
-
   this.GetServerTimeOffset = function()
   {
-    /*
-      Check whether the page being loaded is the 'View Advertisements' page
-      If it is, call this.GetServerTimeOffset() to calculate & store the offset amount [if auto-detecting the offset is enabled]
-    */
+    /**
+     * Check whether the page being loaded is the 'View Advertisements' page
+     * If it is, call this.GetServerTimeOffset() to calculate & store the offset amount [if auto-detecting the offset is enabled]
+     */
 
     // Check whether current page is the "View Advertisements" page
     var CurrentUrl = document.location.href;
@@ -2525,23 +2522,13 @@ function insertLocalServerTime()
     return getPref('serverTimeOffset', 0, { prefType: 'float' });
   };
 
-
-  var locationToInsertTimeString;
-
   this.insertClock = function(arg_timeOffset,arg_adResetOffset)
   {
-    //If the image logo cannot be found, either find an alternate place to insert it
-    //   or abort insertion.
-    if(document.querySelectorAll('img#logo').length <= 0) {
-      return;
-    }
     locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode;
     if(locationToInsertTimeString)
     {
       var localTime = formatTime(dateToday);
       var serverTime = (0 <= this.GetServerTimeOffset() || 0 >= this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
-
-  //  debugLog('Local: ' + localTime + ' Server: ' + serverTime);
 
       if(document.getElementById('containerDiv_timer')) {
         //document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
@@ -2559,26 +2546,17 @@ function insertLocalServerTime()
       } else {
         document.body.appendChild(containerDiv_timer);
       }
-
-
-//      debugLog('Local Midnight ',padZeros(localMidnight.getHours(),2)+':'+padZeros(localMidnight.getMinutes(),2),
-//          'Server Midnight ',padZeros(neoMidnight.getHours(),2)+':'+padZeros(neoMidnight.getMinutes(),2),
-//          'Ad Reset Time ',padZeros(adResetTime.getHours(),2)+':'+padZeros(adResetTime.getMinutes(),2));
-//
-//      debugLog(localMidnight,neoMidnight,adResetTime);
     }
   };
 
-
   this.insertClickGuide = function()
   {
+    if(!adResetTime){
+      return;
+    }
 
     var localMidnightToAdResetTime = (adResetTime - localMidnight) / (1000 * 60 * 60);
     var localMidnightToNeobuxMidnight = (neoMidnight - localMidnight) / (1000 * 60 * 60);
-
-    //    debugLog(localMidnightToAdResetTime);
-    //    debugLog(localMidnightToNeobuxMidnight);
-
 
     var _timePeriods = [];
     var localMidnightToFirstEvent;
@@ -2792,9 +2770,15 @@ function insertLocalServerTime()
   };
 
 
-  this.insertClock(this.GetServerTimeOffset(),getPref('AdResetTime_hours',0, { prefType: 'string' }));
-  this.insertClickGuide();
 
+  //If the image logo cannot be found, either find an alternate place to insert it
+  //   or abort insertion.
+  if(document.querySelectorAll('img#logo').length <= 0) {
+    return;
+  }
+
+  this.insertClock(this.GetServerTimeOffset(), getPref('AdResetTime_hours', 0, { prefType: 'string' }));
+  this.insertClickGuide();
 }
 
 
