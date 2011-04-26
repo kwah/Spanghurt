@@ -2465,8 +2465,6 @@ function insertLocalServerTime()
           minute: parseInt(dateTimeString[5], 10)
         };
 
-        //      debugLog(tmp_CST);
-
         var ServerDateTime = new Date(dateToday);
         ServerDateTime.setFullYear(tmp_CST.year, (tmp_CST.month - 1), tmp_CST.day);
         ServerDateTime.setHours(tmp_CST.hour, tmp_CST.minute);
@@ -2489,8 +2487,6 @@ function insertLocalServerTime()
           hour: parseInt(adResetTimeString[1], 10),
           minute: parseInt(adResetTimeString[2], 10)
         };
-
-        //      debugLog(tmp_ART);
 
         var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
         setPref('AdResetTime_hours', AdResetTimeDifference, { prefType: 'string' });
@@ -2769,8 +2765,6 @@ function insertLocalServerTime()
 
   };
 
-
-
   //If the image logo cannot be found, either find an alternate place to insert it
   //   or abort insertion.
   if(document.querySelectorAll('img#logo').length <= 0) {
@@ -3013,9 +3007,10 @@ var referralListings = new function()
         return arg_string.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]);
       }
 
-      debugLog('cr: ',cr,'\n\n','pr: ',pr);
-      debugLog('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
-
+      if(10 > i) {
+        debugLog('cr: ',cr,'\n\n','pr: ',pr);
+        debugLog('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
+      }
 
       tmp_referrals[cr_ID].lastSeen = tmp_currentDateTime.toString();
       tmp_referrals[cr_ID].hash = cr[7];
@@ -3369,62 +3364,63 @@ var profitGraph = new function()
 };
 
 
-function graphShortCodeToReadableDescription(arg_shortCode)
+function graphShortCodeToReadableDescription(arg_graphId)
 {
   var tmp_headerValue = '';
-  switch(arg_shortCode)
+  switch(arg_graphId)
   {
-    case 'personalClicks':
-      tmp_headerValue = tl8('Local Time');
+    case 'ch_cliques':
+      tmp_headerValue = tl8('Own clicks, Local Time:');
       break;
-    case 'directClicks':
-    //fall through
-    case 'rentedClicks':
-      tmp_headerValue = tl8('Credited clicks');
+    case 'ch_cd':
+      tmp_headerValue = tl8('Credited Direct Referral Clicks:');
       break;
-    case 'recycleCost':
-      tmp_headerValue = tl8('Recycle value');
+    case 'ch_cr':
+      tmp_headerValue = tl8('Credited Rented Referral Clicks:');
       break;
-    case 'renewalCost':
+    case 'ch_recycle':
+      tmp_headerValue = tl8('Amount spent on recycles:');
+      break;
+    case 'ch_extensions':
+      tmp_headerValue = tl8('Amount spent on renewing / extending referrals:');
+      break;
+    case 'ch_autopay':
+      tmp_headerValue = tl8('Amount spent on Autopay:');
+      break;
+    case 'ch_trrb':
+      tmp_headerValue = tl8('Amount transferred to your Rental Balance:');
+      break;
+    case 'ch_earnings':
       tmp_headerValue = tl8('Extension value');
       break;
-    case 'autopayCost':
-      tmp_headerValue = tl8('AutoPay value');
-      break;
-    case 'transfersToRentalBalance':
-      tmp_headerValue = tl8('Transfer value');
-      break;
-    case 'referralEarnings':
+    case 'ch_profit':
       tmp_headerValue = tl8('Extension value');
       break;
-    case 'referralProfit':
-      tmp_headerValue = tl8('Extension value');
+    case 'ch_trar':
+      tmp_headerValue = tl8('Number of referrals automatically recycled for free:');
       break;
-    case 'automaticRecycles':
-      tmp_headerValue = tl8('Referrals');
+    case 'ch_trpb':
+      tmp_headerValue = tl8('Amount transferred to your Golden Pack Balance:');
       break;
-    case 'transferToPackBalance':
-      tmp_headerValue = tl8('Transfer value');
-      break;
-    case 'extensions_631To720':
+    case 'ch_ext_schedule8':
     //fall through
-    case 'extensions_541To630':
+    case 'ch_ext_schedule7':
     //fall through
-    case 'extensions_451To540':
+    case 'ch_ext_schedule6':
     //fall through
-    case 'extensions_361To450':
+    case 'ch_ext_schedule5':
     //fall through
-    case 'extensions_271To360':
+    case 'ch_ext_schedule4':
     //fall through
-    case 'extensions_181To270':
+    case 'ch_ext_schedule3':
     //fall through
-    case 'extensions_91To180':
+    case 'ch_ext_schedule2':
     //fall through
-    case 'extensions_0To90':
+    case 'ch_ext_schedule1':
     //fall through
-    case 'extensions':
+    case 'ch_ext_schedule':
       //fall through
-      tmp_headerValue = tl8('Total number of referrals');
+      tmp_headerValue = tl8('Total number of referrals due to expire on each date:');
       break;
   }
   return tmp_headerValue;
@@ -3872,11 +3868,11 @@ var exportTabs = new function()
         {
           // (event.ctrlKey && event.altKey && event.shiftKey)
           var exportTab = new ModalDialog('exportTab_'+arg_exportType);
-          exportTab.create('background-color: white; margin: 8em auto; padding: 2em; width: 16em;',
+          exportTab.create('background-color: white; margin: 8em auto; padding: 2em; position: relative; top:'+window.pageYOffset+'px; width: 17em;',
               '' +
                   '<h3>'+'Exporting to '+arg_exportTabText+'..'+'</h3>' +
-                  messageHeader+'<br>' +
-                  '<textarea style="height: 15em; width: 15em;">' + ((event.ctrlKey && textareaContentsReverse) ? textareaContentsReverse : textareaContents) +'</textarea><br>' +
+                  '<small><i>'+messageHeader+'</i></small><br>' +
+                  '<textarea style="height: 15em; width: 17em;">' + ((event.ctrlKey && textareaContentsReverse) ? textareaContentsReverse : textareaContents) +'</textarea><br>' +
                   '<button id="'+arg_exportType+'ExportTab_okButton">Ok</button>');
           
           document.getElementById(arg_exportType+'ExportTab_okButton').addEventListener('click',
@@ -3895,10 +3891,6 @@ var exportTabs = new function()
 
   function dataToExportFormat(arg_exportFormat, arg_graphId, arg_graphData, arg_numberOfDaysToExport)
   {
-    if(tmp_currentGraphId.match(/ch_ext_schedule/)) { 
-      return; 
-    }
-    
     var tmp_valuesArray = [];
     var tmp_valuesToExportArray = [];
     var exportString = '';
@@ -3909,15 +3901,30 @@ var exportTabs = new function()
     }
 
     var tmp_currentDate;
-    
-    for(var dateIndex = 0; dateIndex < maxCount; dateIndex++)
+
+    if(arg_graphId.match(/ch_ext_schedule/i))
     {
-      tmp_currentDate = dates_array[dateIndex];
-      if('undefined' !== typeof arg_graphData[tmp_currentDate]) {
-        tmp_valuesArray.push([tmp_currentDate, arg_graphData[tmp_currentDate][lookup_graphCache[arg_graphId]]]);
+      var tmp_extensionGraphIndex =  arg_graphId.match(/ch_ext_schedule([0-9]+)/i)[1];
+      var tmp_extensionScheduleAdjustment_start = (tmp_extensionGraphIndex - 1) * graphLengthLookup[arg_graphId] * -1;
+      var tmp_extensionScheduleAdjustment_end = (tmp_extensionGraphIndex - 0) * graphLengthLookup[arg_graphId] * -1;
+
+      for(var dateIndex = tmp_extensionScheduleAdjustment_start; dateIndex > tmp_extensionScheduleAdjustment_end; dateIndex--)
+      {
+        tmp_currentDate = dates_array[dateIndex];
+        if('undefined' !== typeof arg_graphData[tmp_currentDate]) {
+          tmp_valuesArray.push([tmp_currentDate, arg_graphData[tmp_currentDate][lookup_graphCache[arg_graphId]]]);
+        }
       }
     }
-
+    else {
+      for(var dateIndex = 0; dateIndex < maxCount; dateIndex++)
+      {
+        tmp_currentDate = dates_array[dateIndex];
+        if('undefined' !== typeof arg_graphData[tmp_currentDate]) {
+          tmp_valuesArray.push([tmp_currentDate, arg_graphData[tmp_currentDate][lookup_graphCache[arg_graphId]]]);
+        }
+      }
+    }
     try {
       switch(arg_exportFormat) {
         case 'csv':
@@ -3958,12 +3965,7 @@ var exportTabs = new function()
       tmp_currentGraphId = graphsOnCurrentPage[tmpNameOfCurrentGraph];
       if(document.getElementById(tmp_currentGraphId))
       {
-        if(tmp_currentGraphId.match(/ch_ext_schedule/)) {
-          continue;
-        }
-
         var referenceNode = document.getElementById(tmp_currentGraphId);
-
         try
         {
           //// Add Export Links
@@ -3986,7 +3988,7 @@ var exportTabs = new function()
                     exportTabTypes[exportTabTypes_index].toLowerCase(),
                     tmp_currentGraphId,
                     tmp_currentDataset.graphs,
-                    10)
+                    graphLengthLookup[tmp_currentGraphId])
               );
 
             if(document.getElementById(exportTabTypes[exportTabTypes_index].toLowerCase()+'ExportTab_'+tmp_currentGraphId)) {
@@ -4630,7 +4632,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
 function addClickStatsToGoldenGraph() {
   function mk_ch_ref(x, o, w0, w, O, L, m)
   {
-    debugLog(arguments);
+    console.info(arguments);
     if (0 == m)
     {
       n = [0, 0, 0];
@@ -4654,7 +4656,7 @@ function addClickStatsToGoldenGraph() {
 
     /*start extra stuff added to the function*/
     var newElmnt = document.createElement('div');
-    debugLog('O[0].data: ', O[0].data);
+    console.info('O[0].data: ', O[0].data);
 
     var disp_clicks = "Clicks:";
     var disp_sum = "Sums:";
@@ -4677,8 +4679,8 @@ function addClickStatsToGoldenGraph() {
       sum[i] = ('undefined' !== typeof sum[i+1]) ? clicks[i] + sum[i+1] : clicks[i];
       avg[i] = (sum[i] / (O[0].data.length - i)).toFixed(1);
 
-//      debugLog('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
-//      debugLog('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
+//      console.info('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
+//      console.info('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
     }
 
     //for (var i = O[0].data.length - 1; i >= 0; i--) {
@@ -4710,7 +4712,7 @@ function addClickStatsToGoldenGraph() {
   GM_addStyle(".refGraphDatabar { border-collapse: collapse; }" +
       ".refGraphDatabar tbody tr td { font-size: x-small; padding:0 1px; border: 1px solid black; }");
 
-//  debugLog('mk_ch_ref.toString() : ',mk_ch_ref.toString());
+//  console.info('mk_ch_ref.toString() : ',mk_ch_ref.toString());
   var script = document.createElement("script");
   script.setAttribute('type','text/javascript');
   script.text = mk_ch_ref.toString();
@@ -5115,7 +5117,6 @@ function insertSidebar()
 
       //Check whether data is stored for the current date
       if("undefined" === typeof tmp_dataSet.graphs[tmp_currentDate]) {
-        console.info(tmp_dataSet);
         errorLog("Data for this for this date ("+tmp_currentDate+") is not found.");
 
         //Dataset for current date is missing, thus mark it as such
