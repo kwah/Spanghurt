@@ -5279,15 +5279,21 @@ if(currentPage.pageCode.match(/referralListings_Rented/))
 
 
   //
-  function REFERRAL(arg_refId, arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId)
+  function REFERRAL(arg_refId, arg_referralProperties)
   {
+    //arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
     this.refId = arg_refId;
-    this.referralSince = arg_referralSince;
-    this.nextPayment = arg_nextPayment;
-    this.lastClick = arg_lastClick;
-    this.totalClicks = arg_totalClicks;
-    this.average = arg_average;
-    this.flagColourId = arg_flagColourId;
+    this.referralSince =  arg_referralProperties['referralSince'] || null;
+    this.lastClick =      arg_referralProperties['lastClick']     || null;
+    this.totalClicks =    (0 <= arg_referralProperties['totalClicks'])  ? arg_referralProperties['totalClicks']  : null;
+    this.average =        (0 <= arg_referralProperties['average'])      ? arg_referralProperties['average']      : null;
+    this.flagColourId =   (0 <= arg_referralProperties['flagColourId']) ? arg_referralProperties['flagColourId'] : null;
+
+    //Rented referral properties
+    this.nextPayment =    arg_referralProperties['nextPayment']   || null;
+    //Direct referral properties
+    this.cameFrom =       arg_referralProperties['cameFrom']      || null;
+    this.isSellable =     arg_referralProperties['isSellable']    || null;
 
     function flagIdToColour(arg_flagId) {
       var flagLookup = {
@@ -5298,7 +5304,7 @@ if(currentPage.pageCode.match(/referralListings_Rented/))
         4: 'Green',
         5: 'Blue'
       };
-      return flagLookup[arg_flagId] || "Unkwown";
+      return flagLookup[arg_flagId] || "Unknown";
     }
     this.flagColour = flagIdToColour(this.flagColourId);
 
@@ -5350,19 +5356,22 @@ if(currentPage.pageCode.match(/referralListings_Rented/))
 
     function calculateRealAverage(arg_referralSince, arg_totalClicks) {
       var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
-      return arg_totalClicks / tmp_timeOwned_days;
+      return (arg_totalClicks / tmp_timeOwned_days).toFixed(5) * 1;
     }
-    this.realAverage = calculateRealAverage(this.referralSince_Date, this.totalClicks).toFixed(5);
+    this.realAverage = calculateRealAverage(this.referralSince_Date, this.totalClicks);
   }
 
   var tmp_referral = new REFERRAL(
       'R526077263',
-      '2011/04/25 11:20',
-      '171 days and 20:47',
-      'Today',
-      3,
-      1.500,
-      0);
+      {
+        referralSince: '2011/04/25 11:20',
+        nextPayment: '171 days and 20:47',
+        lastClick: 'Today',
+        totalClicks: 3,
+        average: 1.500,
+        flagColourId: 0
+      }
+  );
 
   console.info(tmp_referral);
 
