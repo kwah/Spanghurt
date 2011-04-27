@@ -5271,12 +5271,100 @@ function codeShouldRun(arg_currentPage, arg_allowedPages)
   return !!arg_allowedPages.indexOf(arg_currentPage);
 }
 
-
 var tmp_iframePages = /viewingAdvertisement|viewingForums_editingMessage|viewingForums_creatingTopic|viewingForums_creatingPoll/i;
 
 if(currentPage.pageCode.match(/referralListings_Rented/))
 {
   widenPages.referralListings();
+
+
+  //
+  function REFERRAL(arg_refId, arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId)
+  {
+    this.refId = arg_refId;
+    this.referralSince = arg_referralSince;
+    this.nextPayment = arg_nextPayment;
+    this.lastClick = arg_lastClick;
+    this.totalClicks = arg_totalClicks;
+    this.average = arg_average;
+    this.flagColourId = arg_flagColourId;
+
+    function flagIdToColour(arg_flagId) {
+      var flagLookup = {
+        0: 'White',
+        1: 'Red',
+        2: 'Orange',
+        3: 'Yellow',
+        4: 'Green',
+        5: 'Blue'
+      };
+      return flagLookup[arg_flagId] || "Unkwown";
+    }
+    this.flagColour = flagIdToColour(this.flagColourId);
+
+    function referralSinceToDateObject(arg_referralSinceString)
+    {
+      //'2011/04/25 11:20'
+      var tmp_breakdown = arg_referralSinceString.match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
+      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
+      // NB:: month is zero-indexed thus needs to be reduced by 1
+      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
+    }
+    this.referralSince_Date = referralSinceToDateObject(this.referralSince);
+
+    function lastClickToDateObject(arg_referralSinceString)
+    {
+      // english | pt | es | greek | FI | SE | DE
+      var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+      var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+      var tl8_tomorrow = /tomorrow/i;
+
+      //'Today' or 'Yesterday' or '2011/04/25'
+      var tmp_breakdown = arg_referralSinceString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+)/);
+
+      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
+      // NB:: month is zero-indexed thus needs to be reduced by 1
+      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],0,0,0,0);
+    }
+    this.lastClick_Date = lastClickToDateObject(this.referralSince);
+
+
+    function nextPaymentToDateObject(arg_referralSinceString)
+    {
+      //'171 days and 20:47'
+      //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
+      var tmp_breakdown = arg_referralSinceString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
+
+      var tmp_nextPaymentDifference =
+          (tmp_breakdown[1] * 24 * 60 * 60 * 1000)+ //days to milliseconds
+          (tmp_breakdown[2] * 60 * 60 * 1000) + //hours to milliseconds
+          (tmp_breakdown[3] * 60 * 1000); // minutes to milliseconds
+
+      //Convert the time/date difference to milliseconds, then sum it with the numerical version (hence -0,
+      //   though any forcing of now to be numerical will work) of the current date/time and convert back to a date
+      var tmp_nextPaymentDate = new Date (dateToday - 0 + tmp_nextPaymentDifference);
+
+      return tmp_nextPaymentDate;
+    }
+    this.nextPayment_Date = nextPaymentToDateObject(this.nextPayment);
+
+    function calculateRealAverage(arg_referralSince, arg_totalClicks) {
+      var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
+      return arg_totalClicks / tmp_timeOwned_days;
+    }
+    this.realAverage = calculateRealAverage(this.referralSince_Date, this.totalClicks).toFixed(5);
+  }
+
+  var tmp_referral = new REFERRAL(
+      'R526077263',
+      '2011/04/25 11:20',
+      '171 days and 20:47',
+      'Today',
+      3,
+      1.500,
+      0);
+
+  console.info(tmp_referral);
 
   var settings = {};
   var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
