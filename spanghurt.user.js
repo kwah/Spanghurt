@@ -4988,8 +4988,8 @@ function insertSidebar()
 
   // Location to insert the sidebar (right hand side)
   var locationToInsertSidebar = {
-    right: docEvaluate("//td[@width='729']").snapshotItem(0).parentNode,
-    left: document.body.children[1].children[1].children[0].children[0].children[0]
+    right: docEvaluate("//td[@width='729']").snapshotItem(0).parentNode || document.body,
+    left: document.body.children[1].children[1].children[0].children[0].children[0] || document.body
   };
 
 
@@ -5139,9 +5139,13 @@ function insertSidebar()
 
           tmp_currentValue = tmp_dataSet.graphs[tmp_currentDate][lookup_graphCache[tmpGraphIndex]];
 //          console.info(tmpGraphIndex + " (" + lookup_graphCache[tmpGraphIndex] + ") on " + tmp_currentDate + " = " + tmp_currentValue);
+
+          if(!tmp_sum[lookup_graphCache[tmpGraphIndex]]) {
+            tmp_sum[lookup_graphCache[tmpGraphIndex]] = {};
+          }
           
-          tmp_sum[dayCounterIndex] = tmp_sum[dayCounterIndex-1] + tmp_currentValue || tmp_currentValue;
-          tmp_average[dayCounterIndex] = tmp_sum[dayCounterIndex] / (dayCounterIndex+1);
+          tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex] = ("undefined" === typeof tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex-1]) ? tmp_currentValue : tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex-1] + tmp_currentValue;
+          tmp_average[dayCounterIndex] = tmp_sum[lookup_graphCache[tmpGraphIndex]] / (dayCounterIndex+1);
 
           if("undefined" === typeof sidebarData[lookup_graphCache[tmpGraphIndex]]) {
             sidebarData[lookup_graphCache[tmpGraphIndex]] = {};
@@ -5149,7 +5153,7 @@ function insertSidebar()
 
           sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate] = {
             'value': tmp_currentValue,
-            'sum': tmp_sum[dayCounterIndex],
+            'sum': tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex],
             'avg': tmp_average[dayCounterIndex]
           };
         }
