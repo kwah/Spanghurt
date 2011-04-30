@@ -2866,6 +2866,13 @@ var referralListings = new function()
     this.cameFrom =               arg_referralProperties['cameFrom']      || null;
     this.isSellable =             arg_referralProperties['isSellable']    || null;
 
+
+      // english | pt | es | greek | FI | SE | DE
+      var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+      var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+      var tl8_tomorrow = /tomorrow/i;
+
+    
     function flagIdToColour(arg_flagId)
     {
       var flagLookup = {
@@ -2886,8 +2893,9 @@ var referralListings = new function()
 
     function referralSinceToDateObject(arg_referralSinceString)
     {
+      console.info('arg_referralSinceString = ',arg_referralSinceString);
       //'2011/04/25 11:20'
-      var tmp_breakdown = arg_referralSinceString.match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
+      var tmp_breakdown = arg_referralSinceString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
       //new Date(year, month, day, hours, minutes, seconds, milliseconds)
       // NB:: month is zero-indexed thus needs to be reduced by 1
       return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
@@ -2896,11 +2904,7 @@ var referralListings = new function()
 
     function lastClickToDateObject(arg_lastClickString)
     {
-      // english | pt | es | greek | FI | SE | DE
-      var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-      var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-      var tl8_tomorrow = /tomorrow/i;
-
+      console.info('arg_lastClickString = ',arg_lastClickString);
       //'Today' or 'Yesterday' or '2011/04/25'
       var tmp_lastClickBreakdown_regex = /([0-9]+)\/([0-9]+)\/([0-9]+)/
       var tmp_breakdown = arg_lastClickString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(tmp_lastClickBreakdown_regex);
@@ -2916,6 +2920,7 @@ var referralListings = new function()
 
     function nextPaymentToDateObject(arg_nextPaymentString)
     {
+      console.info('arg_nextPaymentString = ',arg_nextPaymentString);
       //'171 days and 20:47'
       //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
       var tmp_breakdown = arg_nextPaymentString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
