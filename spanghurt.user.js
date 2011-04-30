@@ -32,6 +32,7 @@ var tl8strings = {
     "Avg. Income: " : "Avg. Income: ",
     "Avg. Transfer: " : "Avg. Transfer: ",
     "Ayer" : "Ayer",
+    "Blue" : "Blue",
     "Close" : "Close",
     "Credited clicks" : "Credited clicks",
     "Demain" : "Demain",
@@ -52,6 +53,7 @@ var tl8strings = {
     "For how long do you usually renew your referrals?" : "For how long do you usually renew your referrals?",
     "Gestern" : "Gestern",
     "Golden Pack" : "Golden Pack",
+    "Green" : "Green",
     "Gross Income" : "Gross Income",
     "Heute" : "Heute",
     "Hier" : "Hier",
@@ -60,7 +62,7 @@ var tl8strings = {
     "How many rented referrals do you have?" : "How many rented referrals do you have?",
     "Hoy" : "Hoy",
     "Huomenna" : "Huomenna",
-    "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>" : "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>",
+    "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you." : "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.",
     "Local Time" : "Local Time",
     "Mañana" : "Mañana",
     "Micro:" : "Micro:",
@@ -69,11 +71,13 @@ var tl8strings = {
     "Net Income" : "Net Income",
     "Net" : "Net",
     "Ontem" : "Ontem",
+    "Orange" : "Orange",
     "Personal Clicks" : "Personal Clicks",
     "Projected Gross Income" : "Projected Gross Income",
     "Projected Income" : "Projected Income",
     "Recycle value" : "Recycle value",
     "Recycles" : "Recycles",
+    "Red" : "Red",
     "Referrals" : "Referrals",
     "Regular:" : "Regular:",
     "Rented 'Real' Average" : "Rented 'Real' Average",
@@ -100,6 +104,8 @@ var tl8strings = {
     "Transfer value" : "Transfer value",
     "Tänään" : "Tänään",
     "What is the time difference between your time and the server's time?" : "What is the time difference between your time and the server's time?",
+    "White" :  "White",
+    "Yellow" : "Yellow",
     "Yesterday Only" : "Yesterday Only",
     "Yesterday" : "Yesterday",
     "Αύριο" : "Αύριο",
@@ -129,7 +135,7 @@ function tl8(arg_originalString)
     console.info('Record of the translation strings yet to be translated has been updated\n\n missing string = '+arg_originalString);
 
     tl8_counter++;
-    if(tl8_counter < 0) {
+    if(0 > tl8_counter) {
       console.info('arg_originalString = ', arg_originalString);
       console.info('tmp_translationStringsNeeded[arg_originalString] = ',tmp_translationStringsNeeded[arg_originalString]);
       console.info('JSON.stringify(tmp_translationStringsNeeded) = ',JSON.stringify(tmp_translationStringsNeeded));
@@ -207,20 +213,6 @@ function debugLog()
   for (var i = 0; i < arguments.length; i++) {
     console.info(arguments[i]);
     if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
-  }
-  if (2 >= arguments.length) {
-    console.groupEnd();
-  }
-}
-
-function pageCodeDebugLog()
-{
-  addToLoggerBox(arguments);
-  if (2 >= arguments.length) {
-    console.group();
-  }
-  for (var i = 0; i < arguments.length; i++) {
-    console.info(arguments[i]);
   }
   if (2 >= arguments.length) {
     console.groupEnd();
@@ -325,7 +317,7 @@ function Object_merge(arg_oldObj, arg_newObj)
 }
 
 /**
- * Creates an alert-style popup on screen which fades out the rest of the page, creating a page-modal type effect
+ * Creates an alert-style pop-up on screen which fades out the rest of the page, creating a page-modal type effect
  * Usage:
  *  var importantMessage = new ModalDialog(string 'idOfDialog', string 'the innerHTML of the dialog');
  * followed by:
@@ -415,7 +407,7 @@ loggerBox.create(
         '<button id="loggerBox_Close" style="float: right;">Close</button>' +
         '<button id="loggerBox_Clear" style="float: right;">Clear</button>' +
         '<h4>Debugging Output</h4>' +
-        '<div style="background-color:lightgrey; height:40em; overflow: auto;">'+
+        '<div style="background-color:#e3e3e3; height:40em; overflow: auto;">'+
         '<ul id="loggerBox_Output">' +
         '<li>&nbsp;</li>' +
         '</ul>' +
@@ -477,32 +469,32 @@ if(("true" !== localStorage.getItem('setupComplete') && true !== localStorage.ge
   var initialSetupDialog = new ModalDialog('initialSetup');
   initialSetupDialog.create(
       'background-color: white; margin: 8em auto; padding: 2em; width: 30em;',
-      '' +
-      '<strong>'+tl8('Spanghurt! Initial Setup')+'</strong><br>' +
-      '<br>' +
-      '<hr>' +
-      tl8('To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.')+"<br>" +
-      '<hr>' +
-      '<br>' +
-      ''+tl8('How many direct referrals do you have?')+' <input id="initialSetup_directReferrals" size="4" value="0" type="text" /><br>' +
-      ''+tl8('How many rented referrals do you have?')+' <input id="initialSetup_rentedReferrals" size="4" value="0" type="text" /><br>' +
-      ''+tl8('Do you use autopay?')+' <input id="initialSetup_autopay" type="checkbox" /><br>' +
-      '<br>' +
-      ''+tl8('For how long do you usually renew your referrals?')+' <select id="initialSetup_normalRenewalLength">' +
-      '<option value="15">'+tl8('15 days (The "Base Rate")')+'</option>' +
-      '<option value="30" selected="selected">'+tl8('30 days (5% discount)')+'</option>' +
-      '<option value="60">'+tl8('60 days (10% discount)')+'</option>' +
-      '<option value="90">'+tl8('90 days (18% discount)')+'</option>' +
-      '<option value="150">'+tl8('150 days (25% discount)')+'</option>' +
-      '<option value="240">'+tl8('240 days (30% discount)')+'</option>' +
-      '</select> <br>' +
-      '<br>' +
-      ''+tl8('What is the time difference between your time and the server\'s time?')+' <input id="initialSetup_timeDifference" size="4" value="" type="text" /><br>' +
-      '<br>' +
-      '<small><i>'+tl8("If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.</i></small>")+
-      '<br>' +
-      '<input id="initialSetup_save" value="'+tl8('Save Settings')+'" type="button"/>' +
-      '<input id="initialSetup_close" value="'+tl8('Close')+'" type="button"/>' +
+      '' + 
+      '<strong>' + tl8('Spanghurt! Initial Setup') + '</strong><br>' + 
+      '<br>' + 
+      '<hr>' + 
+      tl8('To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.') + "<br>" + 
+      '<hr>' + 
+      '<br>' + 
+      '' + tl8('How many direct referrals do you have?') + ' <input id="initialSetup_directReferrals" size="4" value="0" type="text" /><br>' + 
+      '' + tl8('How many rented referrals do you have?') + ' <input id="initialSetup_rentedReferrals" size="4" value="0" type="text" /><br>' + 
+      '' + tl8('Do you use autopay?') + ' <input id="initialSetup_autopay" type="checkbox" /><br>' + 
+      '<br>' + 
+      '' + tl8('For how long do you usually renew your referrals?') + ' <select id="initialSetup_normalRenewalLength">' + 
+      '<option value="15">' + tl8('15 days (The "Base Rate")') + '</option>' + 
+      '<option value="30" selected="selected">' + tl8('30 days (5% discount)') + '</option>' + 
+      '<option value="60">' + tl8('60 days (10% discount)') + '</option>' + 
+      '<option value="90">' + tl8('90 days (18% discount)') + '</option>' + 
+      '<option value="150">' + tl8('150 days (25% discount)') + '</option>' + 
+      '<option value="240">' + tl8('240 days (30% discount)') + '</option>' + 
+      '</select> <br>' + 
+      '<br>' + 
+      '' + tl8('What is the time difference between your time and the server\'s time?') + ' <input id="initialSetup_timeDifference" size="4" value="" type="text" /><br>' + 
+      '<br>' + 
+      '<small><i>' + tl8("If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.") + '</i></small>' + 
+      '<br>' + 
+      '<input id="initialSetup_save" value="' + tl8('Save Settings') + '" type="button"/>' + 
+      '<input id="initialSetup_close" value="' + tl8('Close') + '" type="button"/>' + 
       ''
       );
 
@@ -608,7 +600,7 @@ var rentalBands = [];
 var tmp_baseBandPrice = 0.20; //The lowest price band starts at $0.20
 var AUTOPAY_DISCOUNT = 0.85; // 15% discount when paying via autopay
 
-for(var i=0; i < 8; i++)
+for(var i=0; 8 > i; i++)
 {
   // Minimum number of referrals for this price band to apply:
   // Maximum number of referrals for this price band to apply:
@@ -654,7 +646,7 @@ var tmp_NeobuxAccountTypeDetails = {
 function getRenewalFees(arg_accountType, arg_numberOfRentedRefs, arg_lengthOfRenewal)
 {
   var tmp_rentingBand = Math.floor(arg_numberOfRentedRefs / 250) + tmp_NeobuxAccountTypeDetails[arg_accountType].rentalBandAdjuster;
-  tmp_rentingBand = (tmp_rentingBand > 0) ? tmp_rentingBand : 0;
+  tmp_rentingBand = (0 < tmp_rentingBand) ? tmp_rentingBand : 0;
 
   var tmp_rentingCost = ((rentalBands[tmp_rentingBand].costOfRent / 30) * arg_lengthOfRenewal * bulkRenewalDiscounts[arg_lengthOfRenewal]).toFixed(2);
 
@@ -1242,7 +1234,7 @@ var currentPage = new function()
 
     for(var tmp_langCode in tmp_langCodes) {
       if(tmp_langCodes.hasOwnProperty(tmp_langCode)) {
-        if(document.querySelectorAll('.band2').length > 0 && document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class').match(tmp_langCode))
+        if(0 < document.querySelectorAll('.band2').length && document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class').match(tmp_langCode))
         {
 //          debugLog("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
 //          debugLog('tmp_langCode = '+tmp_langCode);
@@ -1503,7 +1495,7 @@ function getMembershipType()
       null);
 
   var tmp_membershipType_name = '';
-  if (elmt_accountBadge.snapshotLength > 0)
+  if (0 < elmt_accountBadge.snapshotLength)
   {
     var tmp_membershipType_name = elmt_accountBadge.snapshotItem(
         0).textContent.match(
@@ -2012,7 +2004,7 @@ function createAccountCache()
   var tmp_accountCache = {};
 
   Object_merge(tmp_accountCache, tmp_blankAccountCache);
-  Object_merge(tmp_accountCache,storedAccountCache);
+  Object_merge(tmp_accountCache, storedAccountCache);
 
   //console.info(tmp_accountCache);
   return tmp_accountCache;
@@ -2352,7 +2344,7 @@ var chartData = new function ()
     }
 
     setPref('graphData',Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
-    return getPref('graphData',Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
+    return getPref('graphData', Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
   };
 
 
@@ -2767,7 +2759,7 @@ function insertLocalServerTime()
 
   //If the image logo cannot be found, either find an alternate place to insert it
   //   or abort insertion.
-  if(document.querySelectorAll('img#logo').length <= 0) {
+  if(0 >= document.querySelectorAll('img#logo').length) {
     return;
   }
 
@@ -2850,6 +2842,107 @@ function ntl(arg_langString) {
 
 var referralListings = new function()
 {
+
+  //
+  function REFERRAL(arg_refId, arg_referralProperties)
+  {
+    var tmp_currentDateString = dates_array[0];
+
+    //arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
+    this.refId = arg_refId;
+    this.referralSince_raw =       arg_referralProperties['referralSince'] || null;
+    this.lastClick_raw =           arg_referralProperties['lastClick']     || null;
+    this.totalClicks =            (0 <= arg_referralProperties['totalClicks'])          ? arg_referralProperties['totalClicks']   : null;
+    this.clickAverage =           (0 <= arg_referralProperties['average'])              ? arg_referralProperties['average']       : null;
+
+    //Ultimate mini click graph values
+    var ultimateClickValues_raw = (0 <= arg_referralProperties['ultimateClickValues'])  ? arg_referralProperties['ultimateClickValues'] : null;
+    //Rented referral properties
+    this.flagColour_Id =          (0 <= arg_referralProperties['flagColour_Id'])        ? arg_referralProperties['flagColour_Id'] : null;
+    this.locked =                 (0 <= arg_referralProperties['locked'])               ? !!arg_referralProperties['locked']      : null;
+    this.recycleable =            (0 <= arg_referralProperties['recycleable'])          ? arg_referralProperties['recycleable']   : null;
+    this.nextPayment_raw =         arg_referralProperties['nextPayment']   || null;
+    //Direct referral properties
+    this.cameFrom =               arg_referralProperties['cameFrom']      || null;
+    this.isSellable =             arg_referralProperties['isSellable']    || null;
+
+    function flagIdToColour(arg_flagId)
+    {
+      var flagLookup = {
+        0: 'White',
+        1: 'Red',
+        2: 'Orange',
+        3: 'Yellow',
+        4: 'Green',
+        5: 'Blue'
+      };
+      
+      if("undefined" === typeof tl8) {
+        return "Unkwown_no_tl8";
+      }
+      return tl8(flagLookup[arg_flagId] || "Unknown");
+    }
+    this.flagColour = flagIdToColour(this.flagColour_Id);
+
+    function referralSinceToDateObject(arg_referralSinceString)
+    {
+      //'2011/04/25 11:20'
+      var tmp_breakdown = arg_referralSinceString.match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
+      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
+      // NB:: month is zero-indexed thus needs to be reduced by 1
+      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
+    }
+    this.referralSince = referralSinceToDateObject(this.referralSince_raw).toString();
+
+    function lastClickToDateObject(arg_lastClickString)
+    {
+      // english | pt | es | greek | FI | SE | DE
+      var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+      var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+      var tl8_tomorrow = /tomorrow/i;
+
+      //'Today' or 'Yesterday' or '2011/04/25'
+      var tmp_lastClickBreakdown_regex = /([0-9]+)\/([0-9]+)\/([0-9]+)/
+      var tmp_breakdown = arg_lastClickString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(tmp_lastClickBreakdown_regex);
+//      console.info('lastClickToDateObject - arg_lastClickString: ',arg_lastClickString);
+//      console.info('lastClickToDateObject - tmp_breakdown: ',tmp_breakdown);
+
+      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
+      // NB:: month is zero-indexed thus needs to be reduced by 1
+      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],0,0,0,0);
+    }
+    this.lastClick = lastClickToDateObject(this.lastClick_raw).toString();
+
+
+    function nextPaymentToDateObject(arg_nextPaymentString)
+    {
+      //'171 days and 20:47'
+      //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
+      var tmp_breakdown = arg_nextPaymentString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
+
+      var tmp_nextPaymentDifference =
+          (tmp_breakdown[1] * 24 * 60 * 60 * 1000)+ //days to milliseconds
+          (tmp_breakdown[2] * 60 * 60 * 1000) + //hours to milliseconds
+          (tmp_breakdown[3] * 60 * 1000); // minutes to milliseconds
+
+      //Convert the time/date difference to milliseconds, then sum it with the numerical version (hence -0,
+      //   though any forcing of now to be numerical will work) of the current date/time and convert back to a date
+      var tmp_nextPaymentDate = new Date (dateToday - 0 + tmp_nextPaymentDifference);
+
+      return tmp_nextPaymentDate;
+    }
+    this.nextPayment = nextPaymentToDateObject(this.nextPayment_raw).toString();
+
+    function calculateRealAverage(arg_referralSince, arg_totalClicks) {
+      var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
+      return (arg_totalClicks / tmp_timeOwned_days).toFixed(5) * 1;
+    }
+    this.realAverage = calculateRealAverage(this.referralSince, this.totalClicks);
+
+    return this;
+  }
+
+  
   function extractReferralDataFromListingsPage()
   {
     // Grab contents of mtx[] array delivered onto the referral listings page
@@ -2938,25 +3031,7 @@ var referralListings = new function()
     var cr, pr;
     var cr_ID, pr_ID;
 
-    for(var i = 0; i < arg_referralListingsData.length; i++)
-    {
-//      console.group();
-//      debugLog('i',i);
-
-    /**
-     * ## referralSince and lastClick ##
-     * if date/time in one row is the same as the row before, mtx contains a '9'
-     * instead of the duplicated date
-     *
-     * ## lastClick ##
-     * 'Today' is coded as 'N' (unknown reason for this code);
-     * 'Yesterday' is coded as 'O' (in Portuguese, Yesterday == Ontem)
-     *
-     * ## overallAverage ##
-     * when referral is younger than 24hours old and has not yet clicked,
-     * average is displayed as '-.---'
-     *
-     */
+    for(var i = 0; i < arg_referralListingsData.length; i++){
 
       // Current Referral
       cr = arg_referralListingsData[i];
@@ -2965,196 +3040,243 @@ var referralListings = new function()
       pr = arg_referralListingsData[i-1] || arg_referralListingsData[i];
       pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
 
-      var flagLookup = {
-        0: 'White',
-        1: 'Red',
-        2: 'Orange',
-        3: 'Yellow',
-        4: 'Green',
-        5: 'Blue'
-      };
-
-      if (0 < location.href.indexOf('ss3=2'))
-      {
-        tmp_referrals[cr_ID] = {
-          ID: ('0' == cr[1]) ? 'R' + cr[19] : cr[1],
-          referralType: 'R',
-
-          flag: flagLookup[cr[15]],
-          locked: (1 === cr[17]) ? 'Y' : 'N',
-          recycleable: (1 === cr[16]) ? 'Y' : 'N',
-
-          nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].nextPayment : cr[3]
-        };
-      }
-      else if (0 < location.href.indexOf('ss3=1'))
-      {
-        tmp_referrals[cr_ID] = {
-          ID: ('0' == cr[1]) ? 'D' + cr[19] : cr[1],
-          referralType: 'D',
-          cameFrom: cr[2],
-          sellable: (1 === cr[18]) ? 'Y' : 'N'
-        };
-      }
+      tmp_referrals[cr_ID] = new REFERRAL(
+          cr_ID,
+          {
+            flagColour_Id: cr[15],
+            locked: cr[17],
+            recycleable: cr[16],
+            nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].nextPayment_raw : cr[3],
+            cameFrom: cr[2],
+            sellable: cr[18],
+            referralSince: ('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince_raw : cr[2],
+            lastClick: ('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick_raw : ('N' == cr[4]) ? (('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince : cr[2]) : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4],
+            totalClicks: cr[5],
+            clickAverage: cr[6]
+          }
+        );
+    }
 
 
-      function todayYesterdayToDate(arg_string) {
-        // english | pt | es | greek | FI | SE | DE
-        var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-        var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-        var tl8_tomorrow = /tomorrow/i;
-
-        return arg_string.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]);
-      }
-
-      if(10 > i) {
-        debugLog('cr: ',cr,'\n\n','pr: ',pr);
-        debugLog('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
-      }
-
-      tmp_referrals[cr_ID].lastSeen = tmp_currentDateTime.toString();
-      tmp_referrals[cr_ID].hash = cr[7];
-      tmp_referrals[cr_ID].referralSince = todayYesterdayToDate(('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince : cr[2]);
-      tmp_referrals[cr_ID].lastClick = todayYesterdayToDate(('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4]);
-      tmp_referrals[cr_ID].totalClicks = cr[5];
-      tmp_referrals[cr_ID].overallAverage = ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6];
-
-
-      /**
-       * Check how many referrals are being shown per page:  If the user is ultimate and has more than 100 referrals showing, minigraphs will not be displayed
-       * If the user has fewer than 10 referrals, the option to select the # of referrals is not present, thus refsPerPage must be set manually
-      */
-      var refsPerPageSelector = document.getElementById('rlpp');
-      var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
-
-      /* Ultimate only stuff, based on the ultimate minigraphs */
-      // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
-      if(currentUser.accountType.showUltimateFeatures && 300 >= refsPerPage)
-      {
-        tmp_referrals[cr_ID].minigraph = {
-          'rawClickData': ('0' == cr[14]) ? '0000000000'.split('') : cr[14].split(''),
-          'clicks': new Array()
-        };
-
-        // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
-        cr.minigraph.rawClickData = currentUser.accountType.isUltimate ? cr.minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-
-        // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
-        cr.minigraph.rawClickData =  cr.minigraph.rawClickData.reverse();
-
-        // Copy the click data to a separate array and verify/coerce each value to a number
-        for (var i = 0; i < cr.minigraph.rawClickData.length; i++) {
-          cr.minigraph.clicks[i] = parseInt(cr.minigraph.rawClickData[i], 10);
-        }
-
-        /**
-         * Compute the mean and variance using a "numerically stable algorithm".
-         * Based on http://maiaco.com/articles/computingStatsInJS.php
-         * 30/12/2010 - above link no longer exists, mirror found at
-         * http://code.google.com/p/ocropodium/source/browse/static/js/stats.js?spec=svnd8375a8cd3f640b35cbbb42d9669411dde9248eb&r=d8375a8cd3f640b35cbbb42d9669411dde9248eb
-         *
-         * Also temporarily copied in below:
-         */
-
-        var sqsum = 0;
-        cr.minigraph.mean = new Array();
-        cr.minigraph.sum = new Array();
-        cr.minigraph.variance = new Array();
-        cr.minigraph.sdev = new Array();
-
-        cr.minigraph.mean[0] = cr.minigraph.clicks[0];
-        cr.minigraph.sum[0] = cr.minigraph.clicks[0];
-        cr.minigraph.variance[0] = cr.minigraph.clicks[0];
-        cr.minigraph.sdev[0] = cr.minigraph.clicks[0];
-
-        for (var i = 1; i < cr.minigraph.clicks.length; ++i)
-        {
-          var x = cr.minigraph.clicks[i];
-          var delta = x - cr.minigraph.mean[i-1];
-          var sweep = i + 1.0;
-          cr.minigraph.mean[i] = cr.minigraph.mean[i-1] + (delta / sweep);
-          sqsum += delta * delta * (i / sweep);
-
-          cr.minigraph.sum[i] = cr.minigraph.mean[i] * (i + 1);
-          cr.minigraph.variance[i] = sqsum / (i + 1);
-          cr.minigraph.sdev[i] = Math.sqrt(cr.minigraph.variance[i]);
-        }
-
-//        /** Returns an object that contains the count, sum,
-//         * minimum, median, maximum, mean, variance, and
-//         * standard deviation of the series of numbers stored
-//         * in the specified array.  This function changes the
-//         * specified array by sorting its contents. */
-//        function Stats(data) {
-//            this.count = data.length;
+//    for(var i = 0; i < arg_referralListingsData.length; i++)
+//    {
+////      console.group();
+////      debugLog('i',i);
 //
-//            /* Sort the data so that all seemingly
-//             * insignificant values such as 0.000000003 will
-//             * be at the beginning of the array and their
-//             * contribution to the mean and variance of the
-//             * data will not be lost because of the precision
-//             * of the CPU. */
-//            data.sort(ascend);
+//    /**
+//     * ## referralSince and lastClick ##
+//     * if date/time in one row is the same as the row before, mtx contains a '9'
+//     * instead of the duplicated date
+//     *
+//     * ## lastClick ##
+//     * 'Today' is coded as 'N' (unknown reason for this code);
+//     * 'Yesterday' is coded as 'O' (in Portuguese, Yesterday == Ontem)
+//     *
+//     * ## overallAverage ##
+//     * when referral is younger than 24hours old and has not yet clicked,
+//     * average is displayed as '-.---'
+//     *
+//     */
 //
-//            /* Since the data is now sorted, the minimum value
-//             * is at the beginning of the array, the median
-//             * value is in the middle of the array, and the
-//             * maximum value is at the end of the array. */
-//            this.min = data[0];
-//            var middle = Math.floor(data.length / 2);
-//            if ((data.length % 2) != 0) {
-//                this.median = data[middle];
-//            }
-//            else {
-//                this.median = (data[middle - 1] + data[middle]) / 2;
-//            }
-//            this.max = data[data.length - 1];
+//      // Current Referral
+//      cr = arg_referralListingsData[i];
+//      cr_ID = ('0' == cr[1]) ? cr[19] : cr[1];
+//      // Previous Referral
+//      pr = arg_referralListingsData[i-1] || arg_referralListingsData[i];
+//      pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
 //
-//            /* Compute the mean and variance using a
-//             * numerically stable algorithm. */
-//            var sqsum = 0;
-//            this.mean = data[0];
-//            for (var i = 1;  i < data.length;  ++i) {
-//                var x = data[i];
-//                var delta = x - this.mean;
-//                var sweep = i + 1.0;
-//                this.mean += delta / sweep;
-//                sqsum += delta * delta * (i / sweep);
-//            }
-//            this.sum = this.mean * this.count;
-//            this.variance = sqsum / this.count;
-//            this.sdev = Math.sqrt(this.variance);
+//      var flagLookup = {
+//        0: 'White',
+//        1: 'Red',
+//        2: 'Orange',
+//        3: 'Yellow',
+//        4: 'Green',
+//        5: 'Blue'
+//      };
+//
+//      if (0 < location.href.indexOf('ss3=2'))
+//      {
+//        tmp_referrals[cr_ID] = {
+//          ID: ('0' == cr[1]) ? 'R' + cr[19] : cr[1],
+//          referralType: 'R',
+//
+//          flag: flagLookup[cr[15]],
+//          locked: (1 === cr[17]) ? 'Y' : 'N',
+//          recycleable: (1 === cr[16]) ? 'Y' : 'N',
+//
+//          nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].nextPayment : cr[3]
+//        };
+//      }
+//      else if (0 < location.href.indexOf('ss3=1'))
+//      {
+//        tmp_referrals[cr_ID] = {
+//          ID: ('0' == cr[1]) ? 'D' + cr[19] : cr[1],
+//          referralType: 'D',
+//          cameFrom: cr[2],
+//          sellable: (1 === cr[18]) ? 'Y' : 'N'
+//        };
+//      }
+//
+//
+//      function todayYesterdayToDate(arg_string) {
+//        // english | pt | es | greek | FI | SE | DE
+//        var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+//        var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+//        var tl8_tomorrow = /tomorrow/i;
+//
+//        return arg_string.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]);
+//      }
+//
+//      if(10 > i) {
+//        debugLog('cr: ',cr,'\n\n','pr: ',pr);
+//        debugLog('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
+//      }
+//
+//      tmp_referrals[cr_ID].lastSeen = tmp_currentDateTime.toString();
+//      tmp_referrals[cr_ID].hash = cr[7];
+//      tmp_referrals[cr_ID].referralSince = todayYesterdayToDate(('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince : cr[2]);
+//      tmp_referrals[cr_ID].lastClick = todayYesterdayToDate(('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4]);
+//      tmp_referrals[cr_ID].totalClicks = cr[5];
+//      tmp_referrals[cr_ID].overallAverage = ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6];
+//
+//
+//      /**
+//       * Check how many referrals are being shown per page:  If the user is ultimate and has more than 100 referrals showing, minigraphs will not be displayed
+//       * If the user has fewer than 10 referrals, the option to select the # of referrals is not present, thus refsPerPage must be set manually
+//      */
+//      var refsPerPageSelector = document.getElementById('rlpp');
+//      var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
+//
+//      /* Ultimate only stuff, based on the ultimate minigraphs */
+//      // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
+//      if(currentUser.accountType.showUltimateFeatures && 300 >= refsPerPage)
+//      {
+//        tmp_referrals[cr_ID].minigraph = {
+//          'rawClickData': ('0' == cr[14]) ? '0000000000'.split('') : cr[14].split(''),
+//          'clicks': new Array()
+//        };
+//
+//        // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
+//        cr.minigraph.rawClickData = currentUser.accountType.isUltimate ? cr.minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+//
+//        // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
+//        cr.minigraph.rawClickData =  cr.minigraph.rawClickData.reverse();
+//
+//        // Copy the click data to a separate array and verify/coerce each value to a number
+//        for (var i = 0; i < cr.minigraph.rawClickData.length; i++) {
+//          cr.minigraph.clicks[i] = parseInt(cr.minigraph.rawClickData[i], 10);
 //        }
 //
-//        /** Returns a string that shows all the properties and
-//         * their values for this Stats object. */
-//        Stats.prototype.toString = function() {
-//            var s = 'Stats';
-//            for (var attr in this) {
-//                if (typeof(this[attr]) != 'function') {
-//                    s += '  ' + attr + ' ' + this[attr];
-//                }
-//            }
-//            return s;
+//        /**
+//         * Compute the mean and variance using a "numerically stable algorithm".
+//         * Based on http://maiaco.com/articles/computingStatsInJS.php
+//         * 30/12/2010 - above link no longer exists, mirror found at
+//         * http://code.google.com/p/ocropodium/source/browse/static/js/stats.js?spec=svnd8375a8cd3f640b35cbbb42d9669411dde9248eb&r=d8375a8cd3f640b35cbbb42d9669411dde9248eb
+//         *
+//         * Also temporarily copied in below:
+//         */
+//
+//        var sqsum = 0;
+//        cr.minigraph.mean = new Array();
+//        cr.minigraph.sum = new Array();
+//        cr.minigraph.variance = new Array();
+//        cr.minigraph.sdev = new Array();
+//
+//        cr.minigraph.mean[0] = cr.minigraph.clicks[0];
+//        cr.minigraph.sum[0] = cr.minigraph.clicks[0];
+//        cr.minigraph.variance[0] = cr.minigraph.clicks[0];
+//        cr.minigraph.sdev[0] = cr.minigraph.clicks[0];
+//
+//        for (var i = 1; i < cr.minigraph.clicks.length; ++i)
+//        {
+//          var x = cr.minigraph.clicks[i];
+//          var delta = x - cr.minigraph.mean[i-1];
+//          var sweep = i + 1.0;
+//          cr.minigraph.mean[i] = cr.minigraph.mean[i-1] + (delta / sweep);
+//          sqsum += delta * delta * (i / sweep);
+//
+//          cr.minigraph.sum[i] = cr.minigraph.mean[i] * (i + 1);
+//          cr.minigraph.variance[i] = sqsum / (i + 1);
+//          cr.minigraph.sdev[i] = Math.sqrt(cr.minigraph.variance[i]);
 //        }
 //
+////        /** Returns an object that contains the count, sum,
+////         * minimum, median, maximum, mean, variance, and
+////         * standard deviation of the series of numbers stored
+////         * in the specified array.  This function changes the
+////         * specified array by sorting its contents. */
+////        function Stats(data) {
+////            this.count = data.length;
+////
+////            /* Sort the data so that all seemingly
+////             * insignificant values such as 0.000000003 will
+////             * be at the beginning of the array and their
+////             * contribution to the mean and variance of the
+////             * data will not be lost because of the precision
+////             * of the CPU. */
+////            data.sort(ascend);
+////
+////            /* Since the data is now sorted, the minimum value
+////             * is at the beginning of the array, the median
+////             * value is in the middle of the array, and the
+////             * maximum value is at the end of the array. */
+////            this.min = data[0];
+////            var middle = Math.floor(data.length / 2);
+////            if ((data.length % 2) != 0) {
+////                this.median = data[middle];
+////            }
+////            else {
+////                this.median = (data[middle - 1] + data[middle]) / 2;
+////            }
+////            this.max = data[data.length - 1];
+////
+////            /* Compute the mean and variance using a
+////             * numerically stable algorithm. */
+////            var sqsum = 0;
+////            this.mean = data[0];
+////            for (var i = 1;  i < data.length;  ++i) {
+////                var x = data[i];
+////                var delta = x - this.mean;
+////                var sweep = i + 1.0;
+////                this.mean += delta / sweep;
+////                sqsum += delta * delta * (i / sweep);
+////            }
+////            this.sum = this.mean * this.count;
+////            this.variance = sqsum / this.count;
+////            this.sdev = Math.sqrt(this.variance);
+////        }
+////
+////        /** Returns a string that shows all the properties and
+////         * their values for this Stats object. */
+////        Stats.prototype.toString = function() {
+////            var s = 'Stats';
+////            for (var attr in this) {
+////                if (typeof(this[attr]) != 'function') {
+////                    s += '  ' + attr + ' ' + this[attr];
+////                }
+////            }
+////            return s;
+////        }
+////
+////
+////        /** Compares two objects using
+////         * built-in JavaScript operators. */
+////        function ascend(a, b) {
+////            if (a < b)
+////                return -1;
+////            else if (a > b)
+////                return 1;
+////            return 0;
+////        }
 //
-//        /** Compares two objects using
-//         * built-in JavaScript operators. */
-//        function ascend(a, b) {
-//            if (a < b)
-//                return -1;
-//            else if (a > b)
-//                return 1;
-//            return 0;
-//        }
+//      } /* END calculating stats for minigraph clicks */
+//
+//      //debugLog(JSON.stringify(tmp_referrals));
+////      console.groupEnd();
+//
+//    } /* End of for(var i = 0; i < arg_referralListingsData.length; i++) {} loop  */
+//
 
-      } /* END calculating stats for minigraph clicks */
-
-      //debugLog(JSON.stringify(tmp_referrals));
-//      console.groupEnd();
-
-    } /* End of for(var i = 0; i < arg_referralListingsData.length; i++) {} loop  */
 
 //    debugLog('restructureData:\n\n','tmp_referrals',tmp_referrals);
     return tmp_referrals;
@@ -3175,24 +3297,12 @@ var referralListings = new function()
       var tmp_referralsOnCurrentPage = restructureData(tmp_referralDataFromListingsPage.mtx);
 
       // Merge the newly fetched data with the stored data
-      referralData = Object_merge(storedReferralData,tmp_referralsOnCurrentPage);
+      referralData = Object_merge(storedReferralData, tmp_referralsOnCurrentPage);
 
       setPref('referrals',referralData,{ prefType: 'JSON' });
     }
   }
 };
-
-if(0 < location.href.indexOf('ss3=1') || 0 < location.href.indexOf('ss3=2')) {
-  try
-  {
-    referralListings.init();
-  }
-  catch(e)
-  {
-    console.info("ERROR!\n\n referralListings.init() failed\n\n"+e);
-    alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
-  }
-}
 
 
 function PREFERENCE_INPUT_FIELD( arg_inputType, arg_preferenceId, arg_label, arg_values, arg_longDescription,
@@ -3293,7 +3403,7 @@ var logo =
     var xpathResults_logoLocation = docEvaluate('//ul[@id="menu"]/li[@id="menuli"]/parent::ul/parent::td');
 
     // If the location to insert the logo cannot be found, exit the function
-    if(xpathResults_logoLocation.snapshotLength <= 0) {
+    if(0 >= xpathResults_logoLocation.snapshotLength) {
       return
     }
 
@@ -4445,12 +4555,12 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   }
 
   // Similarly, check that each of the ad type counts are valid and/or/else reset to zero
-  arg_adCounts[dates_array[arg_dateIndex]]['extended']    = (arg_adCounts[dates_array[arg_dateIndex]]['extended'] >= 0 )    ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['regular']     = (arg_adCounts[dates_array[arg_dateIndex]]['regular'] >= 0 )     ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['mini']        = (arg_adCounts[dates_array[arg_dateIndex]]['mini'] >= 0 )        ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['fixed']       = (arg_adCounts[dates_array[arg_dateIndex]]['fixed'] >= 0 )       ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro']  = (arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] >= 0 )  ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0;
-  arg_adCounts[dates_array[arg_dateIndex]]['micro']       = (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 )       ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['extended']    = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['extended'] )    ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['regular']     = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['regular'] )     ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['mini']        = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['mini'] )        ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['fixed']       = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixed'] )       ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro']  = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] )  ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['micro']       = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['micro'] )       ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0;
 
 
   // If the date navigated to doesn't currently exist in the arg_adCountChange_currentPageview data, create the data object for it
@@ -4471,37 +4581,37 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
 
   var tmp_foo = {
     extended: {
-      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['extended'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0,
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['extended'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0,
       text: tl8("Extended:"),
       countsToTos37: true,
       value: 0.02
     },
     regular: {
-      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['regular'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0,
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['regular'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0,
       text: tl8("Regular:"),
       countsToTos37: true,
       value: 0.01
     },
     mini: {
-      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['mini'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0,
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['mini'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0,
       text: tl8("Mini:"),
       countsToTos37: false,
       value: 0.005
     },
     fixed: {
-      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['fixed'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0,
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixed'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0,
       text: tl8("Fixed:"),
       countsToTos37: true,
       value: 0.01
     },
     fixedMicro: {
-      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0,
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0,
       text: tl8("Fixed (Micro):"),
       countsToTos37: true,
       value: 0.001
     },
     micro: {
-      adCount: (arg_adCounts[dates_array[arg_dateIndex]]['micro'] >= 0 ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0,
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['micro'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0,
       text: tl8("Micro:"),
       countsToTos37: false,
       value: 0.001
@@ -4525,7 +4635,8 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
         "<tr><td>"+ tmp_foo[tmp_label].text,
         "<button id='"+tmp_label+"AdCount_incrementButton' class='adCountIncrementButton'>+</button>",
         "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>",
-        "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label] > 0) ? "+"+arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]:arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label])+")</span>",
+        "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((0 <
+            arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]) ? "+"+arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]:arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label])+")</span>",
         "<button id='"+tmp_label+"AdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"
       ].join('</td><td>');
     }
@@ -4672,8 +4783,6 @@ function addClickStatsToGoldenGraph() {
       clicks[i] = O[0].data[i];
     }
 
-//    for (var i = 0; i < O[0].data.length; i++) {
-//      sum[i] = clicks[i] + sum[i-1] | clicks[i];
     for (var i = O[0].data.length - 1; 0 <= i; i--)
     {
       sum[i] = ('undefined' !== typeof sum[i+1]) ? clicks[i] + sum[i+1] : clicks[i];
@@ -4682,12 +4791,6 @@ function addClickStatsToGoldenGraph() {
 //      console.info('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
 //      console.info('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
     }
-
-    //for (var i = O[0].data.length - 1; i >= 0; i--) {
-//    for (var i = 0; i < O[0].data.length; i++) {
-//      disp_sum += ' ' + sum[i];
-//      disp_avg += ' ' + avg[i].toFixed(1);
-//    }
 
     newElmnt.innerHTML = '<table class="refGraphDatabar">' +
         '<tr><td>'+ [
@@ -4943,7 +5046,7 @@ var referralListings_columns = new function()
             tmp_value = dateToD(new Date(tmp_referralsData[tmp_currentID].lastClick));
           break;
           case 'textifyFlag':
-            tmp_value = tmp_referralsData[tmp_currentID].flag.split('')[0];
+            tmp_value = tmp_referralsData[tmp_currentID].flagColour.split('')[0];
           break;
         }
 
@@ -5273,108 +5376,36 @@ function codeShouldRun(arg_currentPage, arg_allowedPages)
 
 var tmp_iframePages = /viewingAdvertisement|viewingForums_editingMessage|viewingForums_creatingTopic|viewingForums_creatingPoll/i;
 
-if(currentPage.pageCode.match(/referralListings_Rented/))
+if(currentPage.pageCode.match(/referralListings/i))
 {
+
+  try {
+    referralListings.init();
+  }
+  catch(e) {
+    console.info("ERROR!\n\n referralListings.init() failed\n\n"+e);
+    alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
+  }
+
   widenPages.referralListings();
 
 
-  //
-  function REFERRAL(arg_refId, arg_referralProperties)
-  {
-    //arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
-    this.refId = arg_refId;
-    this.referralSince =  arg_referralProperties['referralSince'] || null;
-    this.lastClick =      arg_referralProperties['lastClick']     || null;
-    this.totalClicks =    (0 <= arg_referralProperties['totalClicks'])  ? arg_referralProperties['totalClicks']  : null;
-    this.average =        (0 <= arg_referralProperties['average'])      ? arg_referralProperties['average']      : null;
-    this.flagColourId =   (0 <= arg_referralProperties['flagColourId']) ? arg_referralProperties['flagColourId'] : null;
 
-    //Rented referral properties
-    this.nextPayment =    arg_referralProperties['nextPayment']   || null;
-    //Direct referral properties
-    this.cameFrom =       arg_referralProperties['cameFrom']      || null;
-    this.isSellable =     arg_referralProperties['isSellable']    || null;
+//  var tmp_referral = new REFERRAL(
+//      'R526077263',
+//      {
+//        referralSince: '2011/04/25 11:20',
+//        nextPayment: '171 days and 20:47',
+//        lastClick: 'Today',
+//        totalClicks: 3,
+//        average: 1.500,
+//        flagColourId: 0
+//      }
+//  );
+//
+//  console.info(tmp_referral);
 
-    function flagIdToColour(arg_flagId) {
-      var flagLookup = {
-        0: 'White',
-        1: 'Red',
-        2: 'Orange',
-        3: 'Yellow',
-        4: 'Green',
-        5: 'Blue'
-      };
-      return flagLookup[arg_flagId] || "Unknown";
-    }
-    this.flagColour = flagIdToColour(this.flagColourId);
-
-    function referralSinceToDateObject(arg_referralSinceString)
-    {
-      //'2011/04/25 11:20'
-      var tmp_breakdown = arg_referralSinceString.match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
-      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
-      // NB:: month is zero-indexed thus needs to be reduced by 1
-      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
-    }
-    this.referralSince_Date = referralSinceToDateObject(this.referralSince);
-
-    function lastClickToDateObject(arg_referralSinceString)
-    {
-      // english | pt | es | greek | FI | SE | DE
-      var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-      var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-      var tl8_tomorrow = /tomorrow/i;
-
-      //'Today' or 'Yesterday' or '2011/04/25'
-      var tmp_breakdown = arg_referralSinceString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+)/);
-
-      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
-      // NB:: month is zero-indexed thus needs to be reduced by 1
-      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],0,0,0,0);
-    }
-    this.lastClick_Date = lastClickToDateObject(this.referralSince);
-
-
-    function nextPaymentToDateObject(arg_referralSinceString)
-    {
-      //'171 days and 20:47'
-      //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
-      var tmp_breakdown = arg_referralSinceString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
-
-      var tmp_nextPaymentDifference =
-          (tmp_breakdown[1] * 24 * 60 * 60 * 1000)+ //days to milliseconds
-          (tmp_breakdown[2] * 60 * 60 * 1000) + //hours to milliseconds
-          (tmp_breakdown[3] * 60 * 1000); // minutes to milliseconds
-
-      //Convert the time/date difference to milliseconds, then sum it with the numerical version (hence -0,
-      //   though any forcing of now to be numerical will work) of the current date/time and convert back to a date
-      var tmp_nextPaymentDate = new Date (dateToday - 0 + tmp_nextPaymentDifference);
-
-      return tmp_nextPaymentDate;
-    }
-    this.nextPayment_Date = nextPaymentToDateObject(this.nextPayment);
-
-    function calculateRealAverage(arg_referralSince, arg_totalClicks) {
-      var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
-      return (arg_totalClicks / tmp_timeOwned_days).toFixed(5) * 1;
-    }
-    this.realAverage = calculateRealAverage(this.referralSince_Date, this.totalClicks);
-  }
-
-  var tmp_referral = new REFERRAL(
-      'R526077263',
-      {
-        referralSince: '2011/04/25 11:20',
-        nextPayment: '171 days and 20:47',
-        lastClick: 'Today',
-        totalClicks: 3,
-        average: 1.500,
-        flagColourId: 0
-      }
-  );
-
-  console.info(tmp_referral);
-
+  var referrals = {};
   var settings = {};
   var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
   var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
@@ -5391,6 +5422,7 @@ if(currentPage.pageCode.match(/referralListings_Rented/))
 
 
   //referralListings_columns.init();
+//  referralListings_columns.readReferralData();
   referralListings_columns.mainLoop();
 
 //  referralListingsNewColumnsTest();
@@ -5472,7 +5504,7 @@ if (!currentPage.pageCode.match(tmp_iframePages) && (top === self))
 
 
 
-if(tl8_counter>0) {
+if(0 < tl8_counter) {
   debugLog("NOTE!!\n\nUntranslated strings on this page!!");
   debugLog(localStorage.getItem('translationStringsNeeded'));
 }
