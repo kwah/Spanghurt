@@ -302,7 +302,7 @@ var tl8strings = {
 };
 
 var tmp_translationStringsNeeded = {};
-tmp_translationStringsNeeded = getPref('translationStringsNeeded', {}, { prefType: 'JSON' }) || {};
+tmp_translationStringsNeeded = {};
 
 var tl8_counter = 0;
 
