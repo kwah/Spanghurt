@@ -2366,416 +2366,416 @@ var chartData = new function ()
   {
     var tmp_storedAccountCache = getPref('accountCache', {}, { prefType: 'JSON' });
     if(!tmp_storedAccountCache) {
-        throw new Error();
-      }
-      return tmp_storedAccountCache;
-    };
-
-
-    this.reformatGraphData = function()
-    {
-      var tmp_graphData = new Array();
-      var tmp_graphDataObject = new Object();
-      var tmp_currentGraphFriendlyName;
-      var currentDataset;
-      var tmp_currentDatasetName;
-      var tmp_currentDate;
-
-      // english | pt | es | greek | FI | SE | DE
-      var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-      var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-      var tl8_tomorrow = /tomorrow/i;
-
-      var tmp_dataGrabbedFromCurrentPage = this.dataGrabbedFromCurrentPage();
-
-      for (var _i in tmp_dataGrabbedFromCurrentPage)
-      {
-        tmp_currentGraphFriendlyName = friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]];
-        tmp_graphData[tmp_currentGraphFriendlyName] = tmp_dataGrabbedFromCurrentPage[_i];
-
-        currentDataset = tmp_graphData[tmp_currentGraphFriendlyName];
-
-        for(var i = 0; i < currentDataset[5].length; i++)
-        {
-          tmp_currentDatasetName = currentDataset[5][i].name;
-          tmp_graphDataObject[tmp_currentGraphFriendlyName] = tmp_graphDataObject[tmp_currentGraphFriendlyName] || {};
-          tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] = tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] || {};
-
-          for(var j = 0; j < currentDataset[2].length; j++)
-          {
-            //If the current date isn't represented as a date, assume that it is a localised version of today/yesterday/tomorrow etc and potentially needs translating
-            if(!currentDataset[2][j].match(/[0-9]{4}\/[0-9]{2}\/[0-9]{2}/)) { tl8(currentDataset[2][j]); }
-            tmp_currentDate = currentDataset[2][j].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-            tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName][tmp_currentDate] = currentDataset[5][i].data[j];
-          }
-        }
-      }
-
-      setPref('graphData',Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
-      return getPref('graphData', Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
-    };
-
-
-    this.mergeGraphDataOnPageWithStoredData = function ()
-    {
-
-    };
-
-    this.init = function() {
-      //TODO: Rearrange the logic of this slightly
-      this.reformatGraphData();
+      throw new Error();
     }
+    return tmp_storedAccountCache;
   };
 
 
-  function insertLocalServerTime()
+  this.reformatGraphData = function()
+  {
+    var tmp_graphData = new Array();
+    var tmp_graphDataObject = new Object();
+    var tmp_currentGraphFriendlyName;
+    var currentDataset;
+    var tmp_currentDatasetName;
+    var tmp_currentDate;
+
+    // english | pt | es | greek | FI | SE | DE
+    var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+    var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+    var tl8_tomorrow = /tomorrow/i;
+
+    var tmp_dataGrabbedFromCurrentPage = this.dataGrabbedFromCurrentPage();
+
+    for (var _i in tmp_dataGrabbedFromCurrentPage)
+    {
+      tmp_currentGraphFriendlyName = friendlyNameLookup[tmp_dataGrabbedFromCurrentPage[_i][0]];
+      tmp_graphData[tmp_currentGraphFriendlyName] = tmp_dataGrabbedFromCurrentPage[_i];
+
+      currentDataset = tmp_graphData[tmp_currentGraphFriendlyName];
+
+      for(var i = 0; i < currentDataset[5].length; i++)
+      {
+        tmp_currentDatasetName = currentDataset[5][i].name;
+        tmp_graphDataObject[tmp_currentGraphFriendlyName] = tmp_graphDataObject[tmp_currentGraphFriendlyName] || {};
+        tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] = tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName] || {};
+
+        for(var j = 0; j < currentDataset[2].length; j++)
+        {
+          //If the current date isn't represented as a date, assume that it is a localised version of today/yesterday/tomorrow etc and potentially needs translating
+          if(!currentDataset[2][j].match(/[0-9]{4}\/[0-9]{2}\/[0-9]{2}/)) { tl8(currentDataset[2][j]); }
+          tmp_currentDate = currentDataset[2][j].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+          tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName][tmp_currentDate] = currentDataset[5][i].data[j];
+        }
+      }
+    }
+
+    setPref('graphData',Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
+    return getPref('graphData', Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
+  };
+
+
+  this.mergeGraphDataOnPageWithStoredData = function ()
   {
 
-    function formatTime(arg_time)
-    {
-      var tmp_Hours = arg_time.getHours();
-      var tmp_Minutes = arg_time.getMinutes();
-      var tmp_Seconds = arg_time.getSeconds();
+  };
 
-      return padZeros(tmp_Hours,2) + ':' + padZeros(tmp_Minutes,2); //+ ":" + padZeros(tmp_Seconds,2);
+  this.init = function() {
+    //TODO: Rearrange the logic of this slightly
+    this.reformatGraphData();
+  }
+};
+
+
+function insertLocalServerTime()
+{
+
+  function formatTime(arg_time)
+  {
+    var tmp_Hours = arg_time.getHours();
+    var tmp_Minutes = arg_time.getMinutes();
+    var tmp_Seconds = arg_time.getSeconds();
+
+    return padZeros(tmp_Hours,2) + ':' + padZeros(tmp_Minutes,2); //+ ":" + padZeros(tmp_Seconds,2);
+  }
+
+  var localMidnight;
+  var currentLocalTime;
+  var currentServerTime;
+  var neoMidnight;
+  var adResetTime;
+  var AdResetTime_hours;
+
+  var locationToInsertTimeString;
+
+  function setTime(arg_dateTime,arg_time)
+  {
+    arg_dateTime.setHours(arg_time[0]);
+    arg_dateTime.setMinutes(arg_time[1]);
+    arg_dateTime.setSeconds(arg_time[2]);
+
+    return arg_dateTime;
+  }
+
+  // Calculate and return the server time formatted correctly
+  this.GetServerTimeAndOffsetText = function(arg_serverTimeOffset)
+  {
+    var offsetMS = arg_serverTimeOffset * 1000 * 60 * 60;
+
+    currentLocalTime = new Date(dateToday);
+    currentServerTime = new Date(currentLocalTime.getTime() + offsetMS);
+
+
+    localMidnight = setTime(new Date(dateToday),[0,0,0]);
+    setPref('localMidnight', localMidnight.toString(), { prefType: 'string' });
+
+    /* If server time is five hours behind (-5), Neobux's midnight will be five hours AFTER local midnight
+      && vice versa, thus need to minus the offset
+      NB, the offset might move the day to tomorrow/yesterday so will need to reset the date to 'today' */
+    neoMidnight = new Date(new Date(localMidnight).getTime() - offsetMS);
+    neoMidnight = new Date(neoMidnight.setDate(localMidnight.getDate()));
+    setPref('neoMidnight', neoMidnight.toString(), { prefType: 'string' });
+
+
+    AdResetTime_hours = getPref('AdResetTime_hours',0, { prefType: 'string' }) * 1000 * 60 * 60;
+    adResetTime = new Date(new Date(localMidnight).getTime() + AdResetTime_hours);
+    adResetTime = new Date(adResetTime.setDate(localMidnight.getDate()));
+    setPref('adResetTime', adResetTime.toString(), { prefType: 'string' });
+
+
+    var timeOffset_text = '';
+    if (0 < arg_serverTimeOffset) {
+      timeOffset_text = '+' + parseFloat(arg_serverTimeOffset.toFixed(2));
+    }
+    else if (0 > arg_serverTimeOffset) {
+      timeOffset_text = parseFloat(arg_serverTimeOffset.toFixed(2));
+    }
+    else {
+      timeOffset_text = '+-' + arg_serverTimeOffset;
     }
 
-    var localMidnight;
-    var currentLocalTime;
-    var currentServerTime;
-    var neoMidnight;
-    var adResetTime;
-    var AdResetTime_hours;
+    // Return the time in the format HH:MM(:SS optional)
 
-    var locationToInsertTimeString;
+    return formatTime(currentServerTime) + ' (' + timeOffset_text + 'hrs)';
 
-    function setTime(arg_dateTime,arg_time)
+  };
+
+  // Calculate and return the size of the time difference/offset
+  this.FetchAndSetTimeOffset = function()
+  {
+    // Hunt for the current server time string
+    var locationOfTimeString = docEvaluate('//td[@class="f_r"]/span');
+    for (var tmp_i = 0; tmp_i < locationOfTimeString.snapshotLength; tmp_i++)
     {
-      arg_dateTime.setHours(arg_time[0]);
-      arg_dateTime.setMinutes(arg_time[1]);
-      arg_dateTime.setSeconds(arg_time[2]);
 
-      return arg_dateTime;
+      // var dateTimeString = '2009/06/07 20:46'; (assuming format yyyy/mm/dd hh:dd )
+      var dateTimeString = locationOfTimeString.snapshotItem(tmp_i).textContent.match(/([\d]{4})\/([\d]{2})\/([\d]{2}) ([\d]{2}):([\d]{2})/) || -1;
+
+      if (0 < dateTimeString.length)
+      {
+        // NB: parseInt("08") == 0 so must definition of base 10 required
+        // CST = Current Server Time
+        var tmp_CST = {
+          year: parseInt(dateTimeString[1], 10),
+          month: parseInt(dateTimeString[2], 10),
+          day: parseInt(dateTimeString[3], 10),
+
+          hour: parseInt(dateTimeString[4], 10),
+          minute: parseInt(dateTimeString[5], 10)
+        };
+
+        var ServerDateTime = new Date(dateToday);
+        ServerDateTime.setFullYear(tmp_CST.year, (tmp_CST.month - 1), tmp_CST.day);
+        ServerDateTime.setHours(tmp_CST.hour, tmp_CST.minute);
+
+        var ServerTime = ServerDateTime.getTime();
+        var LocalTime = dateToday.getTime();
+        var one_hour = 1000 * 60 * 60;
+
+        var serverTimeDifference = (ServerTime - LocalTime) / (one_hour);
+        serverTimeDifference = Math.floor(serverTimeDifference * 1000) / 1000;
+
+        setPref('serverTimeOffset', serverTimeDifference, { prefType: 'string' });
+
+
+        var adResetTimeString = locationOfTimeString.snapshotItem(0).textContent;
+        adResetTimeString = adResetTimeString.match(/([\d]{2}):([\d]{2})/);
+
+        // ART = Ad Reset Time
+        var tmp_ART = {
+          hour: parseInt(adResetTimeString[1], 10),
+          minute: parseInt(adResetTimeString[2], 10)
+        };
+
+        var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
+        setPref('AdResetTime_hours', AdResetTimeDifference, { prefType: 'string' });
+
+        break;
+      }
+
+    }
+  };
+
+  this.GetServerTimeOffset = function()
+  {
+    /**
+     * Check whether the page being loaded is the 'View Advertisements' page
+     * If it is, call this.GetServerTimeOffset() to calculate & store the offset amount [if auto-detecting the offset is enabled]
+     */
+
+    // Check whether current page is the "View Advertisements" page
+    var CurrentUrl = document.location.href;
+
+    var RegExp_AdPage = /^http[s]?:\/\/www\.neobux\.com\/m\/v\//;
+    var IsMatch = RegExp_AdPage.test(CurrentUrl);
+
+    // If it is the ads page AND the script should automatically detect the offset,
+    if (IsMatch && getPref("AutoDetectTimeOffset", true, { prefType: 'string' })) {
+      this.FetchAndSetTimeOffset();
     }
 
-    // Calculate and return the server time formatted correctly
-    this.GetServerTimeAndOffsetText = function(arg_serverTimeOffset)
+    return getPref('serverTimeOffset', 0, { prefType: 'float' });
+  };
+
+  this.insertClock = function(arg_timeOffset,arg_adResetOffset)
+  {
+    locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode;
+    if(locationToInsertTimeString)
     {
-      var offsetMS = arg_serverTimeOffset * 1000 * 60 * 60;
+      var localTime = formatTime(dateToday);
+      var serverTime = (0 <= this.GetServerTimeOffset() || 0 >= this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
 
-      currentLocalTime = new Date(dateToday);
-      currentServerTime = new Date(currentLocalTime.getTime() + offsetMS);
-
-
-      localMidnight = setTime(new Date(dateToday),[0,0,0]);
-      setPref('localMidnight', localMidnight.toString(), { prefType: 'string' });
-
-      /* If server time is five hours behind (-5), Neobux's midnight will be five hours AFTER local midnight
-        && vice versa, thus need to minus the offset
-        NB, the offset might move the day to tomorrow/yesterday so will need to reset the date to 'today' */
-      neoMidnight = new Date(new Date(localMidnight).getTime() - offsetMS);
-      neoMidnight = new Date(neoMidnight.setDate(localMidnight.getDate()));
-      setPref('neoMidnight', neoMidnight.toString(), { prefType: 'string' });
-
-
-      AdResetTime_hours = getPref('AdResetTime_hours',0, { prefType: 'string' }) * 1000 * 60 * 60;
-      adResetTime = new Date(new Date(localMidnight).getTime() + AdResetTime_hours);
-      adResetTime = new Date(adResetTime.setDate(localMidnight.getDate()));
-      setPref('adResetTime', adResetTime.toString(), { prefType: 'string' });
-
-
-      var timeOffset_text = '';
-      if (0 < arg_serverTimeOffset) {
-        timeOffset_text = '+' + parseFloat(arg_serverTimeOffset.toFixed(2));
-      }
-      else if (0 > arg_serverTimeOffset) {
-        timeOffset_text = parseFloat(arg_serverTimeOffset.toFixed(2));
-      }
-      else {
-        timeOffset_text = '+-' + arg_serverTimeOffset;
+      if(document.getElementById('containerDiv_timer')) {
+        //document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
+      } else {
+        locationToInsertTimeString.innerHTML = '<div id="localServerTimeText" style="font-family:mono,monospace; font-size:x-small; margin-bottom:-15px; padding-top:0.7em;">&nbsp; Local time: ' + localTime + '  --  Server time: ' + serverTime + '</div>' + locationToInsertTimeString.innerHTML;
+        locationToInsertTimeString.setAttribute('valign', '');
       }
 
-      // Return the time in the format HH:MM(:SS optional)
+      var containerDiv_timer = document.createElement('div');
+      containerDiv_timer.innerHTML = '<div style="width: 750px; height: 450px; display:none; position:absolute; top:100px; left:100px;" id="containerDiv_timer"></div>';
 
-      return formatTime(currentServerTime) + ' (' + timeOffset_text + 'hrs)';
+      // Used mostly during testing - if the container div is already present update it rather than add another
+      if(document.getElementById('containerDiv_timer')) {
+        document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
+      } else {
+        document.body.appendChild(containerDiv_timer);
+      }
+    }
+  };
 
-    };
+  this.insertClickGuide = function()
+  {
+    if(!adResetTime){
+      return;
+    }
 
-    // Calculate and return the size of the time difference/offset
-    this.FetchAndSetTimeOffset = function()
+    var localMidnightToAdResetTime = (adResetTime - localMidnight) / (1000 * 60 * 60);
+    var localMidnightToNeobuxMidnight = (neoMidnight - localMidnight) / (1000 * 60 * 60);
+
+    var _timePeriods = [];
+    var localMidnightToFirstEvent;
+    var FirstEventToSecondEvent;
+    var SecondEventToLocalMidnight;
+    var FirstTP;
+    var SecondTP;
+    var ThirdTP;
+
+    /*
+     * Test the a = (local midnight to ad reset) time & b = (local midnight to neobux midnight) time
+     * If a < b, the order is 1) local midnight 2) neobux midnight 3) ad resets
+     * If a > b, the order is 1) local midnight 2) ad resets 3) neobux midnight
+     * If a == b, the ads reset at the same time as the neobux midnight ticks over,
+     *  .. and the order is 1) local midnight 2) ad reset+neobux midnight
+
+     * Based on this logic, decide which order to display the 'chunks' of the clock
+     */
+
+    var tmp_displayOrder;
+    if(localMidnightToAdResetTime < localMidnightToNeobuxMidnight) { tmp_displayOrder = 1; }
+    if(localMidnightToAdResetTime > localMidnightToNeobuxMidnight) { tmp_displayOrder = 2; }
+    if(localMidnightToAdResetTime == localMidnightToNeobuxMidnight) { tmp_displayOrder = 3; }
+
+    switch(tmp_displayOrder)
     {
-      // Hunt for the current server time string
-      var locationOfTimeString = docEvaluate('//td[@class="f_r"]/span');
-      for (var tmp_i = 0; tmp_i < locationOfTimeString.snapshotLength; tmp_i++)
+      case 1:
+  //      debugLog('localMidnightToAdResetTime < localMidnightToNeobuxMidnight');
+
+        localMidnightToFirstEvent = localMidnightToAdResetTime;
+        FirstEventToSecondEvent = localMidnightToNeobuxMidnight - localMidnightToAdResetTime;
+        SecondEventToLocalMidnight = 24 - (localMidnightToFirstEvent + FirstEventToSecondEvent);
+
+        FirstTP = 'Local Midnight to Ad Reset Time';
+        SecondTP = 'Ad Reset Time to Neobux Midnight';
+        ThirdTP = 'Neobux Midnight to Local Midnight';
+
+        _timePeriods.push({
+          name: FirstTP,
+          y: localMidnightToFirstEvent,
+          color: '#AA4643'
+        });
+        _timePeriods.push({
+          name: SecondTP,
+          y: FirstEventToSecondEvent,
+          color: '#4572A7'
+        });
+        _timePeriods.push({
+          name: ThirdTP,
+          y: SecondEventToLocalMidnight,
+          color: '#AA4643'
+        });
+
+      break;
+      case 2:
+
+  //      debugLog('localMidnightToAdResetTime > localMidnightToNeobuxMidnight');
+
+        localMidnightToFirstEvent = localMidnightToNeobuxMidnight;
+        FirstEventToSecondEvent = localMidnightToAdResetTime - localMidnightToNeobuxMidnight;
+        SecondEventToLocalMidnight = 24 - (localMidnightToFirstEvent + FirstEventToSecondEvent);
+
+        FirstTP = 'Local Midnight to Neobux Midnight';
+        SecondTP = 'Neobux Midnight to Ad Reset Time';
+        ThirdTP = 'Ad Reset Time to Local Midnight';
+
+        _timePeriods.push({
+          name: FirstTP,
+          y: localMidnightToFirstEvent,
+          color: '#AA4643'
+        });
+        _timePeriods.push({
+          name: SecondTP,
+          y: FirstEventToSecondEvent,
+          color: '#4572A7'
+        });
+        _timePeriods.push({
+          name: ThirdTP,
+          y: SecondEventToLocalMidnight,
+          color: '#AA4643'
+        });
+
+      break;
+      case 3:
+
+  //      debugLog('localMidnightToAdResetTime == localMidnightToNeobuxMidnight');
+
+        localMidnightToFirstEvent = localMidnightToAdResetTime;
+        FirstEventToSecondEvent = 24 - (localMidnightToFirstEvent);
+
+        FirstTP = 'Local Midnight to Neobux Midnight And Ad Reset Time';
+        SecondTP = 'Neobux Midnight And Ad Reset Time to Local Midnight';
+
+        _timePeriods.push({
+          name: FirstTP,
+          y: localMidnightToFirstEvent,
+          color: '#AA4643'
+        });
+        _timePeriods.push({
+          name: SecondTP,
+          y: FirstEventToSecondEvent,
+          color: '#4572A7'
+        });
+
+      break;
+
+    }
+
+    // Transfer script variables to the window
+    location.href = "javascript:void(window._timePeriods = new Array())";
+    for(var i = 0; i < _timePeriods.length; i++) {
+      location.href = "javascript:void(window._timePeriods["+i+"] = JSON.parse('"+JSON.stringify(_timePeriods[i])+"'))";
+    }
+    location.href = "javascript:void(window.adResetTime = new Date('"+adResetTime.toString()+"'))";
+    location.href = "javascript:void(window.neoMidnight = new Date('"+neoMidnight.toString()+"'))";
+    location.href = "javascript:void(window.localMidnight = new Date('"+localMidnight.toString()+"'))";
+
+    //    debugLog(_timePeriods);
+
+    location.href = "javascript:(" + function () {
+
+      // Append zeros to the _input until the _desiredStringLength is reached
+      function padZeros(arg_input,arg_desiredStringLength)
       {
-
-        // var dateTimeString = '2009/06/07 20:46'; (assuming format yyyy/mm/dd hh:dd )
-        var dateTimeString = locationOfTimeString.snapshotItem(tmp_i).textContent.match(/([\d]{4})\/([\d]{2})\/([\d]{2}) ([\d]{2}):([\d]{2})/) || -1;
-
-        if (0 < dateTimeString.length)
-        {
-          // NB: parseInt("08") == 0 so must definition of base 10 required
-          // CST = Current Server Time
-          var tmp_CST = {
-            year: parseInt(dateTimeString[1], 10),
-            month: parseInt(dateTimeString[2], 10),
-            day: parseInt(dateTimeString[3], 10),
-
-            hour: parseInt(dateTimeString[4], 10),
-            minute: parseInt(dateTimeString[5], 10)
-          };
-
-          var ServerDateTime = new Date(dateToday);
-          ServerDateTime.setFullYear(tmp_CST.year, (tmp_CST.month - 1), tmp_CST.day);
-          ServerDateTime.setHours(tmp_CST.hour, tmp_CST.minute);
-
-          var ServerTime = ServerDateTime.getTime();
-          var LocalTime = dateToday.getTime();
-          var one_hour = 1000 * 60 * 60;
-
-          var serverTimeDifference = (ServerTime - LocalTime) / (one_hour);
-          serverTimeDifference = Math.floor(serverTimeDifference * 1000) / 1000;
-
-          setPref('serverTimeOffset', serverTimeDifference, { prefType: 'string' });
-
-
-          var adResetTimeString = locationOfTimeString.snapshotItem(0).textContent;
-          adResetTimeString = adResetTimeString.match(/([\d]{2}):([\d]{2})/);
-
-          // ART = Ad Reset Time
-          var tmp_ART = {
-            hour: parseInt(adResetTimeString[1], 10),
-            minute: parseInt(adResetTimeString[2], 10)
-          };
-
-          var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
-          setPref('AdResetTime_hours', AdResetTimeDifference, { prefType: 'string' });
-
-          break;
+        var currentLength = arg_input.toString().length;
+        var output = arg_input;
+        for(var i=0; i < (arg_desiredStringLength - currentLength); i++) {
+          output = '0' + output;
         }
-
-      }
-    };
-
-    this.GetServerTimeOffset = function()
-    {
-      /**
-       * Check whether the page being loaded is the 'View Advertisements' page
-       * If it is, call this.GetServerTimeOffset() to calculate & store the offset amount [if auto-detecting the offset is enabled]
-       */
-
-      // Check whether current page is the "View Advertisements" page
-      var CurrentUrl = document.location.href;
-
-      var RegExp_AdPage = /^http[s]?:\/\/www\.neobux\.com\/m\/v\//;
-      var IsMatch = RegExp_AdPage.test(CurrentUrl);
-
-      // If it is the ads page AND the script should automatically detect the offset,
-      if (IsMatch && getPref("AutoDetectTimeOffset", true, { prefType: 'string' })) {
-        this.FetchAndSetTimeOffset();
+        return output;
       }
 
-      return getPref('serverTimeOffset', 0, { prefType: 'float' });
-    };
-
-    this.insertClock = function(arg_timeOffset,arg_adResetOffset)
-    {
-      locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode;
-      if(locationToInsertTimeString)
+      if ('undefined' === typeof Highcharts)
       {
-        var localTime = formatTime(dateToday);
-        var serverTime = (0 <= this.GetServerTimeOffset() || 0 >= this.GetServerTimeOffset()) ? this.GetServerTimeAndOffsetText(this.GetServerTimeOffset()) : 'You must "View Advertisements" for this to show correctly.';
+        //move container off screen to stop a transparent div blocking clicks on rest of page
+        //Also colour it so that if it does cause a problem, it isn't invisible
+        //todo: add the event handler before this javascript is called and then remove it here if the timer chart cannot show
 
-        if(document.getElementById('containerDiv_timer')) {
-          //document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
-        } else {
-          locationToInsertTimeString.innerHTML = '<div id="localServerTimeText" style="font-family:mono,monospace; font-size:x-small; margin-bottom:-15px; padding-top:0.7em;">&nbsp; Local time: ' + localTime + '  --  Server time: ' + serverTime + '</div>' + locationToInsertTimeString.innerHTML;
-          locationToInsertTimeString.setAttribute('valign', '');
-        }
-
-        var containerDiv_timer = document.createElement('div');
-        containerDiv_timer.innerHTML = '<div style="width: 750px; height: 450px; display:none; position:absolute; top:100px; left:100px;" id="containerDiv_timer"></div>';
-
-        // Used mostly during testing - if the container div is already present update it rather than add another
-        if(document.getElementById('containerDiv_timer')) {
-          document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
-        } else {
-          document.body.appendChild(containerDiv_timer);
-        }
+        document.getElementById('containerDiv_timer').style.left = '-1000px';
+        document.getElementById('containerDiv_timer').style.backgroundColor = 'black';
+        debugLog("Cannot show the clicking guide graph because graphs are unavailable on this page. Try the account summary page or referral statistics page.");
       }
-    };
-
-    this.insertClickGuide = function()
-    {
-      if(!adResetTime){
-        return;
-      }
-
-      var localMidnightToAdResetTime = (adResetTime - localMidnight) / (1000 * 60 * 60);
-      var localMidnightToNeobuxMidnight = (neoMidnight - localMidnight) / (1000 * 60 * 60);
-
-      var _timePeriods = [];
-      var localMidnightToFirstEvent;
-      var FirstEventToSecondEvent;
-      var SecondEventToLocalMidnight;
-      var FirstTP;
-      var SecondTP;
-      var ThirdTP;
-
-      /*
-       * Test the a = (local midnight to ad reset) time & b = (local midnight to neobux midnight) time
-       * If a < b, the order is 1) local midnight 2) neobux midnight 3) ad resets
-       * If a > b, the order is 1) local midnight 2) ad resets 3) neobux midnight
-       * If a == b, the ads reset at the same time as the neobux midnight ticks over,
-       *  .. and the order is 1) local midnight 2) ad reset+neobux midnight
-
-       * Based on this logic, decide which order to display the 'chunks' of the clock
-       */
-
-      var tmp_displayOrder;
-      if(localMidnightToAdResetTime < localMidnightToNeobuxMidnight) { tmp_displayOrder = 1; }
-      if(localMidnightToAdResetTime > localMidnightToNeobuxMidnight) { tmp_displayOrder = 2; }
-      if(localMidnightToAdResetTime == localMidnightToNeobuxMidnight) { tmp_displayOrder = 3; }
-
-      switch(tmp_displayOrder)
+      else
       {
-        case 1:
-    //      debugLog('localMidnightToAdResetTime < localMidnightToNeobuxMidnight');
-
-          localMidnightToFirstEvent = localMidnightToAdResetTime;
-          FirstEventToSecondEvent = localMidnightToNeobuxMidnight - localMidnightToAdResetTime;
-          SecondEventToLocalMidnight = 24 - (localMidnightToFirstEvent + FirstEventToSecondEvent);
-
-          FirstTP = 'Local Midnight to Ad Reset Time';
-          SecondTP = 'Ad Reset Time to Neobux Midnight';
-          ThirdTP = 'Neobux Midnight to Local Midnight';
-
-          _timePeriods.push({
-            name: FirstTP,
-            y: localMidnightToFirstEvent,
-            color: '#AA4643'
-          });
-          _timePeriods.push({
-            name: SecondTP,
-            y: FirstEventToSecondEvent,
-            color: '#4572A7'
-          });
-          _timePeriods.push({
-            name: ThirdTP,
-            y: SecondEventToLocalMidnight,
-            color: '#AA4643'
-          });
-
-        break;
-        case 2:
-
-    //      debugLog('localMidnightToAdResetTime > localMidnightToNeobuxMidnight');
-
-          localMidnightToFirstEvent = localMidnightToNeobuxMidnight;
-          FirstEventToSecondEvent = localMidnightToAdResetTime - localMidnightToNeobuxMidnight;
-          SecondEventToLocalMidnight = 24 - (localMidnightToFirstEvent + FirstEventToSecondEvent);
-
-          FirstTP = 'Local Midnight to Neobux Midnight';
-          SecondTP = 'Neobux Midnight to Ad Reset Time';
-          ThirdTP = 'Ad Reset Time to Local Midnight';
-
-          _timePeriods.push({
-            name: FirstTP,
-            y: localMidnightToFirstEvent,
-            color: '#AA4643'
-          });
-          _timePeriods.push({
-            name: SecondTP,
-            y: FirstEventToSecondEvent,
-            color: '#4572A7'
-          });
-          _timePeriods.push({
-            name: ThirdTP,
-            y: SecondEventToLocalMidnight,
-            color: '#AA4643'
-          });
-
-        break;
-        case 3:
-
-    //      debugLog('localMidnightToAdResetTime == localMidnightToNeobuxMidnight');
-
-          localMidnightToFirstEvent = localMidnightToAdResetTime;
-          FirstEventToSecondEvent = 24 - (localMidnightToFirstEvent);
-
-          FirstTP = 'Local Midnight to Neobux Midnight And Ad Reset Time';
-          SecondTP = 'Neobux Midnight And Ad Reset Time to Local Midnight';
-
-          _timePeriods.push({
-            name: FirstTP,
-            y: localMidnightToFirstEvent,
-            color: '#AA4643'
-          });
-          _timePeriods.push({
-            name: SecondTP,
-            y: FirstEventToSecondEvent,
-            color: '#4572A7'
-          });
-
-        break;
-
-      }
-
-      // Transfer script variables to the window
-      location.href = "javascript:void(window._timePeriods = new Array())";
-      for(var i = 0; i < _timePeriods.length; i++) {
-        location.href = "javascript:void(window._timePeriods["+i+"] = JSON.parse('"+JSON.stringify(_timePeriods[i])+"'))";
-      }
-      location.href = "javascript:void(window.adResetTime = new Date('"+adResetTime.toString()+"'))";
-      location.href = "javascript:void(window.neoMidnight = new Date('"+neoMidnight.toString()+"'))";
-      location.href = "javascript:void(window.localMidnight = new Date('"+localMidnight.toString()+"'))";
-
-      //    debugLog(_timePeriods);
-
-      location.href = "javascript:(" + function () {
-
-        // Append zeros to the _input until the _desiredStringLength is reached
-        function padZeros(arg_input,arg_desiredStringLength)
-        {
-          var currentLength = arg_input.toString().length;
-          var output = arg_input;
-          for(var i=0; i < (arg_desiredStringLength - currentLength); i++) {
-            output = '0' + output;
-          }
-          return output;
-        }
-
-        if ('undefined' === typeof Highcharts)
-        {
-          //move container off screen to stop a transparent div blocking clicks on rest of page
-          //Also colour it so that if it does cause a problem, it isn't invisible
-          //todo: add the event handler before this javascript is called and then remove it here if the timer chart cannot show
-
-          document.getElementById('containerDiv_timer').style.left = '-1000px';
-          document.getElementById('containerDiv_timer').style.backgroundColor = 'black';
-          debugLog("Cannot show the clicking guide graph because graphs are unavailable on this page. Try the account summary page or referral statistics page.");
-        }
-        else
-        {
-          var chart = new Highcharts.Chart({
-            chart: {
-              renderTo: 'containerDiv_timer',
-              margin: [20,20,80,20],
-              backgroundColor: '#eeeeee'
-            },
-            title: {
-              text: ''
-            },
-            plotArea: {
-              shadow: null,
-              borderWidth: null,
-              backgroundColor: null
-            },
-            tooltip: {
-              formatter: function ()
-              {
-                var _from = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
-                localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y), localMidnight.getMinutes() + ((this.y - Math.floor(this.y)) * 60)));
+        var chart = new Highcharts.Chart({
+          chart: {
+            renderTo: 'containerDiv_timer',
+            margin: [20,20,80,20],
+            backgroundColor: '#eeeeee'
+          },
+          title: {
+            text: ''
+          },
+          plotArea: {
+            shadow: null,
+            borderWidth: null,
+            backgroundColor: null
+          },
+          tooltip: {
+            formatter: function ()
+            {
+              var _from = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
+              localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y), localMidnight.getMinutes() + ((this.y - Math.floor(this.y)) * 60)));
               var _to = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
 
               return '<b>' + this.point.name + '</b>: ' + (Math.floor(this.y * 100) / 100) + 'hours == From: ' + _from + ' To: ' + _to;
@@ -3500,7 +3500,7 @@ var referralListings = new function()
 
     if(-1 !== tmp_referralDataFromListingsPage)
     {
-        // Restructure the data from the given mtx=[] format into the same structure as our stored info
+      // Restructure the data from the given mtx=[] format into the same structure as our stored info
       var tmp_referralsOnCurrentPage = restructureData(tmp_referralDataFromListingsPage.mtx);
 
       // Merge the newly fetched data with the stored data
@@ -4193,7 +4193,7 @@ var exportTabs = new function()
                   '<button id="'+arg_exportType+'ExportTab_okButton">Ok</button>');
 
           document.getElementById(arg_exportType+'ExportTab_okButton').addEventListener('click',
-                function (event) {
+              function (event) {
                 exportTab.hide();
               }, false);
 
