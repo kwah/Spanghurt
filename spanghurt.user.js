@@ -1,9 +1,3 @@
-// ==UserScript==
-// @name           Spanghurt
-// @namespace      http://kwah.org/
-// @description    Spanghurt is the codename v5 of what was formerly the Neobux 2+ script for Neobux.. The script aims to plugin extra bits of info into Neobux to make your life easier when you're managing referrals or analysing your account.. Once this is a bit more fully formed there'll be more info at kwah.org but for now look out for Neobux 2+ (thread author:kwah) in the Neobux forums =]
-// @include        http*://www.neobux.com/*
-// @icon           http://kwah.org/images/SpanghurtScriptIcon.png
 // ==/UserScript==
 
 //var tl8strings = {};
@@ -22,16 +16,19 @@ if('undefined' === typeof GM_log) {
 if('undefined' === typeof console) {
   var console = {
     info: function() {
-      location.href = "javascript:void(console.group());";
+      if(arguments.length>1){ location.href = "javascript:void(console.group());"; }
       for(var i=0; i<arguments.length; i++) {
+        if('undefined' === typeof arguments[i].toString) {
+          location.href = "javascript:void(console.info('cannot convert argument to string'));";
+        }
         location.href = "javascript:void(console.info('"+arguments[i]+"'));";
       }
-      location.href = "javascript:void(console.groupEnd());";
+      if(arguments.length>1){ location.href = "javascript:void(console.groupEnd());"; }
     },
     group: function() { location.href = "javascript:void(console.group());"; },
     groupEnd: function() { location.href = "javascript:void(console.groupEnd());"; }
   };
-  console.info('console not defined');
+  console.info('console not defined, now replaced');
 }
 
 if('undefined' === typeof GM_addStyle) {
@@ -74,10 +71,9 @@ for(var i=0; i < preferredStorageOrder_setValue.length; i++) {
   }
 }
 
-//console.info('getValue.toString() = ',getValue.toString());
+//console.info('getValue.toString = ',getValue.toString);
 //console.info('getValue = ',getValue);
 //console.info('setValue = ',setValue);
-
 
 
 /**
@@ -131,7 +127,7 @@ function getPref(arg_prefName, arg_defaultValue, arg_options)
       }
       catch(e) {
         errorLog('ERROR! Could not convert the stored value to object, returning supplied default value.');
-        return arg_defaultValue;
+        return {};
       }
     default:
       return tmp;
@@ -154,6 +150,9 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
   }
 
   arg_options.prefType = arg_options.prefType || typeof arg_defaultValue;
+//
+//  console.info('typeof arg_defaultValue = ',typeof arg_defaultValue);
+//  console.info('arg_options.prefType = ',arg_options.prefType);
 
   var tmp_value;
   switch (arg_options.prefType)
@@ -175,7 +174,17 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
       break;
   }
 
+  try {
   setValue(arg_prefName, tmp_value);
+  }
+  catch(e) {
+    console.info('error setting using setValue');
+    console.info('typeof arg_defaultValue = ',typeof arg_defaultValue);
+    console.info('arg_options.prefType = ',arg_options.prefType);
+
+    setValue(arg_prefName, tmp_value.toString());
+  }
+
 
   /*Having issues with the localStorage being wiped occasionally [nb: caused by a privacy addon] so storing to GM_log too as a backup*/
   // Also having issues with floats not being able to be stored :S
@@ -190,8 +199,6 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
   }
   return getPref(arg_prefName, tmp_value, arg_options);
 }
-
-
 
 
 var tl8strings = {
@@ -302,7 +309,7 @@ var tl8strings = {
 };
 
 var tmp_translationStringsNeeded = {};
-tmp_translationStringsNeeded = {};
+tmp_translationStringsNeeded = JSON.parse(localStorage.getItem('translationStringsNeeded')) || {};
 
 var tl8_counter = 0;
 
@@ -312,12 +319,12 @@ function tl8(arg_originalString)
   if('undefined' === typeof tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })]) {
     tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })] = {};
   }
-  if('undefined' === typeof tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })][arg_originalString])
+  if('undefined' === typeof tl8strings[getValue('neobuxLanguageCode')][arg_originalString])
   {
     console.group();
 //    console.info('Error!\n\nTranslation string for "',arg_originalString, '" not found');
     tmp_translationStringsNeeded[arg_originalString] = arg_originalString;
-    setPref('translationStringsNeeded', tmp_translationStringsNeeded, { prefType: 'JSON' });
+    setPref('translationStringsNeeded', JSON.stringify(tmp_translationStringsNeeded), { prefType: 'string' });
 
     console.info('Record of the translation strings yet to be translated has been updated\n\n missing string = '+arg_originalString);
 
@@ -326,12 +333,12 @@ function tl8(arg_originalString)
       console.info('arg_originalString = ', arg_originalString);
       console.info('tmp_translationStringsNeeded[arg_originalString] = ',tmp_translationStringsNeeded[arg_originalString]);
       console.info('JSON.stringify(tmp_translationStringsNeeded) = ',JSON.stringify(tmp_translationStringsNeeded));
-      console.info(JSON.parse(getPref('translationStringsNeeded',{}, { prefType: 'JSON' })));
+      console.info(JSON.parse(getValue('translationStringsNeeded')));
     }
     console.groupEnd();
     return (arg_originalString);
   }
-  return tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })][arg_originalString];
+  return tl8strings[getValue('neobuxLanguageCode')][arg_originalString];
 }
 
 
@@ -683,13 +690,13 @@ if(("true" !== getValue('setupComplete') && true !== getValue('setupComplete')))
           )
       {
 
-        setValue('numberOfDirectReferrals', tmp_directRefs[1]);
-        setValue('numberOfRentedReferrals', tmp_rentedRefs[1]);
-        setValue('autopayOn', tmp_autopay);
-        setValue('renewalsLength', tmp_renewalLength);
-        setValue('serverTimeOffset', tmp_timeDifference[1]);
+        setPref('numberOfDirectReferrals', tmp_directRefs[1], { prefType: 'integer' });
+        setPref('numberOfRentedReferrals', tmp_rentedRefs[1], { prefType: 'integer' });
+        setPref('autopayOn', tmp_autopay, { prefType: 'boolean' });
+        setPref('renewalsLength', tmp_renewalLength, { prefType: 'integer' });
+        setPref('serverTimeOffset', tmp_timeDifference[1], { prefType: 'float' });
 
-        setValue('setupComplete', true);
+        setPref('setupComplete', true, { prefType: 'boolean' });
 
 
         alert(tl8('Settings saved! The script will run on the next Neobux page that you load.'));
@@ -1443,7 +1450,8 @@ function extractNumberOfRefs()
     var _pageRefType = null;
     if(0 <= currentPage.pageCode.split('_').indexOf('Rented')) {
       _pageRefType = 'Rented';
-    } else {  _pageRefType = 'Direct';
+    } else {
+      _pageRefType = 'Direct';
     }
 // debugLog('_pageRefType = ',_pageRefType);
     var tmp_numberOfRefs = null;
@@ -2768,2166 +2776,247 @@ var chartData = new function ()
               {
                 var _from = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
                 localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y), localMidnight.getMinutes() + ((this.y - Math.floor(this.y)) * 60)));
-                var _to = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
+              var _to = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
 
-                return '<b>' + this.point.name + '</b>: ' + (Math.floor(this.y * 100) / 100) + 'hours == From: ' + _from + ' To: ' + _to;
-              }
-            },
-            plotOptions: {
-              pie: {
-                allowPointSelect: true,
-                cursor: 'pointer',
-                dataLabels: {
-                  enabled: true,
-                  formatter: function ()
-                  {
-                    if (0 === this.x) {
-                      localMidnight.setHours(0, 0, 0);
-                    }
-                    var _from = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
-                    localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y), localMidnight.getMinutes() + ((this.y - Math.floor(this.y)) * 60)));
-                    var _to = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
-
-                    return _from + '-' + _to;
+              return '<b>' + this.point.name + '</b>: ' + (Math.floor(this.y * 100) / 100) + 'hours == From: ' + _from + ' To: ' + _to;
+            }
+          },
+          plotOptions: {
+            pie: {
+              allowPointSelect: true,
+              cursor: 'pointer',
+              dataLabels: {
+                enabled: true,
+                formatter: function ()
+                {
+                  if (0 === this.x) {
+                    localMidnight.setHours(0, 0, 0);
                   }
+                  var _from = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
+                  localMidnight = new Date(localMidnight.setHours(localMidnight.getHours() + Math.floor(this.y), localMidnight.getMinutes() + ((this.y - Math.floor(this.y)) * 60)));
+                  var _to = padZeros(localMidnight.getHours(), 2) + ':' + padZeros(localMidnight.getMinutes(), 2);
+
+                  return _from + '-' + _to;
                 }
               }
-            },
-            legend: {
-              layout: 'vertical'
-            },
-            series: [
-              {
-                type: 'pie',
-                name: 'Time periods',
-                data: _timePeriods
-              }
-            ]
-          });
+            }
+          },
+          legend: {
+            layout: 'vertical'
+          },
+          series: [
+            {
+              type: 'pie',
+              name: 'Time periods',
+              data: _timePeriods
+            }
+          ]
+        });
 
-        }
-
-
-        //todo: look into passing parameters into the ()
-      } + ")()";
-
-      document.getElementById('localServerTimeText').addEventListener('click',function localServerTime_onClick() {
-        document.getElementById('containerDiv_timer').style.display = ('none' == document.getElementById('containerDiv_timer').style.display) ? '' : 'none' ;
-      },false);
-
-    };
-
-    //If the image logo cannot be found, either find an alternate place to insert it
-    //   or abort insertion.
-    if(0 >= document.querySelectorAll('img#logo').length) {
-      return;
-    }
-
-    this.insertClock(this.GetServerTimeOffset(), getPref('AdResetTime_hours', 0, { prefType: 'string' }));
-    this.insertClickGuide();
-  }
+      }
 
 
-  var graphsOnCurrentPage = [];
-  for(var graphId in friendlyNameLookup) {
-    graphsOnCurrentPage.push(graphId);
-  }
+      //todo: look into passing parameters into the ()
+    } + ")()";
 
+    document.getElementById('localServerTimeText').addEventListener('click',function localServerTime_onClick() {
+      document.getElementById('containerDiv_timer').style.display = ('none' == document.getElementById('containerDiv_timer').style.display) ? '' : 'none' ;
+    },false);
 
-  // Used for detection on pages
-  var langStrings_Neo = {
-    'US': {
-      'Yesterday': 'Yesterday',
-      'Today': 'Today',
-      'No clicks yet': 'No clicks yet'
-    }
   };
 
-  // Used for output from the script
-  var langStrings = {
-    'en-GB': {
-      'N/A':'N/A'
-    }
-  };
+  //If the image logo cannot be found, either find an alternate place to insert it
+  //   or abort insertion.
+  if(0 >= document.querySelectorAll('img#logo').length) {
+    return;
+  }
 
-  // tl = Translate to Local
-  function tl(arg_langString) {
-    var tmp_langCode = 'en-GB';
-    if(langStrings) {
-      if(langStrings[tmp_langCode]) {
-        if(langStrings[tmp_langCode][arg_langString]) {
-          return langStrings[tmp_langCode][arg_langString];
-        }
-        else {
-          errorLog('Error! tl(arg_langString)\nLanguage string not found amongst translated strings for '+tmp_langCode+'. Returning the submitted arg_langString: '+arg_langString);
-          return arg_langString;
-        }
+  this.insertClock(this.GetServerTimeOffset(), getPref('AdResetTime_hours', 0, { prefType: 'string' }));
+  this.insertClickGuide();
+}
+
+
+var graphsOnCurrentPage = [];
+for(var graphId in friendlyNameLookup) {
+  graphsOnCurrentPage.push(graphId);
+}
+
+
+// Used for detection on pages
+var langStrings_Neo = {
+  'US': {
+    'Yesterday': 'Yesterday',
+    'Today': 'Today',
+    'No clicks yet': 'No clicks yet'
+  }
+};
+
+// Used for output from the script
+var langStrings = {
+  'en-GB': {
+    'N/A':'N/A'
+  }
+};
+
+// tl = Translate to Local
+function tl(arg_langString) {
+  var tmp_langCode = 'en-GB';
+  if(langStrings) {
+    if(langStrings[tmp_langCode]) {
+      if(langStrings[tmp_langCode][arg_langString]) {
+        return langStrings[tmp_langCode][arg_langString];
       }
       else {
-        errorLog('Error! tl(arg_langString)\nLanguage set not found amongst translations. Returning the submitted arg_langString: '+arg_langString);
+        errorLog('Error! tl(arg_langString)\nLanguage string not found amongst translated strings for '+tmp_langCode+'. Returning the submitted arg_langString: '+arg_langString);
         return arg_langString;
       }
     }
     else {
-      errorLog('Error! tl(arg_langString)\nTranslations object not found. Returning the submitted arg_langString: '+arg_langString);
+      errorLog('Error! tl(arg_langString)\nLanguage set not found amongst translations. Returning the submitted arg_langString: '+arg_langString);
       return arg_langString;
     }
   }
+  else {
+    errorLog('Error! tl(arg_langString)\nTranslations object not found. Returning the submitted arg_langString: '+arg_langString);
+    return arg_langString;
+  }
+}
 
-  // ntl = Neobux TransLate to Local
-  function ntl(arg_langString) {
-    var tmp_langCode = document.querySelectorAll('.c0')[0].getAttribute('class').match(/f-([a-z]{2})/)[1].toUpperCase();
+// ntl = Neobux TransLate to Local
+function ntl(arg_langString) {
+  var tmp_langCode = document.querySelectorAll('.c0')[0].getAttribute('class').match(/f-([a-z]{2})/)[1].toUpperCase();
 
-    if(langStrings_Neo) {
-      if(langStrings_Neo[tmp_langCode]) {
-        if(langStrings_Neo[tmp_langCode][arg_langString]) {
-          return langStrings_Neo[tmp_langCode][arg_langString];
-        }
-        else {
-          errorLog('Error! ntl(arg_langString)\nLanguage string not found amongst translated strings for '+tmp_langCode+'. Returning the submitted arg_langString: '+arg_langString);
-          return arg_langString;
-        }
+  if(langStrings_Neo) {
+    if(langStrings_Neo[tmp_langCode]) {
+      if(langStrings_Neo[tmp_langCode][arg_langString]) {
+        return langStrings_Neo[tmp_langCode][arg_langString];
       }
       else {
-        errorLog('Error! ntl(arg_langString)\nLanguage set not found amongst translations. Returning the submitted arg_langString: '+arg_langString);
+        errorLog('Error! ntl(arg_langString)\nLanguage string not found amongst translated strings for '+tmp_langCode+'. Returning the submitted arg_langString: '+arg_langString);
         return arg_langString;
       }
     }
     else {
-      errorLog('Error! ntl(arg_langString)\nTranslations object not found. Returning the submitted arg_langString: '+arg_langString);
+      errorLog('Error! ntl(arg_langString)\nLanguage set not found amongst translations. Returning the submitted arg_langString: '+arg_langString);
       return arg_langString;
     }
   }
+  else {
+    errorLog('Error! ntl(arg_langString)\nTranslations object not found. Returning the submitted arg_langString: '+arg_langString);
+    return arg_langString;
+  }
+}
 
 
-  var referralListings = new function()
+var referralListings = new function()
+{
+
+  //
+  function REFERRAL(arg_refId, arg_referralProperties)
   {
-
-    //
-    function REFERRAL(arg_refId, arg_referralProperties)
-    {
 //      console.info('arg_refId = ',arg_refId);
-      var tmp_currentDateString = dates_array[0];
+    var tmp_currentDateString = dates_array[0];
 
-      //arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
-      this.refId = arg_refId;
-      this.referralSince_raw =       arg_referralProperties['referralSince'] || null;
-      this.lastClick_raw =           arg_referralProperties['lastClick']     || null;
-      this.totalClicks =            (0 <= arg_referralProperties['totalClicks'])          ? arg_referralProperties['totalClicks']   : null;
-      this.clickAverage =           (0 <= arg_referralProperties['average'])              ? arg_referralProperties['average']       : null;
+    //arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
+    this.refId = arg_refId;
+    this.referralSince_raw =       arg_referralProperties['referralSince'] || null;
+    this.lastClick_raw =           arg_referralProperties['lastClick']     || null;
+    this.totalClicks =            (0 <= arg_referralProperties['totalClicks'])          ? arg_referralProperties['totalClicks']   : null;
+    this.clickAverage =           (0 <= arg_referralProperties['average'])              ? arg_referralProperties['average']       : null;
 
-      //Ultimate mini click graph values
-      var ultimateClickValues_raw = (0 <= arg_referralProperties['ultimateClickValues'])  ? arg_referralProperties['ultimateClickValues'] : null;
-      //Rented referral properties
-      this.flagColour_Id =          (0 <= arg_referralProperties['flagColour_Id'])        ? arg_referralProperties['flagColour_Id'] : null;
-      this.locked =                 (0 <= arg_referralProperties['locked'])               ? !!arg_referralProperties['locked']      : null;
-      this.recycleable =            (0 <= arg_referralProperties['recycleable'])          ? arg_referralProperties['recycleable']   : null;
-      this.nextPayment_raw =         arg_referralProperties['nextPayment']   || null;
-      //Direct referral properties
-      this.cameFrom =               arg_referralProperties['cameFrom']      || null;
-      this.isSellable =             arg_referralProperties['isSellable']    || null;
-
-
-        // english | pt | es | greek | FI | SE | DE
-        var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-        var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-        var tl8_tomorrow = /tomorrow/i;
+    //Ultimate mini click graph values
+    this.ultimateClickValues_raw = ('undefined' !== typeof arg_referralProperties['ultimateClickValues'])  ? arg_referralProperties['ultimateClickValues'] : null;
+    //Rented referral properties
+    this.flagColour_Id =          (0 <= arg_referralProperties['flagColour_Id'])        ? arg_referralProperties['flagColour_Id'] : null;
+    this.locked =                 (0 <= arg_referralProperties['locked'])               ? !!arg_referralProperties['locked']      : null;
+    this.recycleable =            (0 <= arg_referralProperties['recycleable'])          ? arg_referralProperties['recycleable']   : null;
+    this.nextPayment_raw =         arg_referralProperties['nextPayment']   || null;
+    //Direct referral properties
+    this.cameFrom =               arg_referralProperties['cameFrom']      || null;
+    this.isSellable =             arg_referralProperties['isSellable']    || null;
 
 
-      function flagIdToColour(arg_flagId)
-      {
-        var flagLookup = {
-          0: 'White',
-          1: 'Red',
-          2: 'Orange',
-          3: 'Yellow',
-          4: 'Green',
-          5: 'Blue'
-        };
+      // english | pt | es | greek | FI | SE | DE
+      var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+      var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+      var tl8_tomorrow = /tomorrow/i;
 
-        if("undefined" === typeof tl8) {
-          return "Unkwown_no_tl8";
-        }
-        return tl8(flagLookup[arg_flagId] || "Unknown");
+
+    function flagIdToColour(arg_flagId)
+    {
+      var flagLookup = {
+        0: 'White',
+        1: 'Red',
+        2: 'Orange',
+        3: 'Yellow',
+        4: 'Green',
+        5: 'Blue'
+      };
+
+      if("undefined" === typeof tl8) {
+        return "Unkwown_no_tl8";
       }
-      this.flagColour = flagIdToColour(this.flagColour_Id);
+      return tl8(flagLookup[arg_flagId] || "Unknown");
+    }
+    this.flagColour = flagIdToColour(this.flagColour_Id);
 
-      function referralSinceToDateObject(arg_referralSinceString)
-      {
+    function referralSinceToDateObject(arg_referralSinceString)
+    {
 //        console.info('arg_referralSinceString = ',arg_referralSinceString);
-        //'2011/04/25 11:20'
-        var tmp_breakdown = arg_referralSinceString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
-        //new Date(year, month, day, hours, minutes, seconds, milliseconds)
-        // NB:: month is zero-indexed thus needs to be reduced by 1
-        return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
-      }
-      this.referralSince = referralSinceToDateObject(this.referralSince_raw).toString();
+      //'2011/04/25 11:20'
+      var tmp_breakdown = arg_referralSinceString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
+      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
+      // NB:: month is zero-indexed thus needs to be reduced by 1
+      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
+    }
+    this.referralSince = referralSinceToDateObject(this.referralSince_raw).toString();
 
-      function lastClickToDateObject(arg_lastClickString)
-      {
+    function lastClickToDateObject(arg_lastClickString)
+    {
 //        console.info('arg_lastClickString = ',arg_lastClickString);
-        //'Today' or 'Yesterday' or '2011/04/25'
-        var tmp_lastClickBreakdown_regex = /([0-9]+)\/([0-9]+)\/([0-9]+)/
-        var tmp_breakdown = arg_lastClickString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(tmp_lastClickBreakdown_regex);
+      //'Today' or 'Yesterday' or '2011/04/25'
+      var tmp_lastClickBreakdown_regex = /([0-9]+)\/([0-9]+)\/([0-9]+)/
+      var tmp_breakdown = arg_lastClickString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(tmp_lastClickBreakdown_regex);
 //        console.info('lastClickToDateObject - arg_lastClickString: ',arg_lastClickString);
 //        console.info('lastClickToDateObject - tmp_breakdown: ',tmp_breakdown);
 
-        //new Date(year, month, day, hours, minutes, seconds, milliseconds)
-        // NB:: month is zero-indexed thus needs to be reduced by 1
-        return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],0,0,0,0);
-      }
-      this.lastClick = lastClickToDateObject(this.lastClick_raw).toString();
+      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
+      // NB:: month is zero-indexed thus needs to be reduced by 1
+      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],0,0,0,0);
+    }
+    this.lastClick = lastClickToDateObject(this.lastClick_raw).toString();
 
 
-      function nextPaymentToDateObject(arg_nextPaymentString)
-      {
+    function nextPaymentToDateObject(arg_nextPaymentString)
+    {
 //        console.info('arg_nextPaymentString = ',arg_nextPaymentString);
-        //'171 days and 20:47'
-        //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
-        var tmp_breakdown = arg_nextPaymentString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
+      //'171 days and 20:47'
+      //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
+      var tmp_breakdown = arg_nextPaymentString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
 
-        var tmp_nextPaymentDifference =
-            (tmp_breakdown[1] * 24 * 60 * 60 * 1000)+ //days to milliseconds
-            (tmp_breakdown[2] * 60 * 60 * 1000) + //hours to milliseconds
-            (tmp_breakdown[3] * 60 * 1000); // minutes to milliseconds
+      var tmp_nextPaymentDifference =
+          (tmp_breakdown[1] * 24 * 60 * 60 * 1000)+ //days to milliseconds
+          (tmp_breakdown[2] * 60 * 60 * 1000) + //hours to milliseconds
+          (tmp_breakdown[3] * 60 * 1000); // minutes to milliseconds
 
-        //Convert the time/date difference to milliseconds, then sum it with the numerical version (hence -0,
-        //   though any forcing of now to be numerical will work) of the current date/time and convert back to a date
-        var tmp_nextPaymentDate = new Date (dateToday - 0 + tmp_nextPaymentDifference);
+      //Convert the time/date difference to milliseconds, then sum it with the numerical version (hence -0,
+      //   though any forcing of now to be numerical will work) of the current date/time and convert back to a date
+      var tmp_nextPaymentDate = new Date (dateToday - 0 + tmp_nextPaymentDifference);
 
-        return tmp_nextPaymentDate;
-      }
-      this.nextPayment = nextPaymentToDateObject(this.nextPayment_raw).toString();
-
-      function calculateRealAverage(arg_referralSince, arg_totalClicks) {
-        var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
-        return (arg_totalClicks / tmp_timeOwned_days).toFixed(5) * 1;
-      }
-      this.realAverage = calculateRealAverage(this.referralSince, this.totalClicks);
-
-      return this;
+      return tmp_nextPaymentDate;
     }
+    this.nextPayment = nextPaymentToDateObject(this.nextPayment_raw).toString();
 
-
-    function extractReferralDataFromListingsPage()
-    {
-      // Grab contents of mtx[] array delivered onto the referral listings page
-      var xpathResults_mtx = docEvaluate("//script[contains(.,'mtx=')]");
-
-      if(0 === xpathResults_mtx.snapshotLength) {
-        console.info('referrals data not found');
-//        throw 'referrals data not found';
-        return -1;
-      }
-
-      xpathResults_mtx = xpathResults_mtx.snapshotItem(0).textContent;
-      var tmp_refData = xpathResults_mtx.match(/mtx=\[(.*?),\];/)[1];
-
-      // Insert this into a JSON
-      var tmpObj_currentPageRefData = JSON.parse('{"mtx": ['+tmp_refData.replace(/'/g,'"')+']}') || -1;
-
-
-      if(-1 === tmpObj_currentPageRefData) {
-        // The data extracted couldn't be parsed into a valid JSON string / object so 'return' out of the function
-        errorLog('There was an error extracting the referral listings data.');
-        return -1;
-      }
-
-      return tmpObj_currentPageRefData;
+    function calculateRealAverage(arg_referralSince, arg_totalClicks) {
+      var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
+      return (arg_totalClicks / tmp_timeOwned_days).toFixed(5) * 1;
     }
+    this.realAverage = calculateRealAverage(this.referralSince, this.totalClicks);
 
-    function restructureData(arg_referralListingsData)
-    {
-      // Data pushed by Neobux is in the following format:
 
-      /**
-       * m = mtx[i]
-       *
-       * m[0] = Row # as shown in the first column
-       * m[1] = Real name for referral / else 0
-       * m[2] = Came From (direct) / Referral Since (rented) { (currentRefMTX[2] == '9') ? referrals[z - 1].referralSince : currentRefMTX[2] }
-       * m[3] = Next Payment (rented) / Referral Since (direct) { (currentRefMTX[2] == '9') ? referrals[z - 1].referralSince : currentRefMTX[2] }
-       * m[4] = Last Click Date { (currentRefMTX[4] == '9') ? referrals[z - 1].lastClick : (currentRefMTX[4] == 'N') ? 'No clicks yet' : (currentRefMTX[4] == 'O') ? 'Yesterday' : (currentRefMTX[4] == 'H') ? 'Today' : currentRefMTX[4] }
-       * m[5] = Total Clicks
-       * m[6] = Overall Average { (currentRefMTX[6] == '-.---' || currentRefMTX[6] == 999) ? '-.---' : currentRefMTX[6] }
-       * m[7] = Some kind of long ID # / hash / something
-       * m[8] = Unknown exact purpose 0/1 value used within much of the HTML attributes / function parameters
-       * m[9] = Value of the checkbox
-       * m[10] = When colouring by average is disabled, should background be gray (1) or white (0)
-       * m[11] = *unused
-       * m[12] = *unused
-       * m[13] = Can golden graph button be displayed
-       * m[14] = Minigraph click data (Ultimates only)
-       * m[15] = Flag id (rented refs only)
-       * m[16] = Can referral be recycled
-       * m[17] = Is referral locked (rented refs only)
-       * m[18] = Can referral be sold (direct refs only)
-       * m[19] = Anonymous referral ID (is numerical - prefix of R or D is added on for display only)
-       *
-       */
 
-      // Will convert to the following structure:
-      /*
-      *
-      * referrals = {
-      *   refID: {
-      *     referralType: [ rented | direct ],
-      *     lastSeen: < dateTime >,
-      *     data: {
-      *       <dateTime> : {
-      *         flag: < flag colour >,
-      *         referralSince: < dateTime >,
-      *         lastClick: < date >,
-      *         totalClicks: < number >,
-      *         overallAverage: < decimal >
-      *       },
-      *       <dateTime> : {
-      *         flag: < flag colour >,
-      *         referralSince: < dateTime >,
-      *         lastClick: < date >,
-      *         totalClicks: < number >,
-      *         overallAverage: < decimal >
-      *       }
-      *     }
-      *   },
-      *   // more refs
-      * };
-      *
-      */
 
-      // NB: How often a new dateTime is created vs. an existing one is updated will need a setting
-      // Meanwhile, will create a new one on every page load / running of the script
-
-  //    debugLog('restructureData:\n\n','arg_referralListingsData',arg_referralListingsData);
-
-      var tmp_referrals = {};
-      var tmp_currentDateTime = new Date();
-      var cr, pr;
-      var cr_ID, pr_ID;
-
-      for(var i = 0; i < arg_referralListingsData.length; i++){
-
-        // Current Referral
-        cr = arg_referralListingsData[i];
-        cr_ID = ('0' == cr[1]) ? cr[19] : cr[1];
-        // Previous Referral
-        pr = arg_referralListingsData[i-1] || arg_referralListingsData[i];
-        pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
-
-        tmp_referrals[cr_ID] = new REFERRAL(
-            cr_ID,
-            {
-              flagColour_Id: cr[15],
-              locked: cr[17],
-              recycleable: cr[16],
-              nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].nextPayment_raw : cr[3],
-              cameFrom: cr[2],
-              sellable: cr[18],
-              referralSince: ('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince_raw : cr[2],
-              lastClick: ('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick_raw : ('N' == cr[4]) ? (('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince_raw : cr[2]) : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4],
-              totalClicks: cr[5],
-              clickAverage: cr[6]
-            }
-          );
-      }
-
-
-  //    for(var i = 0; i < arg_referralListingsData.length; i++)
-  //    {
-  ////      console.group();
-  ////      debugLog('i',i);
-  //
-  //    /**
-  //     * ## referralSince and lastClick ##
-  //     * if date/time in one row is the same as the row before, mtx contains a '9'
-  //     * instead of the duplicated date
-  //     *
-  //     * ## lastClick ##
-  //     * 'Today' is coded as 'N' (unknown reason for this code);
-  //     * 'Yesterday' is coded as 'O' (in Portuguese, Yesterday == Ontem)
-  //     *
-  //     * ## overallAverage ##
-  //     * when referral is younger than 24hours old and has not yet clicked,
-  //     * average is displayed as '-.---'
-  //     *
-  //     */
-  //
-  //      // Current Referral
-  //      cr = arg_referralListingsData[i];
-  //      cr_ID = ('0' == cr[1]) ? cr[19] : cr[1];
-  //      // Previous Referral
-  //      pr = arg_referralListingsData[i-1] || arg_referralListingsData[i];
-  //      pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
-  //
-  //      var flagLookup = {
-  //        0: 'White',
-  //        1: 'Red',
-  //        2: 'Orange',
-  //        3: 'Yellow',
-  //        4: 'Green',
-  //        5: 'Blue'
-  //      };
-  //
-  //      if (0 < location.href.indexOf('ss3=2'))
-  //      {
-  //        tmp_referrals[cr_ID] = {
-  //          ID: ('0' == cr[1]) ? 'R' + cr[19] : cr[1],
-  //          referralType: 'R',
-  //
-  //          flag: flagLookup[cr[15]],
-  //          locked: (1 === cr[17]) ? 'Y' : 'N',
-  //          recycleable: (1 === cr[16]) ? 'Y' : 'N',
-  //
-  //          nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].nextPayment : cr[3]
-  //        };
-  //      }
-  //      else if (0 < location.href.indexOf('ss3=1'))
-  //      {
-  //        tmp_referrals[cr_ID] = {
-  //          ID: ('0' == cr[1]) ? 'D' + cr[19] : cr[1],
-  //          referralType: 'D',
-  //          cameFrom: cr[2],
-  //          sellable: (1 === cr[18]) ? 'Y' : 'N'
-  //        };
-  //      }
-  //
-  //
-  //      function todayYesterdayToDate(arg_string) {
-  //        // english | pt | es | greek | FI | SE | DE
-  //        var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-  //        var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-  //        var tl8_tomorrow = /tomorrow/i;
-  //
-  //        return arg_string.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]);
-  //      }
-  //
-  //      if(10 > i) {
-  //        debugLog('cr: ',cr,'\n\n','pr: ',pr);
-  //        debugLog('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
-  //      }
-  //
-  //      tmp_referrals[cr_ID].lastSeen = tmp_currentDateTime.toString();
-  //      tmp_referrals[cr_ID].hash = cr[7];
-  //      tmp_referrals[cr_ID].referralSince = todayYesterdayToDate(('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince : cr[2]);
-  //      tmp_referrals[cr_ID].lastClick = todayYesterdayToDate(('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4]);
-  //      tmp_referrals[cr_ID].totalClicks = cr[5];
-  //      tmp_referrals[cr_ID].overallAverage = ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6];
-  //
-  //
-  //      /**
-  //       * Check how many referrals are being shown per page:  If the user is ultimate and has more than 100 referrals showing, minigraphs will not be displayed
-  //       * If the user has fewer than 10 referrals, the option to select the # of referrals is not present, thus refsPerPage must be set manually
-  //      */
-  //      var refsPerPageSelector = document.getElementById('rlpp');
-  //      var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
-  //
-  //      /* Ultimate only stuff, based on the ultimate minigraphs */
-  //      // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
-  //      if(currentUser.accountType.showUltimateFeatures && 300 >= refsPerPage)
-  //      {
-  //        tmp_referrals[cr_ID].minigraph = {
-  //          'rawClickData': ('0' == cr[14]) ? '0000000000'.split('') : cr[14].split(''),
-  //          'clicks': new Array()
-  //        };
-  //
-  //        // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
-  //        cr.minigraph.rawClickData = currentUser.accountType.isUltimate ? cr.minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-  //
-  //        // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
-  //        cr.minigraph.rawClickData =  cr.minigraph.rawClickData.reverse();
-  //
-  //        // Copy the click data to a separate array and verify/coerce each value to a number
-  //        for (var i = 0; i < cr.minigraph.rawClickData.length; i++) {
-  //          cr.minigraph.clicks[i] = parseInt(cr.minigraph.rawClickData[i], 10);
-  //        }
-  //
-  //        /**
-  //         * Compute the mean and variance using a "numerically stable algorithm".
-  //         * Based on http://maiaco.com/articles/computingStatsInJS.php
-  //         * 30/12/2010 - above link no longer exists, mirror found at
-  //         * http://code.google.com/p/ocropodium/source/browse/static/js/stats.js?spec=svnd8375a8cd3f640b35cbbb42d9669411dde9248eb&r=d8375a8cd3f640b35cbbb42d9669411dde9248eb
-  //         *
-  //         * Also temporarily copied in below:
-  //         */
-  //
-  //        var sqsum = 0;
-  //        cr.minigraph.mean = new Array();
-  //        cr.minigraph.sum = new Array();
-  //        cr.minigraph.variance = new Array();
-  //        cr.minigraph.sdev = new Array();
-  //
-  //        cr.minigraph.mean[0] = cr.minigraph.clicks[0];
-  //        cr.minigraph.sum[0] = cr.minigraph.clicks[0];
-  //        cr.minigraph.variance[0] = cr.minigraph.clicks[0];
-  //        cr.minigraph.sdev[0] = cr.minigraph.clicks[0];
-  //
-  //        for (var i = 1; i < cr.minigraph.clicks.length; ++i)
-  //        {
-  //          var x = cr.minigraph.clicks[i];
-  //          var delta = x - cr.minigraph.mean[i-1];
-  //          var sweep = i + 1.0;
-  //          cr.minigraph.mean[i] = cr.minigraph.mean[i-1] + (delta / sweep);
-  //          sqsum += delta * delta * (i / sweep);
-  //
-  //          cr.minigraph.sum[i] = cr.minigraph.mean[i] * (i + 1);
-  //          cr.minigraph.variance[i] = sqsum / (i + 1);
-  //          cr.minigraph.sdev[i] = Math.sqrt(cr.minigraph.variance[i]);
-  //        }
-  //
-  ////        /** Returns an object that contains the count, sum,
-  ////         * minimum, median, maximum, mean, variance, and
-  ////         * standard deviation of the series of numbers stored
-  ////         * in the specified array.  This function changes the
-  ////         * specified array by sorting its contents. */
-  ////        function Stats(data) {
-  ////            this.count = data.length;
-  ////
-  ////            /* Sort the data so that all seemingly
-  ////             * insignificant values such as 0.000000003 will
-  ////             * be at the beginning of the array and their
-  ////             * contribution to the mean and variance of the
-  ////             * data will not be lost because of the precision
-  ////             * of the CPU. */
-  ////            data.sort(ascend);
-  ////
-  ////            /* Since the data is now sorted, the minimum value
-  ////             * is at the beginning of the array, the median
-  ////             * value is in the middle of the array, and the
-  ////             * maximum value is at the end of the array. */
-  ////            this.min = data[0];
-  ////            var middle = Math.floor(data.length / 2);
-  ////            if ((data.length % 2) != 0) {
-  ////                this.median = data[middle];
-  ////            }
-  ////            else {
-  ////                this.median = (data[middle - 1] + data[middle]) / 2;
-  ////            }
-  ////            this.max = data[data.length - 1];
-  ////
-  ////            /* Compute the mean and variance using a
-  ////             * numerically stable algorithm. */
-  ////            var sqsum = 0;
-  ////            this.mean = data[0];
-  ////            for (var i = 1;  i < data.length;  ++i) {
-  ////                var x = data[i];
-  ////                var delta = x - this.mean;
-  ////                var sweep = i + 1.0;
-  ////                this.mean += delta / sweep;
-  ////                sqsum += delta * delta * (i / sweep);
-  ////            }
-  ////            this.sum = this.mean * this.count;
-  ////            this.variance = sqsum / this.count;
-  ////            this.sdev = Math.sqrt(this.variance);
-  ////        }
-  ////
-  ////        /** Returns a string that shows all the properties and
-  ////         * their values for this Stats object. */
-  ////        Stats.prototype.toString = function() {
-  ////            var s = 'Stats';
-  ////            for (var attr in this) {
-  ////                if (typeof(this[attr]) != 'function') {
-  ////                    s += '  ' + attr + ' ' + this[attr];
-  ////                }
-  ////            }
-  ////            return s;
-  ////        }
-  ////
-  ////
-  ////        /** Compares two objects using
-  ////         * built-in JavaScript operators. */
-  ////        function ascend(a, b) {
-  ////            if (a < b)
-  ////                return -1;
-  ////            else if (a > b)
-  ////                return 1;
-  ////            return 0;
-  ////        }
-  //
-  //      } /* END calculating stats for minigraph clicks */
-  //
-  //      //debugLog(JSON.stringify(tmp_referrals));
-  ////      console.groupEnd();
-  //
-  //    } /* End of for(var i = 0; i < arg_referralListingsData.length; i++) {} loop  */
-  //
-
-
-  //    debugLog('restructureData:\n\n','tmp_referrals',tmp_referrals);
-      return tmp_referrals;
-    }
-
-
-    this.init = function ()
-    {
-      var storedReferralData = getPref('referrals',{},{ prefType: 'JSON' });
-      var referralData;
-
-      var tmp_referralDataFromListingsPage = { mtx:'' };
-      tmp_referralDataFromListingsPage = extractReferralDataFromListingsPage();
-
-      if(-1 !== tmp_referralDataFromListingsPage)
-      {
-        // Restructure the data from the given mtx=[] format into the same structure as our stored info
-        var tmp_referralsOnCurrentPage = restructureData(tmp_referralDataFromListingsPage.mtx);
-
-        // Merge the newly fetched data with the stored data
-        referralData = Object_merge(storedReferralData, tmp_referralsOnCurrentPage);
-
-        setPref('referrals',referralData,{ prefType: 'JSON' });
-      }
-    }
-  };
-
-
-  function PREFERENCE_INPUT_FIELD( arg_inputType, arg_preferenceId, arg_label, arg_values, arg_longDescription,
-      arg_cssStyle_Label, arg_cssStyle_Input )
-  {
-    var tmp_container = document.createElement('span');
-    tmp_container.id = 'label_'+arg_preferenceId;
-    tmp_container.title = arg_longDescription;
-    var tmp_innerHTML = '';
-    tmp_innerHTML += '<label for="'+arg_preferenceId+'">'+arg_label;
-
-    switch(arg_inputType)
-    {
-      case 'text':
-        tmp_innerHTML += '<input type="text" value="'+arg_values.toString()+'" id="'+arg_preferenceId+'"/>';
-        break;
-    }
-
-    tmp_innerHTML += ''+
-        '</label>'+
-        '<br>';
-
-    tmp_container.innerHTML = tmp_innerHTML;
-    debugLog(tmp_container.innerHTML);
-
-    return tmp_container.innerHTML;
-
-  }
-
-  var preferencesDialogStuff = {
-    'username': {
-      inputType: 'text',
-      preferenceId: 'username',
-      label: 'Username: ',
-      values: 'kwah',
-      longDescription: "Your account's username.",
-      cssStyle_Label: '',
-      cssStyle_Input: ''
-    },
-    'rentedReferralsCount': {
-      inputType: 'text',
-      preferenceId: 'rentedReferralsCount',
-      label: 'Rented Refs: ',
-      values: 417,
-      longDescription: "How many rented referrals you have.",
-      cssStyle_Label: '',
-      cssStyle_Input: ''
-    }
-  };
-
-  var tmp_preferencesDialogInnerHtml = ''+
-      '<div style="max-height:99%; background-color:pink;">'+
-      '<h1>Preferences</h1>'+
-      '<br>';
-
-  for(var tmp_prefId in preferencesDialogStuff)
-  {
-    tmp_preferencesDialogInnerHtml += ''+
-        PREFERENCE_INPUT_FIELD(
-            preferencesDialogStuff[tmp_prefId].inputType,
-            preferencesDialogStuff[tmp_prefId].preferenceId,
-            preferencesDialogStuff[tmp_prefId].label,
-            preferencesDialogStuff[tmp_prefId].values,
-            preferencesDialogStuff[tmp_prefId].longDescription,
-            preferencesDialogStuff[tmp_prefId].cssStyle_Label,
-            preferencesDialogStuff[tmp_prefId].cssStyle_Input
-            );
-  }
-
-  tmp_preferencesDialogInnerHtml += ''+
-      ''+
-      '</div>' +
-      '<div>' +
-      '<button id="preferencesDialog_Close">Close</button>' +
-      '</div>';
-
-
-  var preferencesDialog;
-  preferencesDialog = new ModalDialog('preferencesDialog');
-  preferencesDialog.create('background-color: white; margin: 8em auto; padding: 2em; width: 40em;',
-      tmp_preferencesDialogInnerHtml);
-
-  document.getElementById('preferencesDialog_Close').addEventListener('click',
-      function() { preferencesDialog.hide(); },
-      false);
-
-
-
-
-  var logo =
-  {
-    insert: function()
-    {
-      // Inserts the logo for the script into the page
-
-
-      // the language icon in upper right of page
-      var xpathResults_logoLocation = docEvaluate('//ul[@id="menu"]/li[@id="menuli"]/parent::ul/parent::td');
-
-      // If the location to insert the logo cannot be found, exit the function
-      if(0 >= xpathResults_logoLocation.snapshotLength) {
-        return
-      }
-
-      if (1 == xpathResults_logoLocation.snapshotLength)
-      {
-
-        // Container for logo image to allow it to look correct in the page
-        if(document.getElementById('spanghurtLogoContainer')) {
-          document.getElementById('spanghurtLogoContainer').parentNode.removeChild(document.getElementById('spanghurtLogoContainer'));
-        }
-        var elmnt_td = document.createElement('td');
-        elmnt_td.id = 'spanghurtLogoContainer';
-
-        elmnt_td.style.paddingLeft = '8px';
-        elmnt_td.style.paddingRight = '8px';
-        elmnt_td.innerHTML = ' &nbsp;|&nbsp; &nbsp;';
-
-
-        if(document.getElementById('spanghurtLogo')) {
-          document.getElementById('spanghurtLogo').parentNode.removeChild(document.getElementById('spanghurtLogo'));
-        }
-
-        var elmnt_logoImage = document.createElement('img');
-        elmnt_logoImage.id = 'spanghurtLogo';
-
-        elmnt_logoImage.setAttribute('rel', '#scriptPreferences');
-
-        elmnt_logoImage.style.cursor = 'pointer';
-        elmnt_logoImage.border = "0";
-        elmnt_logoImage.width = '16';
-        elmnt_logoImage.alt = tl8('Spanghurt Script Preferences');
-        elmnt_logoImage.title = tl8('Spanghurt Script Preferences');
-        elmnt_logoImage.src = 'http://kwah.org/neobux/script/images/logo.png';
-  //      elmnt_logoImage.src = 'http://img262.imageshack.us/img262/3654/neobuxv3logolargered2.png';
-        // img.src = 'http://img262.imageshack.us/img262/4965/neobuxv3logolargered3.png';
-
-
-
-        elmnt_td.appendChild(elmnt_logoImage);
-
-        xpathResults_logoLocation.snapshotItem(0).parentNode.appendChild(elmnt_td);
-
-      }
-    },
-
-    addClickEvent: function(arg_clickFunction)
-    {
-      if(document.getElementById('spanghurtLogo')) {
-        document.getElementById('spanghurtLogo').addEventListener('click',function() { arg_clickFunction(); },false);
-      }
-    },
-
-    init: function()
-    {
-      this.insert();
-
-  //    this.addClickEvent(preferencesDialog.show);
-      this.addClickEvent(loggerBox.show)
-    }
-
-  };
-
-
-
-  var profitGraph = new function()
-  {
-
-  };
-
-
-  function graphShortCodeToReadableDescription(arg_graphId)
-  {
-    var tmp_headerValue = '';
-    switch(arg_graphId)
-    {
-      case 'ch_cliques':
-        tmp_headerValue = tl8('Own clicks, Local Time:');
-        break;
-      case 'ch_cd':
-        tmp_headerValue = tl8('Credited Direct Referral Clicks:');
-        break;
-      case 'ch_cr':
-        tmp_headerValue = tl8('Credited Rented Referral Clicks:');
-        break;
-      case 'ch_recycle':
-        tmp_headerValue = tl8('Amount spent on recycles:');
-        break;
-      case 'ch_extensions':
-        tmp_headerValue = tl8('Amount spent on renewing / extending referrals:');
-        break;
-      case 'ch_autopay':
-        tmp_headerValue = tl8('Amount spent on Autopay:');
-        break;
-      case 'ch_trrb':
-        tmp_headerValue = tl8('Amount transferred to your Rental Balance:');
-        break;
-      case 'ch_earnings':
-        tmp_headerValue = tl8('Extension value');
-        break;
-      case 'ch_profit':
-        tmp_headerValue = tl8('Extension value');
-        break;
-      case 'ch_trar':
-        tmp_headerValue = tl8('Number of referrals automatically recycled for free:');
-        break;
-      case 'ch_trpb':
-        tmp_headerValue = tl8('Amount transferred to your Golden Pack Balance:');
-        break;
-      case 'ch_ext_schedule8':
-      //fall through
-      case 'ch_ext_schedule7':
-      //fall through
-      case 'ch_ext_schedule6':
-      //fall through
-      case 'ch_ext_schedule5':
-      //fall through
-      case 'ch_ext_schedule4':
-      //fall through
-      case 'ch_ext_schedule3':
-      //fall through
-      case 'ch_ext_schedule2':
-      //fall through
-      case 'ch_ext_schedule1':
-      //fall through
-      case 'ch_ext_schedule':
-        //fall through
-        tmp_headerValue = tl8('Total number of referrals due to expire on each date:');
-        break;
-    }
-    return tmp_headerValue;
-  }
-
-
-  var chartDataBars = new function()
-  {
-    var maxDataBarWidth = 0;
-    this.graphsOnCurrentPage = [];
-
-    for(var i=0; i < graphsOnCurrentPage.length; i++) {
-      if(document.getElementById(graphsOnCurrentPage[i])) {
-        this.graphsOnCurrentPage.push(graphsOnCurrentPage[i]);
-      }
-    }
-
-
-    var dataBarIntervals = {
-  //    10: [0,1,2,3,4,5,6,7,8,9],
-      10: [4,6,9],
-      15: [4,9,14],
-  //    15: [0,1,2,3,4],
-      90: [29,59,89]
-    };
-
-    this.getDataBarData = function(arg_graphId)
-    {
-      var tmp_graphLength = graphLengthLookup[arg_graphId];
-      var tmp_currentDayData;
-      var dataBarData = {};
-      var tmp_sum = [];
-      var tmp_average = [];
-      var tmp_maxInterval = 0;
-      var tmp_currentDate;
-      var tmp_currentValue;
-
-
-      // The extensions due graphs needs special handling, but for now just exit
-      if (friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/)) {
-        return null;
-      }
-
-      //Find the max interval so that only the necessary amount of iterations are done/made
-      //   NB: intervals not necessarily in any particular order
-      for (var i = 0; i < dataBarIntervals[tmp_graphLength].length; i++) {
-        tmp_maxInterval = (dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
-      }
-
-
-      var tmp_decimalPrecision = 10000; //Round to 5 decimal places
-      for (var dateIndex = 0; dateIndex <= tmp_maxInterval; dateIndex++)
-      {
-        tmp_currentDate = dates_array[dateIndex];
-
-        if(!accountCache.graphs[tmp_currentDate]) {
-          //No data at all for date found, flag as such and continue
-          errorLog("//No data at all for date found, flag as such and continue");
-          continue;
-        }
-        if('undefined' === typeof accountCache.graphs[tmp_currentDate][lookup_graphCache[arg_graphId]] ||
-            null === accountCache.graphs[tmp_currentDate][lookup_graphCache[arg_graphId]]) {
-          //No data for selected graph on date found, flag as such and continue
-          errorLog("//No data for selected graph on date found, flag as such and continue");
-          continue;
-        }
-
-        tmp_currentValue = accountCache.graphs[tmp_currentDate][lookup_graphCache[arg_graphId]];
-        tmp_sum[dateIndex] = tmp_sum[dateIndex - 1] + tmp_currentValue || tmp_currentValue;
-        tmp_average[dateIndex] = tmp_sum[dateIndex] / (dateIndex + 1);
-
-        dataBarData[tmp_currentDate] = {
-          'value': Math.round(tmp_currentValue * tmp_decimalPrecision) / tmp_decimalPrecision,
-          'sum': Math.round(tmp_sum[dateIndex] * tmp_decimalPrecision) / tmp_decimalPrecision,
-          'avg': Math.round(tmp_average[dateIndex] * tmp_decimalPrecision) / tmp_decimalPrecision
-        };
-
-        if ('ch_cr' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.rentedReferralClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
-        }
-        if ('ch_cd' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.directReferralClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
-        }
-        if ('ch_cliques' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.ownClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
-        }
-        if ('ch_recycle' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[dateIndex] / currentUser.recycleFee * tmp_decimalPrecision) / tmp_decimalPrecision;
-        }
-        if ('ch_extensions' == arg_graphId) {
-          dataBarData[tmp_currentDate].numberOfRenewals_actualAvg = (tmp_average[dateIndex] / currentUser.renewalFees);
-          dataBarData[tmp_currentDate].idealNumberOfRenewals_avg = (currentUser.numberOfRefs.Rented / currentUser.renewalsLength);
-          dataBarData[tmp_currentDate].idealRenewalsCost_avg = (dataBarData[tmp_currentDate].idealNumberOfRenewals_avg * currentUser.renewalFees);
-          dataBarData[tmp_currentDate].idealRenewalsCost_sum = (dateIndex+1) * (dataBarData[tmp_currentDate].idealNumberOfRenewals_avg * currentUser.renewalFees);
-        }
-      }
-      return dataBarData;
-    };
-
-    this.init = function()
-    {
-      var graphBarCSS = "" +
-          ".dataBarContainer { margin-top:10px; border-collapse:collapse; margin: 10px auto 10px; max-width: 85%; min-width:75%; white-space:nowrap; }" +
-          ".dataBarContainer tr { border:1px solid #AAAAAA; }" +
-          ".graphBar {  color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; padding:1px 2%; vertical-align:middle; }" +
-          ".graphBarFirstCell { text-align: left; min-width: 8em;}" +
-          ".graphBarSecondCell { text-align: left; }" +
-          "";
-      GM_addStyle(graphBarCSS);
-
-      var tmp_dataBarText;
-      var tmp_dataSet;
-      var tmp_dataBarDataToOutput;
-      var tmp_graphLength;
-
-      function dataToOutputToDataBar(arg_dataSet,arg_dataBarIntervals,arg_dataBarTitle,arg_fieldToShow,arg_daysPrefix,arg_daysSuffix,arg_numberOfFixedDecimalPoints)
-      {
-        tmp_dataBarDataToOutput = [];
-
-        try
-        {
-          for(var y = arg_dataBarIntervals.length - 1; 0 <= y; y--)
-          {
-            tmp_counter = (tmp_dateAdjuster[0] == -1) ? y : 0 - arg_dataBarIntervals[y] - tmp_dateAdjuster[1];
-            tmp_dataBarDataToOutput.push(
-              arg_daysPrefix+ (arg_dataBarIntervals[y]+1)+ arg_daysSuffix +
-                  arg_dataSet[dates_array[arg_dataBarIntervals[tmp_counter]]][arg_fieldToShow].toFixed(arg_numberOfFixedDecimalPoints)
-            );
-          }
-          return arg_dataBarTitle+ tmp_dataBarDataToOutput.join(' ');
-        }
-        catch(e) {
-          errorLog('ERROR! \n',e);
-          return 'error in calculations';
-        }
-      }
-
-      function createDataBarRow(arg_graphId,argBarCode,arg_dataBarColumns,arg_customDataBarCss)
-      {
-
-        var elmt_bar = document.createElement("tr");
-        elmt_bar.setAttribute("id", arg_graphId+'__'+argBarCode);
-        elmt_bar.setAttribute("style", arg_customDataBarCss);
-
-        for(var i=0; i<arg_dataBarColumns.length; i++) {
-          var elmt_col = document.createElement("td");
-          elmt_col.setAttribute("class", "graphBar"+((0 == i)?" graphBarFirstCell":"") + ((1 == i)?" graphBarSecondCell":""));
-          elmt_col.innerHTML = arg_dataBarColumns[i];
-          elmt_bar.appendChild(elmt_col);
-        }
-
-        var currentDataBarWidth = elmt_bar.textContent.split('').length;
-        maxDataBarWidth = (maxDataBarWidth < currentDataBarWidth) ? currentDataBarWidth : maxDataBarWidth;
-
-        return elmt_bar;
-      }
-
-
-      for(var i=0; i < this.graphsOnCurrentPage.length; i++)
-      {
-
-        tmp_graphLength = graphLengthLookup[this.graphsOnCurrentPage[i]];
-        tmp_dataSet = this.getDataBarData(this.graphsOnCurrentPage[i]);
-        var tmp_dateAdjuster = friendlyNameLookup[this.graphsOnCurrentPage[i]].match(/extensions_([0-9]+)To([0-9]+)/) || [-1,0];
-
-        var tmp_counter = 0;
-        var graphBarsContainerId = this.graphsOnCurrentPage[i]+'_containers';
-
-        if(document.getElementById(graphBarsContainerId)) {
-          document.getElementById(graphBarsContainerId).parentNode.removeChild(document.getElementById(graphBarsContainerId));
-        }
-
-
-        var chartContainer = document.getElementById(this.graphsOnCurrentPage[i]);
-
-        var graphBarTable = document.createElement("table");
-        graphBarTable.setAttribute("id", graphBarsContainerId);
-        graphBarTable.setAttribute("class", 'dataBarContainer');
-
-        // Generic DataBars
-        switch(this.graphsOnCurrentPage[i])
-        {
-          case 'ch_cliques':
-            // Fall-through
-          case 'ch_cd':
-            // Fall-through
-          case 'ch_cr':
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'sum',
-                  [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') ',0)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avg',
-                  [tl8('Avg. Clicks: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') ',3)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avgIncome',
-                  [tl8('Avg. Income: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avgIncome','(',') $',3)],
-                  ''
-                )
-            );
-            break;
-          case 'ch_extensions':
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'sum',
-                  [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avg',
-                  [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avgIncome',
-                  [tl8('Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','numberOfRenewals_actualAvg','(',') ',2)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avgIncome',
-                  [tl8('Ideal Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealNumberOfRenewals_avg','(',') ',2)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avgIncome',
-                  [tl8('Ideal Avg. Expense ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost_avg','(',') $',3)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avgIncome',
-                  [tl8('Ideal Sum ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost_sum','(',') $',3)],
-                  ''
-                )
-            );
-          break;
-          case 'ch_recycle':
-            // Fall-through
-          case 'ch_autopay':
-            // Fall-through
-          case 'ch_trrb':
-            // Fall-through
-          case 'ch_earnings':
-            // Fall-through
-          case 'ch_profit':
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'sum',
-                  [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avg',
-                  [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
-                  ''
-                )
-            );
-        }
-
-        // Specific DataBars
-        switch(this.graphsOnCurrentPage[i])
-        {
-          case 'ch_recycle':
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avg',
-                  [tl8('Avg. #Recycles: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avgRecycles','(',') ',3)],
-                  ''
-                )
-            );
-          break;
-          case 'ch_trpb':
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'sum',
-                  [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avg',
-                  [tl8('Avg. Transfer: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
-                  ''
-                )
-            );
-          break;
-          case 'ch_trar':
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'sum',
-                  [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') ',1)],
-                  ''
-                )
-            );
-            graphBarTable.appendChild(
-                createDataBarRow(this.graphsOnCurrentPage[i],
-                  'avg',
-                  [tl8('Average Free Recycles: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') ',1)],
-                  ''
-                )
-            );
-          break;
-        }
-        chartContainer.parentNode.appendChild(graphBarTable);
-      }
-
-      GM_addStyle('.dataBarContainer { width:'+(maxDataBarWidth/1.75)+'em; }');
-
-      //    var dataBarsOnPage = document.body.getElementsBy
-      //    document.getElementById(this.graphsOnCurrentPage[i]+'_'+i).addEventListener('click', function() { dataBarClickHandler(this.graphsOnCurrentPage[i]+'_'+i); }, false);
-    };
-  };
-
-
-  var exportTabs = new function()
-  {
-    var tmpCurrentGraph, tmp_currentGraphId;
-
-    this.insertStyles = function ()
-    {
-      var newDialog_Style = "" +
-          "#modalContainer {"+
-          "background-color: transparent;"+
-          "position: absolute;"+
-          "width: 100%;"+
-          "height: 100%;"+
-          "top: 0px;"+
-          "left: 0px;"+
-          "z-index: 10000;"+
-          "background-image: url(tp.png); /* required by MSIE to prevent actions on lower z-index elements */"+
-          " }"+
-
-          "#alertBox {"+
-          "position: relative;"+
-          "width: 300px;"+
-          "min-height: 100px;"+
-          "margin-top: 50px;"+
-          "border: 2px solid #000;"+
-          "background-color: #F2F5F6;"+
-          "background-image: url(alert.png);"+
-          "background-repeat: no-repeat;"+
-          "background-position: 20px 30px;"+
-          " }"+
-
-          "#modalContainer > #alertBox {"+
-          "position: fixed;"+
-          " }"+
-
-          "#alertBox h1 {"+
-          "margin: 0;"+
-          "font: bold 0.9em verdana,arial;"+
-          "background-color: #78919B;"+
-          "color: #FFF;"+
-          "border-bottom: 1px solid #000;"+
-          "padding: 2px 0 2px 5px;"+
-          " }"+
-
-          "#alertBox p {"+
-          "font-family: verdana,arial;"+
-          "padding: 10px;"+
-          "margin: 10px;"+
-          "height: auto;"+
-          " }"+
-
-          "#alertBox textarea {"+
-          "font-family: monospace,courier new,verdana,arial;"+
-          "font-size: x-small;"+
-          "margin: 15px;"+
-          "margin-top: 0px;"+
-          "height: auto;"+
-          "width: 85%;"+
-          " }"+
-
-          "#alertBox #closeBtn {"+
-          "display: block;"+
-          "position: relative;"+
-          "margin: 15px auto;"+
-          "padding: 3px;"+
-          "border: 2px solid #000;"+
-          "width: 70px;"+
-          "font: 0.7em verdana,arial;"+
-          "text-transform: uppercase;"+
-          "text-align: center;"+
-          "color: #FFF;"+
-          "background-color: #78919B;"+
-          "text-decoration: none;"+
-          "}";
-
-
-
-
-      var newDialogStyle = document.body.appendChild(document.createElement('style'));
-      newDialogStyle.setAttribute('type', 'text/css');
-      newDialogStyle.innerHTML = newDialog_Style;
-
-
-
-      var tabStyles = '';
-      tabStyles += '.exportTab { -moz-border-radius: 0.6em 0.6em 0px 0px; display: inline-block; font-size: xx-small; padding: 0px 7px; margin-right: 7px; text-align: center; cursor: pointer; }';
-      tabStyles += '.csvExportTab{ background-color:#ecd; }';
-      tabStyles += '.tsvExportTab{ background-color:#edc; }';
-      tabStyles += '.xmlExportTab{ background-color:#cde; }';
-      tabStyles += '.textExportTab{ background-color:#dce; }';
-
-      GM_addStyle(tabStyles);
-    }
-
-
-    function EXPORT_TAB(arg_exportType, arg_exportTabText, arg_textDescription, arg_textareaContents)
-    {
-      var exportTab = document.createElement('div');
-      // exportTab.style.cssFloat = 'left';
-      // exportTab.style.width = '20px';
-      exportTab.className = arg_exportType+'ExportTab exportTab';
-      exportTab.id = arg_exportType+'ExportTab_'+tmp_currentGraphId;
-
-      exportTab.innerHTML = arg_exportTabText;
-
-      var textareaContents = arg_textareaContents || "not found";
-      var textareaContentsReverse = "not found";
-      var messageHeader = arg_textDescription || "not found";
-
-      exportTab.addEventListener('click',
-          function exportTabs_onClick(event)
-          {
-            // (event.ctrlKey && event.altKey && event.shiftKey)
-            var exportTab = new ModalDialog('exportTab_'+arg_exportType);
-            exportTab.create('background-color: white; margin: 8em auto; padding: 2em; position: relative; top:'+window.pageYOffset+'px; width: 17em;',
-                '' +
-                    '<h3>'+'Exporting to '+arg_exportTabText+'..'+'</h3>' +
-                    '<small><i>'+messageHeader+'</i></small><br>' +
-                    '<textarea style="height: 15em; width: 17em;">' + ((event.ctrlKey && textareaContentsReverse) ? textareaContentsReverse : textareaContents) +'</textarea><br>' +
-                    '<button id="'+arg_exportType+'ExportTab_okButton">Ok</button>');
-
-            document.getElementById(arg_exportType+'ExportTab_okButton').addEventListener('click',
-                function (event) {
-                  exportTab.hide();
-                }, false);
-
-            exportTab.show();
-
-            //      createExportDialog(messageHeader,textareaContents,'Exporting to '+arg_exportTabText+'..','Close',textareaContentsReverse,event);
-          },
-          false);
-
-      return exportTab;
-    }
-
-    function dataToExportFormat(arg_exportFormat, arg_graphId, arg_graphData, arg_numberOfDaysToExport)
-    {
-      var tmp_valuesArray = [];
-      var tmp_valuesToExportArray = [];
-      var exportString = '';
-      var maxCount = 10;
-
-      if(arg_numberOfDaysToExport) {
-        maxCount = arg_numberOfDaysToExport;
-      }
-
-      var tmp_currentDate;
-
-      if(arg_graphId.match(/ch_ext_schedule/i))
-      {
-        var tmp_extensionGraphIndex =  arg_graphId.match(/ch_ext_schedule([0-9]+)/i)[1];
-        var tmp_extensionScheduleAdjustment_start = (tmp_extensionGraphIndex - 1) * graphLengthLookup[arg_graphId] * -1;
-        var tmp_extensionScheduleAdjustment_end = (tmp_extensionGraphIndex - 0) * graphLengthLookup[arg_graphId] * -1;
-
-        for(var dateIndex = tmp_extensionScheduleAdjustment_start; dateIndex > tmp_extensionScheduleAdjustment_end; dateIndex--)
-        {
-          tmp_currentDate = dates_array[dateIndex];
-          if('undefined' !== typeof arg_graphData[tmp_currentDate]) {
-            tmp_valuesArray.push([tmp_currentDate, arg_graphData[tmp_currentDate][lookup_graphCache[arg_graphId]]]);
-          }
-        }
-      }
-      else {
-        for(var dateIndex = 0; dateIndex < maxCount; dateIndex++)
-        {
-          tmp_currentDate = dates_array[dateIndex];
-          if('undefined' !== typeof arg_graphData[tmp_currentDate]) {
-            tmp_valuesArray.push([tmp_currentDate, arg_graphData[tmp_currentDate][lookup_graphCache[arg_graphId]]]);
-          }
-        }
-      }
-      try {
-        switch(arg_exportFormat) {
-          case 'csv':
-            for(var i = 0; i < maxCount; i++) {
-              tmp_valuesToExportArray[i] = tmp_valuesArray[i].join(',');
-            }
-            return tmp_valuesToExportArray.join(',\n');
-            break;
-          case 'tsv':
-            for(var i = 0; i < maxCount; i++) {
-              tmp_valuesToExportArray[i] = tmp_valuesArray[i].join("\t");
-            }
-            return tmp_valuesToExportArray.join("\t\n");
-            break;
-          case 'text':
-            for(var i = 0; i < maxCount; i++) {
-              tmp_valuesToExportArray[i] = tmp_valuesArray[i][1];
-            }
-            return tmp_valuesToExportArray.join("\t\n");
-            break;
-        }
-      }
-      catch(e) {
-        errorLog("ERROR!\n#" +
-            'tmp_currentGraphId = ',tmp_currentGraphId,"\n" +
-            "Error details: \n",e);
-        return 'Error retrieving data';
-      }
-    }
-
-    this.init = function()
-    {
-      this.insertStyles();
-      var tmp_currentDataset = getPref('accountCache', {}, { prefType: 'JSON' });
-
-      for(var tmpNameOfCurrentGraph in graphsOnCurrentPage)
-      {
-        tmp_currentGraphId = graphsOnCurrentPage[tmpNameOfCurrentGraph];
-        if(document.getElementById(tmp_currentGraphId))
-        {
-          var referenceNode = document.getElementById(tmp_currentGraphId);
-          try
-          {
-            //// Add Export Links
-            // Create and insert wrapper for export 'tabs'
-            var exportTabsWrapper = document.createElement('div');
-              exportTabsWrapper.setAttribute('style','bottom:-1px; margin-left:17px; margin-top:4px; position:relative; text-align:left;');
-              exportTabsWrapper.id = 'exportTabsWrapper_'+tmp_currentGraphId;
-              exportTabsWrapper.innerHTML = '&nbsp;';
-
-            referenceNode.parentNode.insertBefore(exportTabsWrapper,referenceNode);
-
-            var exportTabTypes = ['CSV','TSV','Text'];
-            for(var exportTabTypes_index = 0; exportTabTypes_index < exportTabTypes.length; exportTabTypes_index++)
-            {
-              var exportTabElement = EXPORT_TAB(
-                  exportTabTypes[exportTabTypes_index].toLowerCase(),
-                  exportTabTypes[exportTabTypes_index],
-                  graphShortCodeToReadableDescription(tmp_currentGraphId),
-                  dataToExportFormat(
-                      exportTabTypes[exportTabTypes_index].toLowerCase(),
-                      tmp_currentGraphId,
-                      tmp_currentDataset.graphs,
-                      graphLengthLookup[tmp_currentGraphId])
-                );
-
-              if(document.getElementById(exportTabTypes[exportTabTypes_index].toLowerCase()+'ExportTab_'+tmp_currentGraphId)) {
-                document.getElementById(exportTabTypes[exportTabTypes_index].toLowerCase()+'ExportTab_'+tmp_currentGraphId).innerHTML = exportTabElement.innerHTML
-              } else {
-                document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(exportTabElement);
-              }
-            }
-          }
-          catch(e) {
-            errorLog("ERROR!\nCannot add export tabs.\n\nFull error message:\n\n",e)
-          }
-        }
-      }
-    }
-  };
-
-
-
-
-
-  // x = id of the container where the graph is to be inserted
-  // y = title displayed on the graph
-  // o = x axis categories
-  // w0 = prefix to x axis value in tooltip
-  // w = suffix to x axis value in tooltip
-  // O = array containing x series values and title above the graph
-  // L = legend enabled [true|false]
-  // m = y axis plot bands (3-value array or 0)
-  // mn = y-axis minimum
-  // p = x-axis plot bands (3-value array or 0)
-
-  //function mk_ch(x, y, o, w0, w, O, L, m, mn, p)
-
-  function mk_ch(x, y, o, w0, w, O, L, m, mn, p)
-  {
-    if (true != xuw) return '';
-    if (0 == m) n = [0, 0, 0];
-    else n = m;
-    if (0 == p) pn = [0, 0, 0, 0];
-    else pn = p;
-    var s1 = 30,
-        s2 = 20,
-        s3 = 20,
-        s4 = 50;
-    if (1 == L) s1 = 20, s3 = 30;
-    if ('' == y) s1 = 10;
-    if ('x' == mn) {
-      mn = -0.2;
-      maxout = 4
-    } else maxout = null;
-    var g = [s1, s2, s3, s4];
-    var chart = new Highcharts.Chart({
-      chart: {
-        renderTo: x,
-        defaultSeriesType: 'line',
-        margin: g,
-        showAxes: 1,
-        borderColor: '#4572A7',
-        backgroundColor: '#fff',
-        borderWidth: 0,
-        shadow: 0
-      },
-      title: {
-        text: y,
-        style: {
-          margin: '10px 0 0 10px',
-          textAlign: 'center',
-          font: 'normal 12px Verdana, sans-serif'
-        }
-      },
-      xAxis: {
-        categories: o,
-        labels: {
-          enabled: 0
-        },
-        tickmarkPlacement: "on",
-        gridLineWidth: 1,
-        lineColor: '#fff',
-        tickColor: '#fff',
-        gridLineColor: (0 == p) ? '#eee' : '',
-        plotBands: [{
-          from: 0,
-          to: pn[0],
-          color: 'rgba(170,170,170,.3)'
-        },
-          {
-            from: pn[0],
-            to: pn[1],
-            color: 'rgba(255,101,79,.3)'
-          },
-          {
-            from: pn[1],
-            to: pn[2],
-            color: 'rgba(246,189,15,.3)'
-          },
-          {
-            from: pn[2],
-            to: pn[3],
-            color: 'rgba(139,186,0,.3)'
-          }]
-      },
-      yAxis: {
-        title: {
-          enabled: 0,
-          text: null
-        },
-        min: mn,
-        max: maxout,
-        endOnTick: 0,
-        startOnTick: 0,
-        tickPixelInterval: 20,
-        plotLines: [{
-          value: 0,
-          width: 1,
-          color: '#888'
-        }],
-        plotBands: [{
-          from: 0,
-          to: n[0],
-          color: 'rgba(255,101,79,.3)'
-        },
-          {
-            from: n[0],
-            to: n[1],
-            color: 'rgba(246,189,15,.3)'
-          },
-          {
-            from: n[1],
-            to: n[2],
-            color: 'rgba(139,186,0,.3)'
-          }]
-      },
-      tooltip: {
-        formatter: function () {
-          return '<b>' + this.series.name + '</b><br/>' + this.x + ': ' + w0 + this.y + ' ' + w
-        }
-      },
-      legend: {
-        enabled: L,
-        layout: 'horizontal',
-        symbolWidth: 5,
-        style: {
-          left: 'auto',
-          bottom: '5px',
-          right: '5px',
-          top: 'auto',
-          font: 'normal 12px Verdana, sans-serif'
-        }
-      },
-      plotOptions: {
-        line: {
-          lineWidth: 2,
-          marker: {
-            enabled: 1,
-            symbol: 'circle',
-            radius: 3,
-            states: {
-              hover: {
-                enabled: 1,
-                radius: 5
-              }
-            }
-          }
-        }
-      },
-      series: O,
-      credits: {
-        enabled: 0
-      }
-    })
-  }
-
-  function mk_ch2(_containerID, _graphTitle, _x_axisCategories, _tooltipPrefix, _tooltipSuffix, _x_ValuesAndTitle, _legendEnabled, _y_axisPlotBands, _y_axisMin, _x_axisPlotBands) {
-    var pn;
-
-    if (0 === _y_axisPlotBands) {
-      n = [0, 0, 0];
-    } else {
-      n = _y_axisPlotBands;
-    }
-    if (0 === _x_axisPlotBands) {
-      pn = [0, 0, 0, 0];
-    } else {
-      pn = _x_axisPlotBands;
-    }
-    var s1 = 30,
-        s2 = 20,
-        s3 = 20,
-        s4 = 50;
-    if (1 == _legendEnabled) {
-      s1 = 20, s3 = 30;
-    }
-    if ("" == _graphTitle) {
-      s1 = 10;
-    }
-    if ("x" == _y_axisMin) {
-      _y_axisMin = -0.2;
-      maxout = 4;
-    } else {
-      maxout = null;
-    }
-    var g = [s1, s2, s3, s4];
-
-
-    var chart = new(Highcharts.Chart)({
-      chart: {
-        renderTo: _containerID,
-        defaultSeriesType: "line",
-        margin: g,
-        showAxes: 1,
-        borderColor: "#4572A7",
-        backgroundColor: "#fff",
-        borderWidth: 0,
-        shadow: 0
-      },
-      title: {
-        text: _graphTitle,
-        style: {
-          margin: "10px 0 0 10px",
-          textAlign: "center",
-          font: "normal 12px Verdana,sans-serif"
-        }
-      },
-      xAxis: {
-        categories: _x_axisCategories,
-        labels: {
-          enabled: 0
-        },
-        tickmarkPlacement: "on",
-        gridLineWidth: 1,
-        lineColor: "#fff",
-        tickColor: "#fff",
-        gridLineColor: 0 === _x_axisPlotBands ? "#eee" : "",
-        plotBands: [{
-          from: 0,
-          to: pn[0],
-          color: "rgba(170,170,170,.25)"
-        },
-          {
-            from: pn[0],
-            to: pn[1],
-            color: "rgba(255,101,79,.25)"
-          },
-          {
-            from: pn[1],
-            to: pn[2],
-            color: "rgba(246,189,15,.25)"
-          },
-          {
-            from: pn[2],
-            to: pn[3],
-            color: "rgba(139,186,0,.25)"
-          }]
-      },
-      yAxis: {
-        title: {
-          enabled: 0,
-          text: null
-        },
-        min: _y_axisMin,
-        max: maxout,
-        endOnTick: 0,
-        startOnTick: 0,
-        tickPixelInterval: 20,
-        plotLines: [{
-          value: 0,
-          width: 1,
-          color: "#888"
-        }],
-        plotBands: [{
-          from: 0,
-          to: n[0],
-          color: "rgba(255,101,79,.25)"
-        },
-          {
-            from: n[0],
-            to: n[1],
-            color: "rgba(246,189,15,.25)"
-          },
-          {
-            from: n[1],
-            to: n[2],
-            color: "rgba(139,186,0,.25)"
-          }]
-      },
-      tooltip: {
-        formatter: function () {
-          return "<b>" + this.series.name + "</b><br/>" + this.x + ": " + _tooltipPrefix + this.y + " " + _tooltipSuffix;
-        }
-      },
-      legend: {
-        enabled: _legendEnabled,
-        layout: "horizontal",
-        symbolWidth: 5,
-        style: {
-          left: "auto",
-          bottom: "5px",
-          right: "5px",
-          top: "auto",
-          font: "normal 12px Verdana,sans-serif"
-        }
-      },
-      plotOptions: {
-        line: {
-          lineWidth: 2,
-          marker: {
-            enabled: 1,
-            symbol: "circle",
-            radius: 3,
-            states: {
-              hover: {
-                enabled: 1,
-                radius: 5
-              }
-            }
-          }
-        }
-      },
-      series: _x_ValuesAndTitle,
-      credits: {
-        enabled: 0
-      }
-    });
-  }
-
-
-  /*
-
-  mk_ch2("ch_cliques",
-      "",
-      ["2010/12/15", "2010/12/16", "2010/12/17", "2010/12/18", "2010/12/19", "2010/12/20", "2010/12/21", "2010/12/22", decodeURIComponent(escape("Yesterday")), decodeURIComponent(escape("Today"))],
-      "foo",
-      decodeURIComponent(escape("Clicks")),
-      [
-        {
-          name: decodeURIComponent(escape("Local Time")),
-          data: [8, 0, 9, 11, 0, 0, 0, 1, 2, 10]
-        },
-        {
-          name: decodeURIComponent(escape("Server Time")),
-          data: [8, 2, 7, 11, 0, 0, 0, 3, 4, 6]
-        }
-      ],
-      1,
-      [2,4,9],
-      -1.1,
-      [3]
-    ); */
-
-
-
-  var convertRefListingsToUl = function() {
-
-    debugLog(localStorage);
-
-    var referrals = JSON.parse(localStorage.getItem('referrals'))
-
-    debugLog(referrals);
-
-
-    function to_ul (obj) {
-        // --------v create an <ul> element
-        var f, li, ul = document.createElement ("ul");
-
-        // --v loop through its children
-        for (var i in obj)
-        {
-            if(obj.hasOwnProperty(i))
-            {
-                //debugLog(i);
-                li = document.createElement ("li");
-                // if the child has a 'folder' prop on its own, call me again
-                if ('object' == typeof obj[i]) {
-                    li.appendChild (to_ul (obj[i]));
-                } else {
-                    // debugLog(document.createTextNode(i));
-                    li.appendChild(document.createTextNode(i + ' = ' + obj[i]));
-                }
-                ul.appendChild(li);
-            }
-        }
-
-        return ul;
-    }
-
-
-    this.init = function() {
-      var tmp_ul = to_ul(referrals);
-
-      debugLog(tmp_ul);
-
-  //    document.body.innerHTML = "";
-      document.body.appendChild(tmp_ul);
-    }
-  };
-
-
-  //convertRefListingsToUl.init();
-
-
-  var widenPages = new function() {
-
-    this.referralListings = function() {
-      document.body.children[1].style.width = '90%';
-      document.body.children[1].style.padding = '0 4em';
-
-      if(document.getElementById('tblprp')) {
-        document.getElementById('tblprp').style.maxWidth = '78em';
-        document.getElementById('tblprp').style.overflow = 'auto';
-      }
-      
-      GM_addStyle('.l { white-space: nowrap; } ')
-    };
-
-    this.generic = function() {
-      document.body.children[0].style.width = '98%';
-      document.body.children[0].style.maxWidth = '100em';
-      document.body.children[1].style.width = '1100px';
-    }
-  };
-
-
-
-  function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_currentPageview)
-  {
-    if('undefined' === typeof GM_addStyle) {
-      function GM_addStyle(arg_css) {
-        var head = document.getElementsByTagName("head")[0];
-        if (head) {
-          var style = document.createElement("style");
-          style.textContent = arg_css;
-          style.type = "text/css";
-          head.appendChild(style);
-        }
-        return style;
-      }
-    }
-
-    var elmnt_totalsContainer = document.createElement('div');
-    elmnt_totalsContainer.id = 'clickTotalsContainer';
-    elmnt_totalsContainer.setAttribute('style', 'position: fixed; bottom: 2em; right: 2em; width: 150px; min-height: 10em; background-color: white; border: 1px solid black; font-size:x-small !important; padding: 1em 1em; opacity: 0.5;');
-
-    elmnt_totalsContainer.setAttribute('onmouseover','document.getElementById("clickTotalsContainer").style.opacity = "1"; ');
-    elmnt_totalsContainer.setAttribute('onmouseout','document.getElementById("clickTotalsContainer").style.opacity = "0.5";');
-
-    GM_addStyle(".adCountIncrementButton { width: 2.5em; text-align:center; font-size: xx-small; }"+
-        ".adCountDecrementButton { width: 2.5em; text-align:center; font-size: xx-small; }"+
-        "#clickTotalsContainer table tr td { font-size:x-small; }");
-
-
-
-    // If the date navigated to doesn't currently exist in the adCounts data, create the data object for it
-    if(!arg_adCounts[dates_array[arg_dateIndex]]) {
-      arg_adCounts[dates_array[arg_dateIndex]] = {};
-    }
-
-    // Similarly, check that each of the ad type counts are valid and/or/else reset to zero
-    arg_adCounts[dates_array[arg_dateIndex]]['extended']    = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['extended'] )    ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0;
-    arg_adCounts[dates_array[arg_dateIndex]]['regular']     = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['regular'] )     ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0;
-    arg_adCounts[dates_array[arg_dateIndex]]['mini']        = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['mini'] )        ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0;
-    arg_adCounts[dates_array[arg_dateIndex]]['fixed']       = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixed'] )       ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0;
-    arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro']  = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] )  ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0;
-    arg_adCounts[dates_array[arg_dateIndex]]['micro']       = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['micro'] )       ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0;
-
-
-    // If the date navigated to doesn't currently exist in the arg_adCountChange_currentPageview data, create the data object for it
-    if(!arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]) {
-      arg_adCountChange_currentPageview[dates_array[arg_dateIndex]] = {};
-    }
-
-    //Check that each of the pageview ad counts exist, else assign 0 to it
-    //Note: when new dates are navigated to and the above code has to create a record for that date, these sub-objects will not exist
-    arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['extended']   = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['extended']   || 0;
-    arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['regular']    = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['regular']    || 0;
-    arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['mini']       = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['mini']       || 0;
-    arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixed']      = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixed']      || 0;
-    arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixedMicro'] = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixedMicro'] || 0;
-    arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['micro']      = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['micro']      || 0;
-
-
-
-    var tmp_foo = {
-      extended: {
-        adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['extended'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0,
-        text: tl8("Extended:"),
-        countsToTos37: true,
-        value: 0.02
-      },
-      regular: {
-        adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['regular'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0,
-        text: tl8("Regular:"),
-        countsToTos37: true,
-        value: 0.01
-      },
-      mini: {
-        adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['mini'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0,
-        text: tl8("Mini:"),
-        countsToTos37: false,
-        value: 0.005
-      },
-      fixed: {
-        adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixed'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0,
-        text: tl8("Fixed:"),
-        countsToTos37: true,
-        value: 0.01
-      },
-      fixedMicro: {
-        adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0,
-        text: tl8("Fixed (Micro):"),
-        countsToTos37: true,
-        value: 0.001
-      },
-      micro: {
-        adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['micro'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0,
-        text: tl8("Micro:"),
-        countsToTos37: false,
-        value: 0.001
-      }
-    };
-
-
-    var tmp_totalsContainerHTML = "";
-
-    tmp_totalsContainerHTML += "" +
-        "<center><button id='date_decrementButton' class='adCountDecrementButton'>-</button>" +
-        "<span id='date_textCount'>"+dates_array[arg_dateIndex]+"</span>" +
-        "<button id='date_incrementButton' class='adCountIncrementButton'>+</button></center>" +
-        "<br>"+
-        "<table>";
-
-    for(var tmp_label in tmp_foo) {
-      if(tmp_foo.hasOwnProperty(tmp_label))
-      {
-        tmp_totalsContainerHTML += [
-          "<tr><td>"+ tmp_foo[tmp_label].text,
-          "<button id='"+tmp_label+"AdCount_incrementButton' class='adCountIncrementButton'>+</button>",
-          "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>",
-          "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((0 <
-              arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]) ? "+"+arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]:arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label])+")</span>",
-          "<button id='"+tmp_label+"AdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"
-        ].join('</td><td>');
-      }
-    }
-
-    tmp_totalsContainerHTML += "</table>";
-    elmnt_totalsContainer.innerHTML = tmp_totalsContainerHTML;
-
-    if(document.getElementById('clickTotalsContainer')) {
-        document.getElementById('clickTotalsContainer').parentNode.removeChild(document.getElementById('clickTotalsContainer'));
-    }
-    document.body.appendChild(elmnt_totalsContainer);
-
-
-
-
-    /* Add handlers for changing the currently selected date */
-
-    // NB: The date index is in reverse order (ie, n days into the past) thus incrementing this index equates to going an increased number of days into the past
-    document.getElementById('date_decrementButton').addEventListener('click',function () {
-      insertAdCounterBox(arg_dateIndex + 1, arg_adCounts, arg_adCountChange_currentPageview);
-    },false);
-
-    document.getElementById('date_incrementButton').addEventListener('click',function () {
-      insertAdCounterBox(arg_dateIndex - 1, arg_adCounts, arg_adCountChange_currentPageview);
-    },false);
-
-
-    /* Add handlers for changing the ad counts */
-
-    function addIncrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
-    {
-      var tmp_adCounts = {};
-      Object_merge(tmp_adCounts, arg_oldAdCounts);
-
-      var tmp_adCountChange = {};
-      Object_merge(tmp_adCountChange, arg_tmp_adCountChange_currentPageview);
-
-      tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) + 1;
-      tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) + 1;
-
-      //If the adcount is less than zero, reset it to 0 (cannot click fewer than zero of any ad-type) and undo the change
-      // to the adcount for the current pageview
-      if(0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) {
-        tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = 0;
-        tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) - 1;
-      }
-
-      document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function ()
-      {
-        debugLog('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
-        debugLog('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
-        insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
-        // Workaround for GM access checks/violations
-        // http://wiki.greasespot.net/Greasemonkey_access_violation
-        setTimeout(function() {
-          setPref('ownAdCountTally',tmp_adCounts, { prefType: 'JSON' });
-        }, 0);
-      },false);
-    }
-
-    function addDecrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
-    {
-      var tmp_adCounts = {};
-      Object_merge(tmp_adCounts, arg_oldAdCounts);
-
-      var tmp_adCountChange = {};
-      Object_merge(tmp_adCountChange, arg_tmp_adCountChange_currentPageview);
-
-      tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) - 1;
-      tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) - 1;
-
-      //If the adcount is less than zero, reset it to 0 (cannot click fewer than zero of any ad-type) and undo the change
-      // to the adcount for the current pageview
-      if(0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) {
-        tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = 0;
-        tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) + 1;
-      }
-
-      document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function ()
-      {
-        debugLog('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
-        debugLog('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
-        insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
-        // Workaround for GM access checks/violations
-        // http://wiki.greasespot.net/Greasemonkey_access_violation
-        setTimeout(function() {
-          setPref('ownAdCountTally',tmp_adCounts, { prefType: 'JSON' });
-        }, 0);
-      },false);
-    }
-
-    // Loop through the different ad types and call the function that adds the click events for the increment and decrement buttons
-    for(var tmp_label in arg_adCounts[dates_array[arg_dateIndex]]) {
-      if(arg_adCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_label))
-      {
-        addDecrementListener(tmp_label, arg_adCounts, arg_adCountChange_currentPageview);
-        addIncrementListener(tmp_label, arg_adCounts, arg_adCountChange_currentPageview);
-      }
-    }
-  }
-
-
-  function addClickStatsToGoldenGraph() {
-    function mk_ch_ref(x, o, w0, w, O, L, m)
-    {
-      console.info(arguments);
-      if (0 == m)
-      {
-          n = [0, 0, 0];
-      } else {
-          n = m;
-      }
-      var s1 = 20, s2 = 20, s3 = 20, s4 = 50;
-      if (1 == L)
-      {
-          s3 = 30;
-      }
-      var g = [s1, s2, s3, s4];
-      var chart = new (Highcharts.Chart)({chart: {renderTo: x, defaultSeriesType: "line", margin: g, showAxes: 1, borderWidth: 0, shadow: 0}, title: {text: ""}, xAxis: {categories: o, labels: {enabled: 0}, tickmarkPlacement: "on", gridLineWidth: 1, lineColor: "#fff", tickColor: "#fff", gridLineColor: "#ddd"}, yAxis: {title: {enabled: 0, text: null}, min: -0.1, endOnTick: 0, startOnTick: 0, tickPixelInterval: 20, plotLines: [
-        {value: 0, width: 1, color: "#888"}
-      ]}, tooltip: {formatter: function ()
-      {
-        return "<b>" + this.series.name + "</b><br/>" + this.x + ": " + w0 + this.y + " " + w;
-      }}, legend: {enabled: L, layout: "horizontal", symbolWidth: 5, style: {left: "auto", bottom: "5px", right: "5px", top: "auto", font: "normal 12px Verdana, sans-serif"}}, plotOptions: {line: {lineWidth: 2, marker: {enabled: 1, symbol: "circle", radius: 3, states: {hover: {enabled: 1, radius: 5}}}}}, series: O, credits: {enabled: 0}});
-
-
-      /*start extra stuff added to the function*/
-      var newElmnt = document.createElement('div');
-//      console.info('O[0].data: ', O[0].data);
-
-      var disp_clicks = "Clicks:";
-      var disp_sum = "Sums:";
-      var disp_avg = "Avgs:";
-
-      var clicks = [];
-      var sum = [];
-      var avg = [];
-
-
-      for (var i = 0; i < O[0].data.length; i++) {
-        disp_clicks += ' ' + O[0].data[i];
-        clicks[i] = O[0].data[i];
-      }
-
-      for (var i = O[0].data.length - 1; 0 <= i; i--)
-      {
-        sum[i] = ('undefined' !== typeof sum[i+1]) ? clicks[i] + sum[i+1] : clicks[i];
-        avg[i] = (sum[i] / (O[0].data.length - i)).toFixed(1);
-
-//        console.info('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
-//        console.info('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
-      }
-
-      newElmnt.innerHTML = '<table class="refGraphDatabar">' +
-          '<tr><td>'+ [
-            'Day # '+'</td><td>'+[9,8,7,6,5,4,3,2,1,0].join('</td><td>'),
-            'Clicks:'+'</td><td>'+clicks.join('</td><td>'),
-            'Sum: '+'</td><td>'+sum.join('</td><td>'),
-            'Avg: '+'</td><td>'+avg.join('</td><td>')].join('</td></tr><tr><td>') +
-          '</td></tr>' +
-          '</table>';
-
-      newElmnt.style.padding = '0 1.5em 1em';
-
-      document.getElementById(x).style.minHeight = '130px';
-      document.getElementById(x).style.height = '';
-  //    document.getElementById(x).style.minWidth = '280px';
-      document.getElementById(x).style.width = '280px';
-      document.getElementById(x).style.textAlign = 'center';
-      document.getElementById(x).appendChild(newElmnt);
-    }
-
-
-    GM_addStyle(".refGraphDatabar { border-collapse: collapse; }" +
-        ".refGraphDatabar tbody tr td { font-size: x-small; padding:0 1px; border: 1px solid black; }");
-
-  //  console.info('mk_ch_ref.toString() : ',mk_ch_ref.toString());
-    var script = document.createElement("script");
-    script.setAttribute('type','text/javascript');
-    script.text = mk_ch_ref.toString();
-    document.body.appendChild(script);
-
-  }
-
-  var referralListings_columns = new function()
-  {
-    function addColumn(arg_row,arg_columnText,arg_colId,arg_customCSS)
-    {
-      var tmp_newColumn;
-
-  //    debugLog(arg_colId);
-      var tmp_existingCol = document.getElementById(arg_colId);
-      if(tmp_existingCol) {
-        tmp_existingCol.parentNode.removeChild(tmp_existingCol);
-      }
-
-      /*NB: container needs to be a table otherwise Firefox disposes of the contaning <td> due to it not being within a suitable containing element*/
-      var tmp_container = document.createElement('table');
-      tmp_container.innerHTML = '' +
-          '<tbody><tr><td id="'+arg_colId+'"' +
-            ' class="'+arg_row.children[arg_row.children.length - 1].getAttribute('class')+'"' +
-            ' style="'+arg_row.children[arg_row.children.length - 1].getAttribute('style') +
-            arg_customCSS+'"' +
-          '>' +
-            arg_columnText+
-          '</td></tr></tbody>';
-
-      tmp_newColumn = tmp_container.children[0].children[0].children[0];
-      arg_row.appendChild(tmp_newColumn);
-      colCount++;
-
-    }
-
-    function dateToDHM(arg_date)
+    function dateToDHMObject(arg_date)
     {
       var oneSecond = 1000;
       var oneMinute = oneSecond * 60;
@@ -4935,502 +3024,2608 @@ var chartData = new function ()
       var oneDay = oneHour * 24;
 
       var now = new Date();
-
-  //    debugLog('now: ',now,'\nother date: ',arg_date);
-
       var t_diff = new Date(arg_date) - now;
-  //    debugLog('t_diff = '+t_diff);
-
 
       var future = (0 < t_diff);
       var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
 
-  //    debugLog('remaining_time: ',remaining_time);
-
       var diff_days = Math.floor(remaining_time / oneDay);
       remaining_time -= diff_days * oneDay;
 
-  //    debugLog('diff_days: ',diff_days,'\nremaining_time: ',remaining_time);
-
-      var diff_hrs = Math.floor(remaining_time / oneHour);
-      remaining_time -= diff_hrs * oneHour;
-
-  //    debugLog('diff_hrs: ',diff_hrs,'\nremaining_time: ',remaining_time);
+      var diff_hours = Math.floor(remaining_time / oneHour);
+      remaining_time -= diff_hours * oneHour;
 
       var diff_mins = Math.floor(remaining_time / oneMinute);
       remaining_time -= diff_mins * oneMinute;
-
-  //    debugLog('diff_mins: ',diff_mins,'\nremaining_time: ',remaining_time);
 
       var diff_secs = Math.floor(remaining_time / oneSecond);
       remaining_time -= diff_secs * oneSecond;
 
   //    debugLog('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
 
-     return '['+
-         diff_days+'d'+
-         ', '+diff_hrs+'h'+
-         ', '+diff_mins+'m'+
-  //       ', '+diff_secs+'s'+
-         ']';
+       return {
+         days: diff_days,
+         hours: diff_hours,
+         mins: diff_mins,
+         secs: diff_secs
+       };
     }
-    function dateToD(arg_date)
+    function dateToDHM(arg_prefix, arg_date, arg_suffix)
     {
-      var oneSecond = 1000;
-      var oneMinute = oneSecond * 60;
-      var oneHour = oneMinute * 60;
-      var oneDay = oneHour * 24;
+      var tmp_dhmObject = dateToDHMObject(this.referralSince);
 
-      var now = new Date();
-      var t_diff = new Date(arg_date) - now;
-
-      var future = (0 < t_diff);
-      var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
-
-      var diff_days = Math.floor(remaining_time / oneDay);
-      remaining_time -= diff_days * oneDay;
-
-      if(isNaN(diff_days)) {
-        return '--';
-      }
-
-      return '['+
-         diff_days+'d' +
-         ']';
+      return arg_prefix+
+          tmp_dhmObject.days+'d'+', '+
+          tmp_dhmObject.hours+'h'+', '+
+          tmp_dhmObject.mins+'m'+
+        arg_suffix;
     }
-
-    function nextPaymentStringToDate(arg_string)
+    function dateToDec(arg_prefix, arg_date, arg_suffix)
     {
-      arg_string = arg_string.toString();
-  //    debugLog('nextPaymentStringToDate: \n','arg_string : ',arg_string);
-      var onesec = 1000;
-      var onemin = onesec * 60;
-      var onehr = onemin * 60;
-      var oneday = onehr * 24;
+      var tmp_dhmObject = dateToDHMObject(arg_date);
+      var tmp_age = tmp_dhmObject.days;
+      tmp_age += tmp_dhmObject.hours / 24;
+      tmp_age += tmp_dhmObject.mins / (24*60);
 
-      /* nb: bugfix - occasionally neobux displafs displays a negative # of hours for the next payment date which breaks the regex */
-  //    var spliced = arg_string.match(/([0-9]+).*([0-9]{2}):([0-9]{2})/);
-      var spliced = arg_string.match(/([0-9]+)[^-]*(-?[0-9]{2}):([0-9]{2})/);
-      var tmp_days = spliced[1]*1;
-      var tmp_hours = spliced[2]*1;
-      var tmp_mins = spliced[3]*1;
-
-      var tmp_date = new Date( (new Date()*1) +
-          (tmp_days * oneday) +
-          (tmp_hours * onehr) +
-          (tmp_mins * onemin) );
-
-  //    debugLog(tmp_days+'d, '+tmp_hours+'h, '+tmp_mins+'m');
-      return tmp_date;
-
+      return arg_prefix +
+          tmp_age +
+        arg_suffix;
+    }
+    function dateToD(arg_date) {
+      return dateToDHMObject(this.referralSince).days;
     }
 
-    this.editHeaderRow = function ()
+    this.age_DHMObject = dateToDHMObject(this.referralSince);
+    this.age_dec = dateToDec('',this.referralSince,'') * 1;
+
+
+    function ultimateClickValuesRaw_toStats(arg_ultimateClickValues_raw)
     {
-
-    }
-
-    this.mainLoop = function()
-    {
-      var tmp_currentID, tmp_income, tmp_value;
-      var tmp_dhmOwned;
-
-      var headerCol_idPrefix = 'header_';
-      var newCol_idPrefix = ''; // set within the loop
-
-      var columns = {
-        incomeCol: {
-          colType: 'new',
-          colPrefix: '$',
-          colSuffix: '',
-          colHeaderText: 'Income'
-        },
-        refSince_DHM: {
-          colType: 'new',
-          colPrefix: '',
-          colSuffix: '',
-          colHeaderText: 'D/H/M Ref Since'
-        },
-        nextPayment_DHM: {
-          colType: 'new',
-          colPrefix: '',
-          colSuffix: '',
-          colHeaderText: 'D/H/M Next Payment'
-        },
-        lastClick_D: {
-          colType: 'new',
-          colPrefix: '',
-          colSuffix: '',
-          colHeaderText: 'D Last Click'
-        },
-        textifyFlag: {
-          colType: 'new',
-          colPrefix: '',
-          colSuffix: '',
-          colHeaderText: 'Flag Colour'
-        }
+      var minigraph = {
+        'rawClickData': arg_ultimateClickValues_raw,
+        'clicks': new Array()
       };
 
+      // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
+      minigraph.rawClickData = currentUser.accountType.isUltimate ? minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
 
-      for(var columnName in columns)
+      // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
+      minigraph.rawClickData =  minigraph.rawClickData.reverse();
+
+      // Copy the click data to a separate array and verify/coerce each value to a number
+      for (var i = 0; i < minigraph.rawClickData.length; i++) {
+        minigraph.clicks[i] = parseInt(minigraph.rawClickData[i], 10);
+      }
+
+      /**
+       * Compute the mean and variance using a "numerically stable algorithm".
+       * Based on http://maiaco.com/articles/computingStatsInJS.php
+       * 30/12/2010 - above link no longer exists, mirror found at
+       * http://code.google.com/p/ocropodium/source/browse/static/js/stats.js?spec=svnd8375a8cd3f640b35cbbb42d9669411dde9248eb&r=d8375a8cd3f640b35cbbb42d9669411dde9248eb
+       *
+       * Also temporarily copied in below:
+       */
+
+      var sqsum = 0;
+      minigraph.mean = new Array();
+      minigraph.sum = new Array();
+      minigraph.variance = new Array();
+      minigraph.sdev = new Array();
+
+      minigraph.mean[0] = minigraph.clicks[0];
+      minigraph.sum[0] = minigraph.clicks[0];
+      minigraph.variance[0] = minigraph.clicks[0];
+      minigraph.sdev[0] = minigraph.clicks[0];
+
+      for (var i = 1; i < minigraph.clicks.length; ++i)
       {
-        addColumn(headerRow,
-            columns[columnName].colHeaderText,
-            headerCol_idPrefix + columnName,
-            '');
+        var x = minigraph.clicks[i];
+        var delta = x - minigraph.mean[i-1];
+        var sweep = i + 1.0;
+        minigraph.mean[i] = minigraph.mean[i-1] + (delta / sweep);
+        sqsum += delta * delta * (i / sweep);
+
+        minigraph.sum[i] = minigraph.mean[i] * (i + 1);
+        minigraph.variance[i] = sqsum / (i + 1);
+        minigraph.sdev[i] = Math.sqrt(minigraph.variance[i]);
       }
 
-      var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
+      return minigraph;
+    }
 
-      for(var i=1; i<tmp_colspans.length - 1;i++) {
-  //      if(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan') == (colCount-1) {
-          tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
-  //      }
-  //      debugLog(tmp_colspans[i],tmp_colspans[i].getAttribute('colspan'));
-      }
+    this.ultimateClickValues =  ultimateClickValuesRaw_toStats(this.ultimateClickValues_raw);
 
-      for(var i=0; i<referralRows.length; i++) {
-        tmp_currentRow = referralRows[i];
 
-        tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/)[0];
-        tmp_currentRow.id = tmp_currentID;
-        tmp_currentRow.setAttribute('class',tmp_currentRow.getAttribute('class') + ' referralRow');
+    return this;
+  }
 
-        GM_addStyle('.referralRow { letter-spacing: -0.01em; }');
 
-        newCol_idPrefix = tmp_currentID + '_';
 
-        for(var columnName in columns) {
-          switch(columnName) {
-            case 'incomeCol':
-                if(currentPage.pageCode.match(/referralListings_Rented/)) {
-                  tmp_value = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.rentedReferralClickValue).toFixed(3);
-                } else if(currentPage.pageCode.match(/referralListings_Direct/)) {
-                  tmp_value = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.directReferralClickValue).toFixed(3);
-                }
-            break;
-            case 'refSince_DHM':
-              tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].referralSince));
-            break;
-            case 'nextPayment_DHM':
-              tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].nextPayment));
-            break;
-            case 'lastClick_D':
-              tmp_value = dateToD(new Date(tmp_referralsData[tmp_currentID].lastClick));
-            break;
-            case 'textifyFlag':
-              tmp_value = tmp_referralsData[tmp_currentID].flagColour.split('')[0];
-            break;
+  function extractReferralDataFromListingsPage()
+  {
+    // Grab contents of mtx[] array delivered onto the referral listings page
+    var xpathResults_mtx = docEvaluate("//script[contains(.,'mtx=')]");
+
+    if(0 === xpathResults_mtx.snapshotLength) {
+      console.info('referrals data not found');
+//        throw 'referrals data not found';
+      return -1;
+    }
+
+    xpathResults_mtx = xpathResults_mtx.snapshotItem(0).textContent;
+    var tmp_refData = xpathResults_mtx.match(/mtx=\[(.*?),\];/)[1];
+
+    // Insert this into a JSON
+    var tmpObj_currentPageRefData = JSON.parse('{"mtx": ['+tmp_refData.replace(/'/g,'"')+']}') || -1;
+
+
+    if(-1 === tmpObj_currentPageRefData) {
+      // The data extracted couldn't be parsed into a valid JSON string / object so 'return' out of the function
+      errorLog('There was an error extracting the referral listings data.');
+      return -1;
+    }
+
+    return tmpObj_currentPageRefData;
+  }
+
+  function restructureData(arg_referralListingsData)
+  {
+    // Data pushed by Neobux is in the following format:
+
+    /**
+     * m = mtx[i]
+     *
+     * m[0] = Row # as shown in the first column
+     * m[1] = Real name for referral / else 0
+     * m[2] = Came From (direct) / Referral Since (rented) { (currentRefMTX[2] == '9') ? referrals[z - 1].referralSince : currentRefMTX[2] }
+     * m[3] = Next Payment (rented) / Referral Since (direct) { (currentRefMTX[2] == '9') ? referrals[z - 1].referralSince : currentRefMTX[2] }
+     * m[4] = Last Click Date { (currentRefMTX[4] == '9') ? referrals[z - 1].lastClick : (currentRefMTX[4] == 'N') ? 'No clicks yet' : (currentRefMTX[4] == 'O') ? 'Yesterday' : (currentRefMTX[4] == 'H') ? 'Today' : currentRefMTX[4] }
+     * m[5] = Total Clicks
+     * m[6] = Overall Average { (currentRefMTX[6] == '-.---' || currentRefMTX[6] == 999) ? '-.---' : currentRefMTX[6] }
+     * m[7] = Some kind of long ID # / hash / something
+     * m[8] = Unknown exact purpose 0/1 value used within much of the HTML attributes / function parameters
+     * m[9] = Value of the checkbox
+     * m[10] = When colouring by average is disabled, should background be gray (1) or white (0)
+     * m[11] = *unused
+     * m[12] = *unused
+     * m[13] = Can golden graph button be displayed
+     * m[14] = Minigraph click data (Ultimates only)
+     * m[15] = Flag id (rented refs only)
+     * m[16] = Can referral be recycled
+     * m[17] = Is referral locked (rented refs only)
+     * m[18] = Can referral be sold (direct refs only)
+     * m[19] = Anonymous referral ID (is numerical - prefix of R or D is added on for display only)
+     *
+     */
+
+    // Will convert to the following structure:
+    /*
+    *
+    * referrals = {
+    *   refID: {
+    *     referralType: [ rented | direct ],
+    *     lastSeen: < dateTime >,
+    *     data: {
+    *       <dateTime> : {
+    *         flag: < flag colour >,
+    *         referralSince: < dateTime >,
+    *         lastClick: < date >,
+    *         totalClicks: < number >,
+    *         overallAverage: < decimal >
+    *       },
+    *       <dateTime> : {
+    *         flag: < flag colour >,
+    *         referralSince: < dateTime >,
+    *         lastClick: < date >,
+    *         totalClicks: < number >,
+    *         overallAverage: < decimal >
+    *       }
+    *     }
+    *   },
+    *   // more refs
+    * };
+    *
+    */
+
+    // NB: How often a new dateTime is created vs. an existing one is updated will need a setting
+    // Meanwhile, will create a new one on every page load / running of the script
+
+//    debugLog('restructureData:\n\n','arg_referralListingsData',arg_referralListingsData);
+
+    var tmp_referrals = {};
+    var tmp_currentDateTime = new Date();
+    var cr, pr;
+    var cr_ID, pr_ID;
+
+    for(var i = 0; i < arg_referralListingsData.length; i++){
+
+      // Current Referral
+      cr = arg_referralListingsData[i];
+      cr_ID = ('0' == cr[1]) ? cr[19] : cr[1];
+      // Previous Referral
+      pr = arg_referralListingsData[i-1] || arg_referralListingsData[i];
+      pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
+
+      tmp_referrals[cr_ID] = new REFERRAL(
+          cr_ID,
+          {
+            flagColour_Id: cr[15],
+            locked: cr[17],
+            recycleable: cr[16],
+            nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].nextPayment_raw : cr[3],
+            cameFrom: cr[2],
+            sellable: cr[18],
+            referralSince: ('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince_raw : cr[2],
+            lastClick: ('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick_raw : ('N' == cr[4]) ? (('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince_raw : cr[2]) : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4],
+            totalClicks: cr[5],
+            clickAverage: cr[6],
+            ultimateClickValues: ('0' == cr[14]) ? '0000000000' : cr[14]
           }
+        );
+    }
 
-          if('new' === columns[columnName].colType) {
-            try {
-              addColumn(tmp_currentRow,
-                  columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix,
-                  newCol_idPrefix+columnName,
-                  ''
-                  );
+/*REDUNDANT CODE AS THE BELOW IS DONE ABOVE BY NEW REFERRAL() */
+//    for(var i = 0; i < arg_referralListingsData.length; i++)
+//    {
+////      console.group();
+////      debugLog('i',i);
+//
+//    /**
+//     * ## referralSince and lastClick ##
+//     * if date/time in one row is the same as the row before, mtx contains a '9'
+//     * instead of the duplicated date
+//     *
+//     * ## lastClick ##
+//     * 'Today' is coded as 'N' (unknown reason for this code);
+//     * 'Yesterday' is coded as 'O' (in Portuguese, Yesterday == Ontem)
+//     *
+//     * ## overallAverage ##
+//     * when referral is younger than 24hours old and has not yet clicked,
+//     * average is displayed as '-.---'
+//     *
+//     */
+//
+//      // Current Referral
+//      cr_raw = arg_referralListingsData[i];
+//      cr_ID = ('0' == cr_raw[1]) ? cr_raw[19] : cr_raw[1];
+//      // Previous Referral
+//      pr = arg_referralListingsData[i-1] || arg_referralListingsData[i];
+//      pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
+//
+//      var flagLookup = {
+//        0: 'White',
+//        1: 'Red',
+//        2: 'Orange',
+//        3: 'Yellow',
+//        4: 'Green',
+//        5: 'Blue'
+//      };
+//
+//      if (0 < location.href.indexOf('ss3=2'))
+//      {
+//        tmp_referrals[cr_ID] = {
+//          ID: ('0' == cr_raw[1]) ? 'R' + cr_raw[19] : cr_raw[1],
+//          referralType: 'R',
+//
+//          flag: flagLookup[cr_raw[15]],
+//          locked: (1 === cr_raw[17]) ? 'Y' : 'N',
+//          recycleable: (1 === cr_raw[16]) ? 'Y' : 'N',
+//
+//          nextPayment: ('9' == cr_raw[3]) ? tmp_referrals[pr_ID].nextPayment : cr_raw[3]
+//        };
+//      }
+//      else if (0 < location.href.indexOf('ss3=1'))
+//      {
+//        tmp_referrals[cr_ID] = {
+//          ID: ('0' == cr_raw[1]) ? 'D' + cr_raw[19] : cr_raw[1],
+//          referralType: 'D',
+//          cameFrom: cr_raw[2],
+//          sellable: (1 === cr_raw[18]) ? 'Y' : 'N'
+//        };
+//      }
+//
+//
+//      function todayYesterdayToDate(arg_todayYesterdayString) {
+//        // english | pt | es | greek | FI | SE | DE
+//        var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+//        var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+//        var tl8_tomorrow = /tomorrow/i;
+//
+//        return arg_todayYesterdayString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]);
+//      }
+//
+//      if(10 > i) {
+//        debugLog('cr: ',cr,'\n\n','pr: ',pr);
+//        debugLog('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
+//      }
+//
+//      cr.lastSeen = tmp_currentDateTime.toString();
+//      cr.hash = cr[7];
+//      cr.referralSince = todayYesterdayToDate(('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince : cr[2]);
+//      cr.lastClick = todayYesterdayToDate(('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4]);
+//      cr.totalClicks = cr[5];
+//      cr.overallAverage = ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6];
+//
+//
+//      /**
+//       * Check how many referrals are being shown per page:  If the user is ultimate and has more than 100 referrals showing, minigraphs will not be displayed
+//       * If the user has fewer than 10 referrals, the option to select the # of referrals is not present, thus refsPerPage must be set manually
+//      */
+//      var refsPerPageSelector = document.getElementById('rlpp');
+//      var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
+//
+//      /* Ultimate only stuff, based on the ultimate minigraphs */
+//      // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
+////      if(currentUser.accountType.showUltimateFeatures && 300 >= refsPerPage)
+////      {
+//        cr.minigraph = {
+//          'rawClickData': ('0' == cr[14]) ? '0000000000'.split('') : cr[14].split(''),
+//          'clicks': new Array()
+//        };
+//
+//        // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
+//        cr.minigraph.rawClickData = currentUser.accountType.isUltimate ? cr.minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+//
+//        // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
+//        cr.minigraph.rawClickData =  cr.minigraph.rawClickData.reverse();
+//
+//        // Copy the click data to a separate array and verify/coerce each value to a number
+//        for (var i = 0; i < cr.minigraph.rawClickData.length; i++) {
+//          cr.minigraph.clicks[i] = parseInt(cr.minigraph.rawClickData[i], 10);
+//        }
+//
+//        /**
+//         * Compute the mean and variance using a "numerically stable algorithm".
+//         * Based on http://maiaco.com/articles/computingStatsInJS.php
+//         * 30/12/2010 - above link no longer exists, mirror found at
+//         * http://code.google.com/p/ocropodium/source/browse/static/js/stats.js?spec=svnd8375a8cd3f640b35cbbb42d9669411dde9248eb&r=d8375a8cd3f640b35cbbb42d9669411dde9248eb
+//         *
+//         * Also temporarily copied in below:
+//         */
+//
+//        var sqsum = 0;
+//        cr.minigraph.mean = new Array();
+//        cr.minigraph.sum = new Array();
+//        cr.minigraph.variance = new Array();
+//        cr.minigraph.sdev = new Array();
+//
+//        cr.minigraph.mean[0] = cr.minigraph.clicks[0];
+//        cr.minigraph.sum[0] = cr.minigraph.clicks[0];
+//        cr.minigraph.variance[0] = cr.minigraph.clicks[0];
+//        cr.minigraph.sdev[0] = cr.minigraph.clicks[0];
+//
+//        for (var i = 1; i < cr.minigraph.clicks.length; ++i)
+//        {
+//          var x = cr.minigraph.clicks[i];
+//          var delta = x - cr.minigraph.mean[i-1];
+//          var sweep = i + 1.0;
+//          cr.minigraph.mean[i] = cr.minigraph.mean[i-1] + (delta / sweep);
+//          sqsum += delta * delta * (i / sweep);
+//
+//          cr.minigraph.sum[i] = cr.minigraph.mean[i] * (i + 1);
+//          cr.minigraph.variance[i] = sqsum / (i + 1);
+//          cr.minigraph.sdev[i] = Math.sqrt(cr.minigraph.variance[i]);
+//        }
+//
+////        /** Returns an object that contains the count, sum,
+////         * minimum, median, maximum, mean, variance, and
+////         * standard deviation of the series of numbers stored
+////         * in the specified array.  This function changes the
+////         * specified array by sorting its contents. */
+////        function Stats(data) {
+////            this.count = data.length;
+////
+////            /* Sort the data so that all seemingly
+////             * insignificant values such as 0.000000003 will
+////             * be at the beginning of the array and their
+////             * contribution to the mean and variance of the
+////             * data will not be lost because of the precision
+////             * of the CPU. */
+////            data.sort(ascend);
+////
+////            /* Since the data is now sorted, the minimum value
+////             * is at the beginning of the array, the median
+////             * value is in the middle of the array, and the
+////             * maximum value is at the end of the array. */
+////            this.min = data[0];
+////            var middle = Math.floor(data.length / 2);
+////            if ((data.length % 2) != 0) {
+////                this.median = data[middle];
+////            }
+////            else {
+////                this.median = (data[middle - 1] + data[middle]) / 2;
+////            }
+////            this.max = data[data.length - 1];
+////
+////            /* Compute the mean and variance using a
+////             * numerically stable algorithm. */
+////            var sqsum = 0;
+////            this.mean = data[0];
+////            for (var i = 1;  i < data.length;  ++i) {
+////                var x = data[i];
+////                var delta = x - this.mean;
+////                var sweep = i + 1.0;
+////                this.mean += delta / sweep;
+////                sqsum += delta * delta * (i / sweep);
+////            }
+////            this.sum = this.mean * this.count;
+////            this.variance = sqsum / this.count;
+////            this.sdev = Math.sqrt(this.variance);
+////        }
+////
+////        /** Returns a string that shows all the properties and
+////         * their values for this Stats object. */
+////        Stats.prototype.toString = function() {
+////            var s = 'Stats';
+////            for (var attr in this) {
+////                if (typeof(this[attr]) != 'function') {
+////                    s += '  ' + attr + ' ' + this[attr];
+////                }
+////            }
+////            return s;
+////        }
+////
+////
+////        /** Compares two objects using
+////         * built-in JavaScript operators. */
+////        function ascend(a, b) {
+////            if (a < b)
+////                return -1;
+////            else if (a > b)
+////                return 1;
+////            return 0;
+////        }
+//
+////      } /* END calculating stats for minigraph clicks */
+//
+//      //debugLog(JSON.stringify(tmp_referrals));
+////      console.groupEnd();
+
+//    } /* End of for(var i = 0; i < arg_referralListingsData.length; i++) {} loop  */
+
+
+
+    debugLog('restructureData:\n\n','tmp_referrals',tmp_referrals);
+    return tmp_referrals;
+  }
+
+
+  this.init = function ()
+  {
+    var storedReferralData = getPref('referrals',{},{ prefType: 'JSON' });
+    var referralData;
+
+    var tmp_referralDataFromListingsPage = { mtx:'' };
+    tmp_referralDataFromListingsPage = extractReferralDataFromListingsPage();
+
+    if(-1 !== tmp_referralDataFromListingsPage)
+    {
+        // Restructure the data from the given mtx=[] format into the same structure as our stored info
+      var tmp_referralsOnCurrentPage = restructureData(tmp_referralDataFromListingsPage.mtx);
+
+      // Merge the newly fetched data with the stored data
+      referralData = Object_merge(storedReferralData, tmp_referralsOnCurrentPage);
+
+      setPref('referrals',referralData,{ prefType: 'JSON' });
+    }
+  }
+};
+
+
+function PREFERENCE_INPUT_FIELD( arg_inputType, arg_preferenceId, arg_label, arg_values, arg_longDescription,
+    arg_cssStyle_Label, arg_cssStyle_Input )
+{
+  var tmp_container = document.createElement('span');
+  tmp_container.id = 'label_'+arg_preferenceId;
+  tmp_container.title = arg_longDescription;
+  var tmp_innerHTML = '';
+  tmp_innerHTML += '<label for="'+arg_preferenceId+'">'+arg_label;
+
+  switch(arg_inputType)
+  {
+    case 'text':
+      tmp_innerHTML += '<input type="text" value="'+arg_values.toString()+'" id="'+arg_preferenceId+'"/>';
+      break;
+  }
+
+  tmp_innerHTML += ''+
+      '</label>'+
+      '<br>';
+
+  tmp_container.innerHTML = tmp_innerHTML;
+  debugLog(tmp_container.innerHTML);
+
+  return tmp_container.innerHTML;
+
+}
+
+var preferencesDialogStuff = {
+  'username': {
+    inputType: 'text',
+    preferenceId: 'username',
+    label: 'Username: ',
+    values: 'kwah',
+    longDescription: "Your account's username.",
+    cssStyle_Label: '',
+    cssStyle_Input: ''
+  },
+  'rentedReferralsCount': {
+    inputType: 'text',
+    preferenceId: 'rentedReferralsCount',
+    label: 'Rented Refs: ',
+    values: 417,
+    longDescription: "How many rented referrals you have.",
+    cssStyle_Label: '',
+    cssStyle_Input: ''
+  }
+};
+
+var tmp_preferencesDialogInnerHtml = ''+
+    '<div style="max-height:99%; background-color:pink;">'+
+    '<h1>Preferences</h1>'+
+    '<br>';
+
+for(var tmp_prefId in preferencesDialogStuff)
+{
+  tmp_preferencesDialogInnerHtml += ''+
+      PREFERENCE_INPUT_FIELD(
+          preferencesDialogStuff[tmp_prefId].inputType,
+          preferencesDialogStuff[tmp_prefId].preferenceId,
+          preferencesDialogStuff[tmp_prefId].label,
+          preferencesDialogStuff[tmp_prefId].values,
+          preferencesDialogStuff[tmp_prefId].longDescription,
+          preferencesDialogStuff[tmp_prefId].cssStyle_Label,
+          preferencesDialogStuff[tmp_prefId].cssStyle_Input
+          );
+}
+
+tmp_preferencesDialogInnerHtml += ''+
+    ''+
+    '</div>' +
+    '<div>' +
+    '<button id="preferencesDialog_Close">Close</button>' +
+    '</div>';
+
+
+var preferencesDialog;
+preferencesDialog = new ModalDialog('preferencesDialog');
+preferencesDialog.create('background-color: white; margin: 8em auto; padding: 2em; width: 40em;',
+    tmp_preferencesDialogInnerHtml);
+
+document.getElementById('preferencesDialog_Close').addEventListener('click',
+    function() { preferencesDialog.hide(); },
+    false);
+
+
+
+
+var logo =
+{
+  insert: function()
+  {
+    // Inserts the logo for the script into the page
+
+
+    // the language icon in upper right of page
+    var xpathResults_logoLocation = docEvaluate('//ul[@id="menu"]/li[@id="menuli"]/parent::ul/parent::td');
+
+    // If the location to insert the logo cannot be found, exit the function
+    if(0 >= xpathResults_logoLocation.snapshotLength) {
+      return
+    }
+
+    if (1 == xpathResults_logoLocation.snapshotLength)
+    {
+
+      // Container for logo image to allow it to look correct in the page
+      if(document.getElementById('spanghurtLogoContainer')) {
+        document.getElementById('spanghurtLogoContainer').parentNode.removeChild(document.getElementById('spanghurtLogoContainer'));
+      }
+      var elmnt_td = document.createElement('td');
+      elmnt_td.id = 'spanghurtLogoContainer';
+
+      elmnt_td.style.paddingLeft = '8px';
+      elmnt_td.style.paddingRight = '8px';
+      elmnt_td.innerHTML = ' &nbsp;|&nbsp; &nbsp;';
+
+
+      if(document.getElementById('spanghurtLogo')) {
+        document.getElementById('spanghurtLogo').parentNode.removeChild(document.getElementById('spanghurtLogo'));
+      }
+
+      var elmnt_logoImage = document.createElement('img');
+      elmnt_logoImage.id = 'spanghurtLogo';
+
+      elmnt_logoImage.setAttribute('rel', '#scriptPreferences');
+
+      elmnt_logoImage.style.cursor = 'pointer';
+      elmnt_logoImage.border = "0";
+      elmnt_logoImage.width = '16';
+      elmnt_logoImage.alt = tl8('Spanghurt Script Preferences');
+      elmnt_logoImage.title = tl8('Spanghurt Script Preferences');
+      elmnt_logoImage.src = 'http://kwah.org/neobux/script/images/logo.png';
+//      elmnt_logoImage.src = 'http://img262.imageshack.us/img262/3654/neobuxv3logolargered2.png';
+      // img.src = 'http://img262.imageshack.us/img262/4965/neobuxv3logolargered3.png';
+
+
+
+      elmnt_td.appendChild(elmnt_logoImage);
+
+      xpathResults_logoLocation.snapshotItem(0).parentNode.appendChild(elmnt_td);
+
+    }
+  },
+
+  addClickEvent: function(arg_clickFunction)
+  {
+    if(document.getElementById('spanghurtLogo')) {
+      document.getElementById('spanghurtLogo').addEventListener('click',function() { arg_clickFunction(); },false);
+    }
+  },
+
+  init: function()
+  {
+    this.insert();
+
+//    this.addClickEvent(preferencesDialog.show);
+    this.addClickEvent(loggerBox.show)
+  }
+
+};
+
+
+
+var profitGraph = new function()
+{
+
+};
+
+
+function graphShortCodeToReadableDescription(arg_graphId)
+{
+  var tmp_headerValue = '';
+  switch(arg_graphId)
+  {
+    case 'ch_cliques':
+      tmp_headerValue = tl8('Own clicks, Local Time:');
+      break;
+    case 'ch_cd':
+      tmp_headerValue = tl8('Credited Direct Referral Clicks:');
+      break;
+    case 'ch_cr':
+      tmp_headerValue = tl8('Credited Rented Referral Clicks:');
+      break;
+    case 'ch_recycle':
+      tmp_headerValue = tl8('Amount spent on recycles:');
+      break;
+    case 'ch_extensions':
+      tmp_headerValue = tl8('Amount spent on renewing / extending referrals:');
+      break;
+    case 'ch_autopay':
+      tmp_headerValue = tl8('Amount spent on Autopay:');
+      break;
+    case 'ch_trrb':
+      tmp_headerValue = tl8('Amount transferred to your Rental Balance:');
+      break;
+    case 'ch_earnings':
+      tmp_headerValue = tl8('Extension value');
+      break;
+    case 'ch_profit':
+      tmp_headerValue = tl8('Extension value');
+      break;
+    case 'ch_trar':
+      tmp_headerValue = tl8('Number of referrals automatically recycled for free:');
+      break;
+    case 'ch_trpb':
+      tmp_headerValue = tl8('Amount transferred to your Golden Pack Balance:');
+      break;
+    case 'ch_ext_schedule8':
+    //fall through
+    case 'ch_ext_schedule7':
+    //fall through
+    case 'ch_ext_schedule6':
+    //fall through
+    case 'ch_ext_schedule5':
+    //fall through
+    case 'ch_ext_schedule4':
+    //fall through
+    case 'ch_ext_schedule3':
+    //fall through
+    case 'ch_ext_schedule2':
+    //fall through
+    case 'ch_ext_schedule1':
+    //fall through
+    case 'ch_ext_schedule':
+      //fall through
+      tmp_headerValue = tl8('Total number of referrals due to expire on each date:');
+      break;
+  }
+  return tmp_headerValue;
+}
+
+
+var chartDataBars = new function()
+{
+  var maxDataBarWidth = 0;
+  this.graphsOnCurrentPage = [];
+
+  for(var i=0; i < graphsOnCurrentPage.length; i++) {
+    if(document.getElementById(graphsOnCurrentPage[i])) {
+      this.graphsOnCurrentPage.push(graphsOnCurrentPage[i]);
+    }
+  }
+
+
+  var dataBarIntervals = {
+//    10: [0,1,2,3,4,5,6,7,8,9],
+    10: [4,6,9],
+    15: [4,9,14],
+//    15: [0,1,2,3,4],
+    90: [29,59,89]
+  };
+
+  this.getDataBarData = function(arg_graphId)
+  {
+    var tmp_graphLength = graphLengthLookup[arg_graphId];
+    var tmp_currentDayData;
+    var dataBarData = {};
+    var tmp_sum = [];
+    var tmp_average = [];
+    var tmp_maxInterval = 0;
+    var tmp_currentDate;
+    var tmp_currentValue;
+
+
+    // The extensions due graphs needs special handling, but for now just exit
+    if (friendlyNameLookup[arg_graphId].match(/extensions_([0-9]+)To([0-9]+)/)) {
+      return null;
+    }
+
+    //Find the max interval so that only the necessary amount of iterations are done/made
+    //   NB: intervals not necessarily in any particular order
+    for (var i = 0; i < dataBarIntervals[tmp_graphLength].length; i++) {
+      tmp_maxInterval = (dataBarIntervals[tmp_graphLength][i] > tmp_maxInterval) ? dataBarIntervals[tmp_graphLength][i] : tmp_maxInterval;
+    }
+
+
+    var tmp_decimalPrecision = 10000; //Round to 5 decimal places
+    for (var dateIndex = 0; dateIndex <= tmp_maxInterval; dateIndex++)
+    {
+      tmp_currentDate = dates_array[dateIndex];
+
+      if(!accountCache.graphs[tmp_currentDate]) {
+        //No data at all for date found, flag as such and continue
+        errorLog("//No data at all for date found, flag as such and continue");
+        continue;
+      }
+      if('undefined' === typeof accountCache.graphs[tmp_currentDate][lookup_graphCache[arg_graphId]] ||
+          null === accountCache.graphs[tmp_currentDate][lookup_graphCache[arg_graphId]]) {
+        //No data for selected graph on date found, flag as such and continue
+        errorLog("//No data for selected graph on date found, flag as such and continue");
+        continue;
+      }
+
+      tmp_currentValue = accountCache.graphs[tmp_currentDate][lookup_graphCache[arg_graphId]];
+      tmp_sum[dateIndex] = tmp_sum[dateIndex - 1] + tmp_currentValue || tmp_currentValue;
+      tmp_average[dateIndex] = tmp_sum[dateIndex] / (dateIndex + 1);
+
+      dataBarData[tmp_currentDate] = {
+        'value': Math.round(tmp_currentValue * tmp_decimalPrecision) / tmp_decimalPrecision,
+        'sum': Math.round(tmp_sum[dateIndex] * tmp_decimalPrecision) / tmp_decimalPrecision,
+        'avg': Math.round(tmp_average[dateIndex] * tmp_decimalPrecision) / tmp_decimalPrecision
+      };
+
+      if ('ch_cr' == arg_graphId) {
+        dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.rentedReferralClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
+      }
+      if ('ch_cd' == arg_graphId) {
+        dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.directReferralClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
+      }
+      if ('ch_cliques' == arg_graphId) {
+        dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.ownClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
+      }
+      if ('ch_recycle' == arg_graphId) {
+        dataBarData[tmp_currentDate].avgRecycles = Math.round(tmp_average[dateIndex] / currentUser.recycleFee * tmp_decimalPrecision) / tmp_decimalPrecision;
+      }
+      if ('ch_extensions' == arg_graphId) {
+        dataBarData[tmp_currentDate].numberOfRenewals_actualAvg = (tmp_average[dateIndex] / currentUser.renewalFees);
+        dataBarData[tmp_currentDate].idealNumberOfRenewals_avg = (currentUser.numberOfRefs.Rented / currentUser.renewalsLength);
+        dataBarData[tmp_currentDate].idealRenewalsCost_avg = (dataBarData[tmp_currentDate].idealNumberOfRenewals_avg * currentUser.renewalFees);
+        dataBarData[tmp_currentDate].idealRenewalsCost_sum = (dateIndex+1) * (dataBarData[tmp_currentDate].idealNumberOfRenewals_avg * currentUser.renewalFees);
+      }
+    }
+    return dataBarData;
+  };
+
+  this.init = function()
+  {
+    var graphBarCSS = "" +
+        ".dataBarContainer { margin-top:10px; border-collapse:collapse; margin: 10px auto 10px; max-width: 85%; min-width:75%; white-space:nowrap; }" +
+        ".dataBarContainer tr { border:1px solid #AAAAAA; }" +
+        ".graphBar {  color:#444444; clear:both; font-family:verdana; font-size:9px; font-weight:bold; height:14px; padding:1px 2%; vertical-align:middle; }" +
+        ".graphBarFirstCell { text-align: left; min-width: 8em;}" +
+        ".graphBarSecondCell { text-align: left; }" +
+        "";
+    GM_addStyle(graphBarCSS);
+
+    var tmp_dataBarText;
+    var tmp_dataSet;
+    var tmp_dataBarDataToOutput;
+    var tmp_graphLength;
+
+    function dataToOutputToDataBar(arg_dataSet,arg_dataBarIntervals,arg_dataBarTitle,arg_fieldToShow,arg_daysPrefix,arg_daysSuffix,arg_numberOfFixedDecimalPoints)
+    {
+      tmp_dataBarDataToOutput = [];
+
+      try
+      {
+        for(var y = arg_dataBarIntervals.length - 1; 0 <= y; y--)
+        {
+          tmp_counter = (tmp_dateAdjuster[0] == -1) ? y : 0 - arg_dataBarIntervals[y] - tmp_dateAdjuster[1];
+          tmp_dataBarDataToOutput.push(
+            arg_daysPrefix+ (arg_dataBarIntervals[y]+1)+ arg_daysSuffix +
+                arg_dataSet[dates_array[arg_dataBarIntervals[tmp_counter]]][arg_fieldToShow].toFixed(arg_numberOfFixedDecimalPoints)
+          );
+        }
+        return arg_dataBarTitle+ tmp_dataBarDataToOutput.join(' ');
+      }
+      catch(e) {
+        errorLog('ERROR! \n',e);
+        return 'error in calculations';
+      }
+    }
+
+    function createDataBarRow(arg_graphId,argBarCode,arg_dataBarColumns,arg_customDataBarCss)
+    {
+
+      var elmt_bar = document.createElement("tr");
+      elmt_bar.setAttribute("id", arg_graphId+'__'+argBarCode);
+      elmt_bar.setAttribute("style", arg_customDataBarCss);
+
+      for(var i=0; i<arg_dataBarColumns.length; i++) {
+        var elmt_col = document.createElement("td");
+        elmt_col.setAttribute("class", "graphBar"+((0 == i)?" graphBarFirstCell":"") + ((1 == i)?" graphBarSecondCell":""));
+        elmt_col.innerHTML = arg_dataBarColumns[i];
+        elmt_bar.appendChild(elmt_col);
+      }
+
+      var currentDataBarWidth = elmt_bar.textContent.split('').length;
+      maxDataBarWidth = (maxDataBarWidth < currentDataBarWidth) ? currentDataBarWidth : maxDataBarWidth;
+
+      return elmt_bar;
+    }
+
+
+    for(var i=0; i < this.graphsOnCurrentPage.length; i++)
+    {
+
+      tmp_graphLength = graphLengthLookup[this.graphsOnCurrentPage[i]];
+      tmp_dataSet = this.getDataBarData(this.graphsOnCurrentPage[i]);
+      var tmp_dateAdjuster = friendlyNameLookup[this.graphsOnCurrentPage[i]].match(/extensions_([0-9]+)To([0-9]+)/) || [-1,0];
+
+      var tmp_counter = 0;
+      var graphBarsContainerId = this.graphsOnCurrentPage[i]+'_containers';
+
+      if(document.getElementById(graphBarsContainerId)) {
+        document.getElementById(graphBarsContainerId).parentNode.removeChild(document.getElementById(graphBarsContainerId));
+      }
+
+
+      var chartContainer = document.getElementById(this.graphsOnCurrentPage[i]);
+
+      var graphBarTable = document.createElement("table");
+      graphBarTable.setAttribute("id", graphBarsContainerId);
+      graphBarTable.setAttribute("class", 'dataBarContainer');
+
+      // Generic DataBars
+      switch(this.graphsOnCurrentPage[i])
+      {
+        case 'ch_cliques':
+          // Fall-through
+        case 'ch_cd':
+          // Fall-through
+        case 'ch_cr':
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') ',0)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                [tl8('Avg. Clicks: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') ',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avgIncome',
+                [tl8('Avg. Income: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avgIncome','(',') $',3)],
+                ''
+              )
+          );
+          break;
+        case 'ch_extensions':
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avgIncome',
+                [tl8('Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','numberOfRenewals_actualAvg','(',') ',2)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avgIncome',
+                [tl8('Ideal Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealNumberOfRenewals_avg','(',') ',2)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avgIncome',
+                [tl8('Ideal Avg. Expense ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost_avg','(',') $',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avgIncome',
+                [tl8('Ideal Sum ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost_sum','(',') $',3)],
+                ''
+              )
+          );
+        break;
+        case 'ch_recycle':
+          // Fall-through
+        case 'ch_autopay':
+          // Fall-through
+        case 'ch_trrb':
+          // Fall-through
+        case 'ch_earnings':
+          // Fall-through
+        case 'ch_profit':
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                ''
+              )
+          );
+      }
+
+      // Specific DataBars
+      switch(this.graphsOnCurrentPage[i])
+      {
+        case 'ch_recycle':
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                [tl8('Avg. #Recycles: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avgRecycles','(',') ',3)],
+                ''
+              )
+          );
+        break;
+        case 'ch_trpb':
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                [tl8('Avg. Transfer: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                ''
+              )
+          );
+        break;
+        case 'ch_trar':
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'sum',
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') ',1)],
+                ''
+              )
+          );
+          graphBarTable.appendChild(
+              createDataBarRow(this.graphsOnCurrentPage[i],
+                'avg',
+                [tl8('Average Free Recycles: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') ',1)],
+                ''
+              )
+          );
+        break;
+      }
+      chartContainer.parentNode.appendChild(graphBarTable);
+    }
+
+    GM_addStyle('.dataBarContainer { width:'+(maxDataBarWidth/1.75)+'em; }');
+
+    //    var dataBarsOnPage = document.body.getElementsBy
+    //    document.getElementById(this.graphsOnCurrentPage[i]+'_'+i).addEventListener('click', function() { dataBarClickHandler(this.graphsOnCurrentPage[i]+'_'+i); }, false);
+  };
+};
+
+
+var exportTabs = new function()
+{
+  var tmpCurrentGraph, tmp_currentGraphId;
+
+  this.insertStyles = function ()
+  {
+    var newDialog_Style = "" +
+        "#modalContainer {"+
+        "background-color: transparent;"+
+        "position: absolute;"+
+        "width: 100%;"+
+        "height: 100%;"+
+        "top: 0px;"+
+        "left: 0px;"+
+        "z-index: 10000;"+
+        "background-image: url(tp.png); /* required by MSIE to prevent actions on lower z-index elements */"+
+        " }"+
+
+        "#alertBox {"+
+        "position: relative;"+
+        "width: 300px;"+
+        "min-height: 100px;"+
+        "margin-top: 50px;"+
+        "border: 2px solid #000;"+
+        "background-color: #F2F5F6;"+
+        "background-image: url(alert.png);"+
+        "background-repeat: no-repeat;"+
+        "background-position: 20px 30px;"+
+        " }"+
+
+        "#modalContainer > #alertBox {"+
+        "position: fixed;"+
+        " }"+
+
+        "#alertBox h1 {"+
+        "margin: 0;"+
+        "font: bold 0.9em verdana,arial;"+
+        "background-color: #78919B;"+
+        "color: #FFF;"+
+        "border-bottom: 1px solid #000;"+
+        "padding: 2px 0 2px 5px;"+
+        " }"+
+
+        "#alertBox p {"+
+        "font-family: verdana,arial;"+
+        "padding: 10px;"+
+        "margin: 10px;"+
+        "height: auto;"+
+        " }"+
+
+        "#alertBox textarea {"+
+        "font-family: monospace,courier new,verdana,arial;"+
+        "font-size: x-small;"+
+        "margin: 15px;"+
+        "margin-top: 0px;"+
+        "height: auto;"+
+        "width: 85%;"+
+        " }"+
+
+        "#alertBox #closeBtn {"+
+        "display: block;"+
+        "position: relative;"+
+        "margin: 15px auto;"+
+        "padding: 3px;"+
+        "border: 2px solid #000;"+
+        "width: 70px;"+
+        "font: 0.7em verdana,arial;"+
+        "text-transform: uppercase;"+
+        "text-align: center;"+
+        "color: #FFF;"+
+        "background-color: #78919B;"+
+        "text-decoration: none;"+
+        "}";
+
+
+
+
+    var newDialogStyle = document.body.appendChild(document.createElement('style'));
+    newDialogStyle.setAttribute('type', 'text/css');
+    newDialogStyle.innerHTML = newDialog_Style;
+
+
+
+    var tabStyles = '';
+    tabStyles += '.exportTab { -moz-border-radius: 0.6em 0.6em 0px 0px; display: inline-block; font-size: xx-small; padding: 0px 7px; margin-right: 7px; text-align: center; cursor: pointer; }';
+    tabStyles += '.csvExportTab{ background-color:#ecd; }';
+    tabStyles += '.tsvExportTab{ background-color:#edc; }';
+    tabStyles += '.xmlExportTab{ background-color:#cde; }';
+    tabStyles += '.textExportTab{ background-color:#dce; }';
+
+    GM_addStyle(tabStyles);
+  }
+
+
+  function EXPORT_TAB(arg_exportType, arg_exportTabText, arg_textDescription, arg_textareaContents)
+  {
+    var exportTab = document.createElement('div');
+    // exportTab.style.cssFloat = 'left';
+    // exportTab.style.width = '20px';
+    exportTab.className = arg_exportType+'ExportTab exportTab';
+    exportTab.id = arg_exportType+'ExportTab_'+tmp_currentGraphId;
+
+    exportTab.innerHTML = arg_exportTabText;
+
+    var textareaContents = arg_textareaContents || "not found";
+    var textareaContentsReverse = "not found";
+    var messageHeader = arg_textDescription || "not found";
+
+    exportTab.addEventListener('click',
+        function exportTabs_onClick(event)
+        {
+          // (event.ctrlKey && event.altKey && event.shiftKey)
+          var exportTab = new ModalDialog('exportTab_'+arg_exportType);
+          exportTab.create('background-color: white; margin: 8em auto; padding: 2em; position: relative; top:'+window.pageYOffset+'px; width: 17em;',
+              '' +
+                  '<h3>'+'Exporting to '+arg_exportTabText+'..'+'</h3>' +
+                  '<small><i>'+messageHeader+'</i></small><br>' +
+                  '<textarea style="height: 15em; width: 17em;">' + ((event.ctrlKey && textareaContentsReverse) ? textareaContentsReverse : textareaContents) +'</textarea><br>' +
+                  '<button id="'+arg_exportType+'ExportTab_okButton">Ok</button>');
+
+          document.getElementById(arg_exportType+'ExportTab_okButton').addEventListener('click',
+                function (event) {
+                exportTab.hide();
+              }, false);
+
+          exportTab.show();
+
+          //      createExportDialog(messageHeader,textareaContents,'Exporting to '+arg_exportTabText+'..','Close',textareaContentsReverse,event);
+        },
+        false);
+
+    return exportTab;
+  }
+
+  function dataToExportFormat(arg_exportFormat, arg_graphId, arg_graphData, arg_numberOfDaysToExport)
+  {
+    var tmp_valuesArray = [];
+    var tmp_valuesToExportArray = [];
+    var exportString = '';
+    var maxCount = 10;
+
+    if(arg_numberOfDaysToExport) {
+      maxCount = arg_numberOfDaysToExport;
+    }
+
+    var tmp_currentDate;
+
+    if(arg_graphId.match(/ch_ext_schedule/i))
+    {
+      var tmp_extensionGraphIndex =  arg_graphId.match(/ch_ext_schedule([0-9]+)/i)[1];
+      var tmp_extensionScheduleAdjustment_start = (tmp_extensionGraphIndex - 1) * graphLengthLookup[arg_graphId] * -1;
+      var tmp_extensionScheduleAdjustment_end = (tmp_extensionGraphIndex - 0) * graphLengthLookup[arg_graphId] * -1;
+
+      for(var dateIndex = tmp_extensionScheduleAdjustment_start; dateIndex > tmp_extensionScheduleAdjustment_end; dateIndex--)
+      {
+        tmp_currentDate = dates_array[dateIndex];
+        if('undefined' !== typeof arg_graphData[tmp_currentDate]) {
+          tmp_valuesArray.push([tmp_currentDate, arg_graphData[tmp_currentDate][lookup_graphCache[arg_graphId]]]);
+        }
+      }
+    }
+    else {
+      for(var dateIndex = 0; dateIndex < maxCount; dateIndex++)
+      {
+        tmp_currentDate = dates_array[dateIndex];
+        if('undefined' !== typeof arg_graphData[tmp_currentDate]) {
+          tmp_valuesArray.push([tmp_currentDate, arg_graphData[tmp_currentDate][lookup_graphCache[arg_graphId]]]);
+        }
+      }
+    }
+    try {
+      switch(arg_exportFormat) {
+        case 'csv':
+          for(var i = 0; i < maxCount; i++) {
+            tmp_valuesToExportArray[i] = tmp_valuesArray[i].join(',');
+          }
+          return tmp_valuesToExportArray.join(',\n');
+          break;
+        case 'tsv':
+          for(var i = 0; i < maxCount; i++) {
+            tmp_valuesToExportArray[i] = tmp_valuesArray[i].join("\t");
+          }
+          return tmp_valuesToExportArray.join("\t\n");
+          break;
+        case 'text':
+          for(var i = 0; i < maxCount; i++) {
+            tmp_valuesToExportArray[i] = tmp_valuesArray[i][1];
+          }
+          return tmp_valuesToExportArray.join("\t\n");
+          break;
+      }
+    }
+    catch(e) {
+      errorLog("ERROR!\n#" +
+          'tmp_currentGraphId = ',tmp_currentGraphId,"\n" +
+          "Error details: \n",e);
+      return 'Error retrieving data';
+    }
+  }
+
+  this.init = function()
+  {
+    this.insertStyles();
+    var tmp_currentDataset = getPref('accountCache', {}, { prefType: 'JSON' });
+
+    for(var tmpNameOfCurrentGraph in graphsOnCurrentPage)
+    {
+      tmp_currentGraphId = graphsOnCurrentPage[tmpNameOfCurrentGraph];
+      if(document.getElementById(tmp_currentGraphId))
+      {
+        var referenceNode = document.getElementById(tmp_currentGraphId);
+        try
+        {
+          //// Add Export Links
+          // Create and insert wrapper for export 'tabs'
+          var exportTabsWrapper = document.createElement('div');
+            exportTabsWrapper.setAttribute('style','bottom:-1px; margin-left:17px; margin-top:4px; position:relative; text-align:left;');
+            exportTabsWrapper.id = 'exportTabsWrapper_'+tmp_currentGraphId;
+            exportTabsWrapper.innerHTML = '&nbsp;';
+
+          referenceNode.parentNode.insertBefore(exportTabsWrapper,referenceNode);
+
+          var exportTabTypes = ['CSV','TSV','Text'];
+          for(var exportTabTypes_index = 0; exportTabTypes_index < exportTabTypes.length; exportTabTypes_index++)
+          {
+            var exportTabElement = EXPORT_TAB(
+                exportTabTypes[exportTabTypes_index].toLowerCase(),
+                exportTabTypes[exportTabTypes_index],
+                graphShortCodeToReadableDescription(tmp_currentGraphId),
+                dataToExportFormat(
+                    exportTabTypes[exportTabTypes_index].toLowerCase(),
+                    tmp_currentGraphId,
+                    tmp_currentDataset.graphs,
+                    graphLengthLookup[tmp_currentGraphId])
+              );
+
+            if(document.getElementById(exportTabTypes[exportTabTypes_index].toLowerCase()+'ExportTab_'+tmp_currentGraphId)) {
+              document.getElementById(exportTabTypes[exportTabTypes_index].toLowerCase()+'ExportTab_'+tmp_currentGraphId).innerHTML = exportTabElement.innerHTML
+            } else {
+              document.getElementById('exportTabsWrapper_'+tmp_currentGraphId).appendChild(exportTabElement);
             }
-            catch(e) {
-              errorLog('error with new column - '+columnName+' ::\n',e);
+          }
+        }
+        catch(e) {
+          errorLog("ERROR!\nCannot add export tabs.\n\nFull error message:\n\n",e)
+        }
+      }
+    }
+  }
+};
+
+
+
+
+
+// x = id of the container where the graph is to be inserted
+// y = title displayed on the graph
+// o = x axis categories
+// w0 = prefix to x axis value in tooltip
+// w = suffix to x axis value in tooltip
+// O = array containing x series values and title above the graph
+// L = legend enabled [true|false]
+// m = y axis plot bands (3-value array or 0)
+// mn = y-axis minimum
+// p = x-axis plot bands (3-value array or 0)
+
+//function mk_ch(x, y, o, w0, w, O, L, m, mn, p)
+
+function mk_ch(x, y, o, w0, w, O, L, m, mn, p)
+{
+  if (true != xuw) return '';
+  if (0 == m) n = [0, 0, 0];
+  else n = m;
+  if (0 == p) pn = [0, 0, 0, 0];
+  else pn = p;
+  var s1 = 30,
+      s2 = 20,
+      s3 = 20,
+      s4 = 50;
+  if (1 == L) s1 = 20, s3 = 30;
+  if ('' == y) s1 = 10;
+  if ('x' == mn) {
+    mn = -0.2;
+    maxout = 4
+  } else maxout = null;
+  var g = [s1, s2, s3, s4];
+  var chart = new Highcharts.Chart({
+    chart: {
+      renderTo: x,
+      defaultSeriesType: 'line',
+      margin: g,
+      showAxes: 1,
+      borderColor: '#4572A7',
+      backgroundColor: '#fff',
+      borderWidth: 0,
+      shadow: 0
+    },
+    title: {
+      text: y,
+      style: {
+        margin: '10px 0 0 10px',
+        textAlign: 'center',
+        font: 'normal 12px Verdana, sans-serif'
+      }
+    },
+    xAxis: {
+      categories: o,
+      labels: {
+        enabled: 0
+      },
+      tickmarkPlacement: "on",
+      gridLineWidth: 1,
+      lineColor: '#fff',
+      tickColor: '#fff',
+      gridLineColor: (0 == p) ? '#eee' : '',
+      plotBands: [{
+        from: 0,
+        to: pn[0],
+        color: 'rgba(170,170,170,.3)'
+      },
+        {
+          from: pn[0],
+          to: pn[1],
+          color: 'rgba(255,101,79,.3)'
+        },
+        {
+          from: pn[1],
+          to: pn[2],
+          color: 'rgba(246,189,15,.3)'
+        },
+        {
+          from: pn[2],
+          to: pn[3],
+          color: 'rgba(139,186,0,.3)'
+        }]
+    },
+    yAxis: {
+      title: {
+        enabled: 0,
+        text: null
+      },
+      min: mn,
+      max: maxout,
+      endOnTick: 0,
+      startOnTick: 0,
+      tickPixelInterval: 20,
+      plotLines: [{
+        value: 0,
+        width: 1,
+        color: '#888'
+      }],
+      plotBands: [{
+        from: 0,
+        to: n[0],
+        color: 'rgba(255,101,79,.3)'
+      },
+        {
+          from: n[0],
+          to: n[1],
+          color: 'rgba(246,189,15,.3)'
+        },
+        {
+          from: n[1],
+          to: n[2],
+          color: 'rgba(139,186,0,.3)'
+        }]
+    },
+    tooltip: {
+      formatter: function () {
+        return '<b>' + this.series.name + '</b><br/>' + this.x + ': ' + w0 + this.y + ' ' + w
+      }
+    },
+    legend: {
+      enabled: L,
+      layout: 'horizontal',
+      symbolWidth: 5,
+      style: {
+        left: 'auto',
+        bottom: '5px',
+        right: '5px',
+        top: 'auto',
+        font: 'normal 12px Verdana, sans-serif'
+      }
+    },
+    plotOptions: {
+      line: {
+        lineWidth: 2,
+        marker: {
+          enabled: 1,
+          symbol: 'circle',
+          radius: 3,
+          states: {
+            hover: {
+              enabled: 1,
+              radius: 5
             }
           }
         }
       }
+    },
+    series: O,
+    credits: {
+      enabled: 0
+    }
+  })
+}
+
+function mk_ch2(_containerID, _graphTitle, _x_axisCategories, _tooltipPrefix, _tooltipSuffix, _x_ValuesAndTitle, _legendEnabled, _y_axisPlotBands, _y_axisMin, _x_axisPlotBands) {
+  var pn;
+
+  if (0 === _y_axisPlotBands) {
+    n = [0, 0, 0];
+  } else {
+    n = _y_axisPlotBands;
+  }
+  if (0 === _x_axisPlotBands) {
+    pn = [0, 0, 0, 0];
+  } else {
+    pn = _x_axisPlotBands;
+  }
+  var s1 = 30,
+      s2 = 20,
+      s3 = 20,
+      s4 = 50;
+  if (1 == _legendEnabled) {
+    s1 = 20, s3 = 30;
+  }
+  if ("" == _graphTitle) {
+    s1 = 10;
+  }
+  if ("x" == _y_axisMin) {
+    _y_axisMin = -0.2;
+    maxout = 4;
+  } else {
+    maxout = null;
+  }
+  var g = [s1, s2, s3, s4];
+
+
+  var chart = new(Highcharts.Chart)({
+    chart: {
+      renderTo: _containerID,
+      defaultSeriesType: "line",
+      margin: g,
+      showAxes: 1,
+      borderColor: "#4572A7",
+      backgroundColor: "#fff",
+      borderWidth: 0,
+      shadow: 0
+    },
+    title: {
+      text: _graphTitle,
+      style: {
+        margin: "10px 0 0 10px",
+        textAlign: "center",
+        font: "normal 12px Verdana,sans-serif"
+      }
+    },
+    xAxis: {
+      categories: _x_axisCategories,
+      labels: {
+        enabled: 0
+      },
+      tickmarkPlacement: "on",
+      gridLineWidth: 1,
+      lineColor: "#fff",
+      tickColor: "#fff",
+      gridLineColor: 0 === _x_axisPlotBands ? "#eee" : "",
+      plotBands: [{
+        from: 0,
+        to: pn[0],
+        color: "rgba(170,170,170,.25)"
+      },
+        {
+          from: pn[0],
+          to: pn[1],
+          color: "rgba(255,101,79,.25)"
+        },
+        {
+          from: pn[1],
+          to: pn[2],
+          color: "rgba(246,189,15,.25)"
+        },
+        {
+          from: pn[2],
+          to: pn[3],
+          color: "rgba(139,186,0,.25)"
+        }]
+    },
+    yAxis: {
+      title: {
+        enabled: 0,
+        text: null
+      },
+      min: _y_axisMin,
+      max: maxout,
+      endOnTick: 0,
+      startOnTick: 0,
+      tickPixelInterval: 20,
+      plotLines: [{
+        value: 0,
+        width: 1,
+        color: "#888"
+      }],
+      plotBands: [{
+        from: 0,
+        to: n[0],
+        color: "rgba(255,101,79,.25)"
+      },
+        {
+          from: n[0],
+          to: n[1],
+          color: "rgba(246,189,15,.25)"
+        },
+        {
+          from: n[1],
+          to: n[2],
+          color: "rgba(139,186,0,.25)"
+        }]
+    },
+    tooltip: {
+      formatter: function () {
+        return "<b>" + this.series.name + "</b><br/>" + this.x + ": " + _tooltipPrefix + this.y + " " + _tooltipSuffix;
+      }
+    },
+    legend: {
+      enabled: _legendEnabled,
+      layout: "horizontal",
+      symbolWidth: 5,
+      style: {
+        left: "auto",
+        bottom: "5px",
+        right: "5px",
+        top: "auto",
+        font: "normal 12px Verdana,sans-serif"
+      }
+    },
+    plotOptions: {
+      line: {
+        lineWidth: 2,
+        marker: {
+          enabled: 1,
+          symbol: "circle",
+          radius: 3,
+          states: {
+            hover: {
+              enabled: 1,
+              radius: 5
+            }
+          }
+        }
+      }
+    },
+    series: _x_ValuesAndTitle,
+    credits: {
+      enabled: 0
+    }
+  });
+}
+
+
+/*
+
+mk_ch2("ch_cliques",
+    "",
+    ["2010/12/15", "2010/12/16", "2010/12/17", "2010/12/18", "2010/12/19", "2010/12/20", "2010/12/21", "2010/12/22", decodeURIComponent(escape("Yesterday")), decodeURIComponent(escape("Today"))],
+    "foo",
+    decodeURIComponent(escape("Clicks")),
+    [
+      {
+        name: decodeURIComponent(escape("Local Time")),
+        data: [8, 0, 9, 11, 0, 0, 0, 1, 2, 10]
+      },
+      {
+        name: decodeURIComponent(escape("Server Time")),
+        data: [8, 2, 7, 11, 0, 0, 0, 3, 4, 6]
+      }
+    ],
+    1,
+    [2,4,9],
+    -1.1,
+    [3]
+  ); */
+
+
+
+var convertRefListingsToUl = function() {
+
+  debugLog(localStorage);
+
+  var referrals = JSON.parse(getValue('referrals'))
+
+  debugLog(referrals);
+
+
+  function to_ul (obj) {
+      // --------v create an <ul> element
+      var f, li, ul = document.createElement ("ul");
+
+      // --v loop through its children
+      for (var i in obj)
+      {
+          if(obj.hasOwnProperty(i))
+          {
+              //debugLog(i);
+              li = document.createElement ("li");
+              // if the child has a 'folder' prop on its own, call me again
+              if ('object' == typeof obj[i]) {
+                  li.appendChild (to_ul (obj[i]));
+              } else {
+                  // debugLog(document.createTextNode(i));
+                  li.appendChild(document.createTextNode(i + ' = ' + obj[i]));
+              }
+              ul.appendChild(li);
+          }
+      }
+
+      return ul;
+  }
+
+
+  this.init = function() {
+    var tmp_ul = to_ul(referrals);
+
+    debugLog(tmp_ul);
+
+//    document.body.innerHTML = "";
+    document.body.appendChild(tmp_ul);
+  }
+};
+
+
+//convertRefListingsToUl.init();
+
+
+var widenPages = new function() {
+
+  this.referralListings = function() {
+    document.body.children[1].style.width = '90%';
+    document.body.children[1].style.padding = '0 4em';
+
+    if(document.getElementById('tblprp')) {
+      document.getElementById('tblprp').style.maxWidth = '78em';
+      document.getElementById('tblprp').style.overflow = 'auto';
     }
 
-    this.init = function (arg_options)
-    {
-      var settings = {};
-      var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
-      var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
-      var tmp_currentRow;
+    GM_addStyle('.l { white-space: nowrap; } ')
+  };
 
-      var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
+  this.generic = function() {
+    document.body.children[0].style.width = '98%';
+    document.body.children[0].style.maxWidth = '100em';
+    document.body.children[1].style.width = '1100px';
+  }
+};
 
-      var colIndexes = {
-        refID: 3,
-        refSince: 5
-      };
-      var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
-      debugLog(tmp_referralsData);
+
+
+function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_currentPageview)
+{
+  if('undefined' === typeof GM_addStyle) {
+    function GM_addStyle(arg_css) {
+      var head = document.getElementsByTagName("head")[0];
+      if (head) {
+        var style = document.createElement("style");
+        style.textContent = arg_css;
+        style.type = "text/css";
+        head.appendChild(style);
+      }
+      return style;
+    }
+  }
+
+  var elmnt_totalsContainer = document.createElement('div');
+  elmnt_totalsContainer.id = 'clickTotalsContainer';
+  elmnt_totalsContainer.setAttribute('style', 'position: fixed; bottom: 2em; right: 2em; width: 150px; min-height: 10em; background-color: white; border: 1px solid black; font-size:x-small !important; padding: 1em 1em; opacity: 0.5;');
+
+  elmnt_totalsContainer.setAttribute('onmouseover','document.getElementById("clickTotalsContainer").style.opacity = "1"; ');
+  elmnt_totalsContainer.setAttribute('onmouseout','document.getElementById("clickTotalsContainer").style.opacity = "0.5";');
+
+  GM_addStyle(".adCountIncrementButton { width: 2.5em; text-align:center; font-size: xx-small; }"+
+      ".adCountDecrementButton { width: 2.5em; text-align:center; font-size: xx-small; }"+
+      "#clickTotalsContainer table tr td { font-size:x-small; }");
+
+
+
+  // If the date navigated to doesn't currently exist in the adCounts data, create the data object for it
+  if(!arg_adCounts[dates_array[arg_dateIndex]]) {
+    arg_adCounts[dates_array[arg_dateIndex]] = {};
+  }
+
+  // Similarly, check that each of the ad type counts are valid and/or/else reset to zero
+  arg_adCounts[dates_array[arg_dateIndex]]['extended']    = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['extended'] )    ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['regular']     = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['regular'] )     ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['mini']        = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['mini'] )        ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['fixed']       = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixed'] )       ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro']  = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] )  ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0;
+  arg_adCounts[dates_array[arg_dateIndex]]['micro']       = (0 <= arg_adCounts[dates_array[arg_dateIndex]]['micro'] )       ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0;
+
+
+  // If the date navigated to doesn't currently exist in the arg_adCountChange_currentPageview data, create the data object for it
+  if(!arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]) {
+    arg_adCountChange_currentPageview[dates_array[arg_dateIndex]] = {};
+  }
+
+  //Check that each of the pageview ad counts exist, else assign 0 to it
+  //Note: when new dates are navigated to and the above code has to create a record for that date, these sub-objects will not exist
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['extended']   = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['extended']   || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['regular']    = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['regular']    || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['mini']       = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['mini']       || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixed']      = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixed']      || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixedMicro'] = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['fixedMicro'] || 0;
+  arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['micro']      = arg_adCountChange_currentPageview[dates_array[arg_dateIndex]]['micro']      || 0;
+
+
+
+  var tmp_foo = {
+    extended: {
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['extended'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['extended'] : 0,
+      text: tl8("Extended:"),
+      countsToTos37: true,
+      value: 0.02
+    },
+    regular: {
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['regular'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['regular'] : 0,
+      text: tl8("Regular:"),
+      countsToTos37: true,
+      value: 0.01
+    },
+    mini: {
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['mini'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['mini'] : 0,
+      text: tl8("Mini:"),
+      countsToTos37: false,
+      value: 0.005
+    },
+    fixed: {
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixed'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixed'] : 0,
+      text: tl8("Fixed:"),
+      countsToTos37: true,
+      value: 0.01
+    },
+    fixedMicro: {
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['fixedMicro'] : 0,
+      text: tl8("Fixed (Micro):"),
+      countsToTos37: true,
+      value: 0.001
+    },
+    micro: {
+      adCount: (0 <= arg_adCounts[dates_array[arg_dateIndex]]['micro'] ) ? arg_adCounts[dates_array[arg_dateIndex]]['micro'] : 0,
+      text: tl8("Micro:"),
+      countsToTos37: false,
+      value: 0.001
     }
   };
 
 
-  function insertSidebar()
-  {
-    // Function which inserts the 'Statistics Sidebar' to the referral statistics page
+  var tmp_totalsContainerHTML = "";
 
-    // Location to insert the sidebar (right hand side)
-    var locationToInsertSidebar = {
-      right: docEvaluate("//td[@width='729']").snapshotItem(0).parentNode || document.body,
-      left: document.body.children[1].children[1].children[0].children[0].children[0] || document.body
+  tmp_totalsContainerHTML += "" +
+      "<center><button id='date_decrementButton' class='adCountDecrementButton'>-</button>" +
+      "<span id='date_textCount'>"+dates_array[arg_dateIndex]+"</span>" +
+      "<button id='date_incrementButton' class='adCountIncrementButton'>+</button></center>" +
+      "<br>"+
+      "<table>";
+
+  for(var tmp_label in tmp_foo) {
+    if(tmp_foo.hasOwnProperty(tmp_label))
+    {
+      tmp_totalsContainerHTML += [
+        "<tr><td>"+ tmp_foo[tmp_label].text,
+        "<button id='"+tmp_label+"AdCount_incrementButton' class='adCountIncrementButton'>+</button>",
+        "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>",
+        "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((0 <
+            arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]) ? "+"+arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]:arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label])+")</span>",
+        "<button id='"+tmp_label+"AdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"
+      ].join('</td><td>');
+    }
+  }
+
+  tmp_totalsContainerHTML += "</table>";
+  elmnt_totalsContainer.innerHTML = tmp_totalsContainerHTML;
+
+  if(document.getElementById('clickTotalsContainer')) {
+      document.getElementById('clickTotalsContainer').parentNode.removeChild(document.getElementById('clickTotalsContainer'));
+  }
+  document.body.appendChild(elmnt_totalsContainer);
+
+
+
+
+  /* Add handlers for changing the currently selected date */
+
+  // NB: The date index is in reverse order (ie, n days into the past) thus incrementing this index equates to going an increased number of days into the past
+  document.getElementById('date_decrementButton').addEventListener('click',function () {
+    insertAdCounterBox(arg_dateIndex + 1, arg_adCounts, arg_adCountChange_currentPageview);
+  },false);
+
+  document.getElementById('date_incrementButton').addEventListener('click',function () {
+    insertAdCounterBox(arg_dateIndex - 1, arg_adCounts, arg_adCountChange_currentPageview);
+  },false);
+
+
+  /* Add handlers for changing the ad counts */
+
+  function addIncrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
+  {
+    var tmp_adCounts = {};
+    Object_merge(tmp_adCounts, arg_oldAdCounts);
+
+    var tmp_adCountChange = {};
+    Object_merge(tmp_adCountChange, arg_tmp_adCountChange_currentPageview);
+
+    tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) + 1;
+    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) + 1;
+
+    //If the adcount is less than zero, reset it to 0 (cannot click fewer than zero of any ad-type) and undo the change
+    // to the adcount for the current pageview
+    if(0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) {
+      tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = 0;
+      tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) - 1;
+    }
+
+    document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function ()
+    {
+      debugLog('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
+      debugLog('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
+      insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
+      // Workaround for GM access checks/violations
+      // http://wiki.greasespot.net/Greasemonkey_access_violation
+      setTimeout(function() {
+        setPref('ownAdCountTally',tmp_adCounts, { prefType: 'JSON' });
+      }, 0);
+    },false);
+  }
+
+  function addDecrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
+  {
+    var tmp_adCounts = {};
+    Object_merge(tmp_adCounts, arg_oldAdCounts);
+
+    var tmp_adCountChange = {};
+    Object_merge(tmp_adCountChange, arg_tmp_adCountChange_currentPageview);
+
+    tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) - 1;
+    tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = parseInt(arg_oldAdCounts[dates_array[arg_dateIndex]][arg_adType]) - 1;
+
+    //If the adcount is less than zero, reset it to 0 (cannot click fewer than zero of any ad-type) and undo the change
+    // to the adcount for the current pageview
+    if(0 > tmp_adCounts[dates_array[arg_dateIndex]][arg_adType]) {
+      tmp_adCounts[dates_array[arg_dateIndex]][arg_adType] = 0;
+      tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) + 1;
+    }
+
+    document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function ()
+    {
+      debugLog('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
+      debugLog('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
+      insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
+      // Workaround for GM access checks/violations
+      // http://wiki.greasespot.net/Greasemonkey_access_violation
+      setTimeout(function() {
+        setPref('ownAdCountTally',tmp_adCounts, { prefType: 'JSON' });
+      }, 0);
+    },false);
+  }
+
+  // Loop through the different ad types and call the function that adds the click events for the increment and decrement buttons
+  for(var tmp_label in arg_adCounts[dates_array[arg_dateIndex]]) {
+    if(arg_adCounts[dates_array[arg_dateIndex]].hasOwnProperty(tmp_label))
+    {
+      addDecrementListener(tmp_label, arg_adCounts, arg_adCountChange_currentPageview);
+      addIncrementListener(tmp_label, arg_adCounts, arg_adCountChange_currentPageview);
+    }
+  }
+}
+
+
+function addClickStatsToGoldenGraph() {
+  function mk_ch_ref(x, o, w0, w, O, L, m)
+  {
+    console.info(arguments);
+    if (0 == m)
+    {
+        n = [0, 0, 0];
+    } else {
+        n = m;
+    }
+    var s1 = 20, s2 = 20, s3 = 20, s4 = 50;
+    if (1 == L)
+    {
+        s3 = 30;
+    }
+    var g = [s1, s2, s3, s4];
+    var chart = new (Highcharts.Chart)({chart: {renderTo: x, defaultSeriesType: "line", margin: g, showAxes: 1, borderWidth: 0, shadow: 0}, title: {text: ""}, xAxis: {categories: o, labels: {enabled: 0}, tickmarkPlacement: "on", gridLineWidth: 1, lineColor: "#fff", tickColor: "#fff", gridLineColor: "#ddd"}, yAxis: {title: {enabled: 0, text: null}, min: -0.1, endOnTick: 0, startOnTick: 0, tickPixelInterval: 20, plotLines: [
+      {value: 0, width: 1, color: "#888"}
+    ]}, tooltip: {formatter: function ()
+    {
+      return "<b>" + this.series.name + "</b><br/>" + this.x + ": " + w0 + this.y + " " + w;
+    }}, legend: {enabled: L, layout: "horizontal", symbolWidth: 5, style: {left: "auto", bottom: "5px", right: "5px", top: "auto", font: "normal 12px Verdana, sans-serif"}}, plotOptions: {line: {lineWidth: 2, marker: {enabled: 1, symbol: "circle", radius: 3, states: {hover: {enabled: 1, radius: 5}}}}}, series: O, credits: {enabled: 0}});
+
+
+    /*start extra stuff added to the function*/
+    var newElmnt = document.createElement('div');
+//      console.info('O[0].data: ', O[0].data);
+
+    var disp_clicks = "Clicks:";
+    var disp_sum = "Sums:";
+    var disp_avg = "Avgs:";
+
+    var clicks = [];
+    var sum = [];
+    var avg = [];
+
+
+    for (var i = 0; i < O[0].data.length; i++) {
+      disp_clicks += ' ' + O[0].data[i];
+      clicks[i] = O[0].data[i];
+    }
+
+    for (var i = O[0].data.length - 1; 0 <= i; i--)
+    {
+      sum[i] = ('undefined' !== typeof sum[i+1]) ? clicks[i] + sum[i+1] : clicks[i];
+      avg[i] = (sum[i] / (O[0].data.length - i)).toFixed(1);
+
+//        console.info('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
+//        console.info('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
+    }
+
+    newElmnt.innerHTML = '<table class="refGraphDatabar">' +
+        '<tr><td>'+ [
+          'Day # '+'</td><td>'+[9,8,7,6,5,4,3,2,1,0].join('</td><td>'),
+          'Clicks:'+'</td><td>'+clicks.join('</td><td>'),
+          'Sum: '+'</td><td>'+sum.join('</td><td>'),
+          'Avg: '+'</td><td>'+avg.join('</td><td>')].join('</td></tr><tr><td>') +
+        '</td></tr>' +
+        '</table>';
+
+    newElmnt.style.padding = '0 1.5em 1em';
+
+    document.getElementById(x).style.minHeight = '130px';
+    document.getElementById(x).style.height = '';
+//    document.getElementById(x).style.minWidth = '280px';
+    document.getElementById(x).style.width = '280px';
+    document.getElementById(x).style.textAlign = 'center';
+    document.getElementById(x).appendChild(newElmnt);
+  }
+
+
+  GM_addStyle(".refGraphDatabar { border-collapse: collapse; }" +
+      ".refGraphDatabar tbody tr td { font-size: x-small; padding:0 1px; border: 1px solid black; }");
+
+//  console.info('mk_ch_ref.toString() : ',mk_ch_ref.toString());
+  var script = document.createElement("script");
+  script.setAttribute('type','text/javascript');
+  script.text = mk_ch_ref.toString();
+  document.body.appendChild(script);
+
+}
+
+var referralListings_columns = new function()
+{
+  function addColumn(arg_row,arg_columnText,arg_colId,arg_customCSS)
+  {
+    var tmp_newColumn;
+
+//    debugLog(arg_colId);
+    var tmp_existingCol = document.getElementById(arg_colId);
+    if(tmp_existingCol) {
+      tmp_existingCol.parentNode.removeChild(tmp_existingCol);
+    }
+
+    /*NB: container needs to be a table otherwise Firefox disposes of the contaning <td> due to it not being within a suitable containing element*/
+    var tmp_container = document.createElement('table');
+    tmp_container.innerHTML = '' +
+        '<tbody><tr><td id="'+arg_colId+'"' +
+          ' class="'+arg_row.children[arg_row.children.length - 1].getAttribute('class')+'"' +
+          ' style="'+arg_row.children[arg_row.children.length - 1].getAttribute('style') +
+          arg_customCSS+'"' +
+        '>' +
+          arg_columnText+
+        '</td></tr></tbody>';
+
+    tmp_newColumn = tmp_container.children[0].children[0].children[0];
+    arg_row.appendChild(tmp_newColumn);
+    colCount++;
+
+  }
+
+  function dateToDHM(arg_date)
+  {
+    var oneSecond = 1000;
+    var oneMinute = oneSecond * 60;
+    var oneHour = oneMinute * 60;
+    var oneDay = oneHour * 24;
+
+    var now = new Date();
+
+//    debugLog('now: ',now,'\nother date: ',arg_date);
+
+    var t_diff = new Date(arg_date) - now;
+//    debugLog('t_diff = '+t_diff);
+
+
+    var future = (0 < t_diff);
+    var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
+
+//    debugLog('remaining_time: ',remaining_time);
+
+    var diff_days = Math.floor(remaining_time / oneDay);
+    remaining_time -= diff_days * oneDay;
+
+//    debugLog('diff_days: ',diff_days,'\nremaining_time: ',remaining_time);
+
+    var diff_hrs = Math.floor(remaining_time / oneHour);
+    remaining_time -= diff_hrs * oneHour;
+
+//    debugLog('diff_hrs: ',diff_hrs,'\nremaining_time: ',remaining_time);
+
+    var diff_mins = Math.floor(remaining_time / oneMinute);
+    remaining_time -= diff_mins * oneMinute;
+
+//    debugLog('diff_mins: ',diff_mins,'\nremaining_time: ',remaining_time);
+
+    var diff_secs = Math.floor(remaining_time / oneSecond);
+    remaining_time -= diff_secs * oneSecond;
+
+//    debugLog('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
+
+   return '['+
+       diff_days+'d'+
+       ', '+diff_hrs+'h'+
+       ', '+diff_mins+'m'+
+//       ', '+diff_secs+'s'+
+       ']';
+  }
+  function dateToD(arg_date)
+  {
+    var oneSecond = 1000;
+    var oneMinute = oneSecond * 60;
+    var oneHour = oneMinute * 60;
+    var oneDay = oneHour * 24;
+
+    var now = new Date();
+    var t_diff = new Date(arg_date) - now;
+
+    var future = (0 < t_diff);
+    var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
+
+    var diff_days = Math.floor(remaining_time / oneDay);
+    remaining_time -= diff_days * oneDay;
+
+    if(isNaN(diff_days)) {
+      return '--';
+    }
+
+    return '['+
+       diff_days+'d' +
+       ']';
+  }
+
+  function nextPaymentStringToDate(arg_nextPaymentString)
+  {
+    arg_nextPaymentString = arg_nextPaymentString.toString();
+//    debugLog('nextPaymentStringToDate: \n','arg_nextPaymentString : ',arg_nextPaymentString);
+    var onesec = 1000;
+    var onemin = onesec * 60;
+    var onehr = onemin * 60;
+    var oneday = onehr * 24;
+
+    /* nb: bugfix - occasionally neobux displafs displays a negative # of hours for the next payment date which breaks the regex */
+//    var spliced = arg_nextPaymentString.match(/([0-9]+).*([0-9]{2}):([0-9]{2})/);
+    var spliced = arg_nextPaymentString.match(/([0-9]+)[^-]*(-?[0-9]{2}):([0-9]{2})/);
+    var tmp_days = spliced[1]*1;
+    var tmp_hours = spliced[2]*1;
+    var tmp_mins = spliced[3]*1;
+
+    var tmp_date = new Date( (new Date()*1) +
+        (tmp_days * oneday) +
+        (tmp_hours * onehr) +
+        (tmp_mins * onemin) );
+
+//    debugLog(tmp_days+'d, '+tmp_hours+'h, '+tmp_mins+'m');
+    return tmp_date;
+
+  }
+
+  this.editHeaderRow = function ()
+  {
+
+  }
+
+  this.mainLoop = function()
+  {
+    var tmp_currentID, tmp_income, tmp_value;
+    var tmp_dhmOwned;
+
+    var headerCol_idPrefix = 'header_';
+    var newCol_idPrefix = ''; // set within the loop
+
+    var columns = {
+      totalIncomeCol: {
+        colType: 'new',
+        colPrefix: '$',
+        colSuffix: '',
+        colHeaderText: 'Total Income'
+      },
+      totalExpensesCol: {
+        colType: 'new',
+        colPrefix: '$',
+        colSuffix: '',
+        colHeaderText: 'Total Expenses'
+      },
+      netIncome: {
+        colType: 'new',
+        colPrefix: '$',
+        colSuffix: '',
+        colHeaderText: 'Net Income'
+      },
+      clickValues: {
+        colType: 'new',
+        colPrefix: '',
+        colSuffix: '',
+        colHeaderText: 'Ultimate Click Values'
+      },
+      refSince_DHM: {
+        colType: 'new',
+        colPrefix: '',
+        colSuffix: '',
+        colHeaderText: 'D/H/M Ref Since'
+      },
+      nextPayment_DHM: {
+        colType: 'new',
+        colPrefix: '',
+        colSuffix: '',
+        colHeaderText: 'D/H/M Next Payment'
+      },
+      lastClick_D: {
+        colType: 'new',
+        colPrefix: '',
+        colSuffix: '',
+        colHeaderText: 'D Last Click'
+      },
+      textifyFlag: {
+        colType: 'new',
+        colPrefix: '',
+        colSuffix: '',
+        colHeaderText: 'Flag Colour'
+      }
     };
 
 
-    // Time periods for the statistics sidebar where:
-    // 0=today, 1=1day ago, 14=14days ago etc
-    // [
-    //    [starting day, ending day],
-    //    [next time periods....],
-    //    [another time period....],
-    //    [etc..]
-    // ]
-    var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,9],[1,9]];
-    var tmp_dataSet = getPref('accountCache', {}, { prefType: 'JSON' });
-
-    var sidebarData = {};
-    var currentSidebarTimePeriod;
-    var showProjected;
-
-    var tmp_sum = [], tmp_currentValue = [], tmp_average = [];
-    var tmp_currentDate;
-    var tmp_foobar;
-
-    var dataIsComplete = {};
-
-    var tmp_projectedClicks_rented = parseFloat(document.querySelectorAll('span.f_b')[4].textContent);
-    var tmp_projectedClicks_direct = parseFloat(document.querySelectorAll('span.f_b')[2].textContent);
-
-    sidebarData.projectedClicks = {};
-    sidebarData.projectedClicks['Rented'] = currentUser.numberOfRefs.Rented * tmp_projectedClicks_rented;
-    sidebarData.projectedClicks['Direct'] = currentUser.numberOfRefs.Direct * tmp_projectedClicks_direct;
-    sidebarData.projectedClicks['Total'] = sidebarData.projectedClicks['Rented'] + sidebarData.projectedClicks['Direct'];
-
-    sidebarData.projectedIncome = {};
-    sidebarData.projectedIncome['Rented'] = (sidebarData.projectedClicks['Rented'] * currentUser.rentedReferralClickValue);
-    sidebarData.projectedIncome['Direct'] = (sidebarData.projectedClicks['Direct'] * currentUser.directReferralClickValue);
-    sidebarData.projectedIncome['Total'] = (sidebarData.projectedIncome['Rented'] + sidebarData.projectedIncome['Direct']);
-
-    // // NOW CREATE THE ACTUAL SIDEBAR ////
-    if(document.getElementById("sidebarContainer")) {
-      document.getElementById("sidebarContainer").parentNode.removeChild(document.getElementById("sidebarContainer"));
-    }
-
-    var sidebarContainer = document.createElement("div");
-    sidebarContainer.id = "sidebarContainer";
-
-    GM_addStyle("#sidebarContainer { background-color:#FFFFFF; background-repeat:no-repeat; border:1px solid #AAAAAA; margin-left:5px; padding:0 10px 15px 8px; vertical-align:top; width:182px; }" +
-        ".leftSide { position: inline-block; opacity: 1; }" +
-  //      ".rightSide { position: fixed; right: 2px; top:117px; opacity: 0.5; }" +
-        ".rightSide { position: relative; right: 2px; top:0; }" +
-        ".sidebarContent { font-family: Verdana, Arial, Helvetica, sans-serif; font-size: x-small !important; }" +
-        ".sidebarHeader { display:block; font-size:1.1em; text-align:center; } " +
-        ".sidebarDetails { font-size: x-small; margin-left: 5px; } " +
-        "h4 { color: #444; margin-top: 10px; margin-bottom:2px } " +
-        "h5 { margin-top: 7px; margin-bottom:2px; margin-left:2px; } " +
-        "h6 { font-size: xx-small !important; margin-top: 2px; margin-bottom:2px } " +
-        ".h5_subHead { margin-top:2px; font-size:xx-small; } " +
-        ".bold { font-weight: bold; } " +
-        ".grey { color: #aaa; }");
-
-
-    //Functions to quickly decide if info should be shown
-    function showInfo(arg_toDisplay, arg_refType) { return (0 < currentUser.numberOfRefs[arg_refType]) ? arg_toDisplay : ''; }
-    /*Show if user has rented referrals*/
-    function SIRR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
-    /*Show if user has direct referrals*/
-    function SIDR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct) ? arg_toDisplay : ''; }
-    /*Show if user has referrals*/
-    function SIR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct || 0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
-
-    function outputIfExists(arg_varToOutput,arg_textToDisplayOtherwise)
-    {
-      try { return arg_varToOutput; }
-      catch(e) { return arg_textToDisplayOtherwise; }
-    }
-
-
-    var tmp = "";
-    tmp += "<span class='sidebarContent'>";
-    tmp += "<span class='sidebarHeader'>";
-    tmp += "<h4 class='bold'>"+tl8('Statistics Summary')+"</h4>";
-    tmp += "<i>"+tl8('Rented')+": " + currentUser.numberOfRefs.Rented + " / "+tl8('Direct')+": " + currentUser.numberOfRefs.Direct + "</i><br>";
-    tmp += "<i>"+tl8('Total')+": " + (currentUser.numberOfRefs.Rented + currentUser.numberOfRefs.Direct) + "</i>";
-    tmp += " </span>";
-
-
-    for(var i=0; i < sidebarTimePeriods.length; i++)
-    {
-      currentSidebarTimePeriod = sidebarTimePeriods[i];
-
-      //Default showing the projected values for the current time period to false and only enable it if required
-      showProjected = false;
-
-      /**
-       * CHECK IF THE CURRENTLY SELECTED TIME PERIOD IS VALID
-       * IF NOT, CONTINUE TO THE NEXT SIDEBAR TIME PERIOD
-       **/
-      if (2 !== currentSidebarTimePeriod.length) {
-        errorLog("ERROR!\n\n", "Sidebar Timeperiods incorrect length (" + currentSidebarTimePeriod.length + ") not 2. Moving onto next time period.");
-        continue;
-      }
-      if(!(0 <= currentSidebarTimePeriod[0]) || !(0 <= currentSidebarTimePeriod[1])) {
-        errorLog("ERROR!\n\n", "Sidebar Timeperiod #" + i + " is not numerical. Moving onto next time period.");
-        continue;
-      }
-
-      if(currentSidebarTimePeriod[0] > currentSidebarTimePeriod[1]) {
-        errorLog("Error!\n\n", "Sidebar Timeperiod #" + i + ' is not in the correct order (end day is earlier than the start day). Moving onto next time period');
-        continue;
-      }
-
-      //Determine which one is the start or end day & fix the order of the time periods if the order is malformed
-      if(currentSidebarTimePeriod[0] <= currentSidebarTimePeriod[1]){
-        startDay = currentSidebarTimePeriod[0];
-        endDay = currentSidebarTimePeriod[1];
-      }
-      else {
-        startDay = currentSidebarTimePeriod[1];
-        endDay = currentSidebarTimePeriod[0];
-      }
-
-
-      for(var dayCounterIndex = startDay; dayCounterIndex <= endDay; dayCounterIndex++)
+    for(var columnName in columns) {
+      if(columns.hasOwnProperty(columnName))
       {
-        tmp_currentDate = dates_array[dayCounterIndex];
+        switch(columns[columnName].colType)
+        {
+          case 'new':
+            addColumn(headerRow,
+                columns[columnName].colHeaderText,
+                headerCol_idPrefix + columnName,
+                '');
+          break;
+          case 'append':
+          break;
+          case 'prepend':
+          break;
+          case 'replace':
+          break;
+        }
+      }
+    }
 
-        //Check whether data is stored for the current date
-        if("undefined" === typeof tmp_dataSet.graphs[tmp_currentDate]) {
-          errorLog("Data for this for this date ("+tmp_currentDate+") is not found.");
+    var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
+    for(var i=1; i<tmp_colspans.length - 1;i++) {
+      tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
+    }
 
-          //Dataset for current date is missing, thus mark it as such
-          dataIsComplete[tmp_currentDate] = 'missing';
-          continue;
+    var extensionCostPerDay = userAccount.feesCosts.extensions[preferences.preferredExtensionLength] / preferences.preferredExtensionLength;
+    var goldenFeePerDay = currentUser.accountType.cost / 365;
+    var goldenFeePerDayPerReferral = goldenFeePerDay / currentUser.numberOfRefs.Rented;
+
+    var costPerReferralPerDay = extensionCostPerDay; // + goldenFeePerDayPerReferral;
+
+    var incomeExpenses = {};
+
+    for(var i=0; i<referralRows.length; i++) {
+      tmp_currentRow = referralRows[i];
+
+      tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/)[0];
+      tmp_currentRow.id = tmp_currentID;
+      tmp_currentRow.setAttribute('class',tmp_currentRow.getAttribute('class') + ' referralRow');
+
+      incomeExpenses[tmp_currentID] = incomeExpenses[tmp_currentID] || {};
+      if(currentPage.pageCode.match(/referralListings_Rented/)) {
+      incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.rentedReferralClickValue).toFixed(3);
+    } else if(currentPage.pageCode.match(/referralListings_Direct/)) {
+      incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.directReferralClickValue).toFixed(3);
+    }
+
+    if(currentPage.pageCode.match(/referralListings_Rented/)) {
+      incomeExpenses[tmp_currentID].totalExpenses = (tmp_referralsData[tmp_currentID].age_dec * costPerReferralPerDay).toFixed(3);
+    } else if(currentPage.pageCode.match(/referralListings_Direct/)) {
+      incomeExpenses[tmp_currentID].totalExpenses = 0;
+    }
+
+      GM_addStyle('.referralRow { letter-spacing: -0.01em; }');
+
+      newCol_idPrefix = tmp_currentID + '_';
+
+      for(var columnName in columns) {
+        switch(columnName) {
+          case 'totalIncomeCol':
+              tmp_value = incomeExpenses[tmp_currentID].totalIncome;
+          break;
+          case 'totalExpensesCol':
+              tmp_value = incomeExpenses[tmp_currentID].totalExpenses;
+          break;
+          case 'netIncome':
+              tmp_value = (incomeExpenses[tmp_currentID].totalIncome - incomeExpenses[tmp_currentID].totalExpenses).toFixed(3);
+          break;
+          case 'clickValues':
+//              console.info(tmp_referralsData[tmp_currentID].ultimateClickValues.clicks);
+              tmp_value = '<small><i>|';
+              for(var tmp_clicksIndex in tmp_referralsData[tmp_currentID].ultimateClickValues.clicks){
+                if(tmp_referralsData[tmp_currentID].ultimateClickValues.clicks.hasOwnProperty(tmp_clicksIndex))
+                {
+                  tmp_value += tmp_referralsData[tmp_currentID].ultimateClickValues.clicks[tmp_clicksIndex].toString() + '|';
+                }
+              }
+              tmp_value += '</i></small>';
+//              tmp_value = tmp_referralsData[tmp_currentID].ultimateClickValues.clicks.join(', ') || "Error";
+          break;
+          case 'refSince_DHM':
+            tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].referralSince));
+          break;
+          case 'nextPayment_DHM':
+            tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].nextPayment));
+          break;
+          case 'lastClick_D':
+            tmp_value = dateToD(new Date(tmp_referralsData[tmp_currentID].lastClick));
+          break;
+          case 'textifyFlag':
+            tmp_value = tmp_referralsData[tmp_currentID].flagColour.split('')[0] || "Unknown".split('')[0];
+          break;
         }
 
-        //Loop through the data contained for the current date,
-        for(var tmpGraphIndex in lookup_graphCache) {
-          if(lookup_graphCache.hasOwnProperty(tmpGraphIndex))
-          {
-            if(tmpGraphIndex.match(/ch_ext_schedule/i)){
-              continue;
-            }
-            if("undefined" === typeof tmp_dataSet.graphs[tmp_currentDate][lookup_graphCache[tmpGraphIndex]]) {
-              //Data for this specific graph is not found for this date
-              errorLog("Data for this specific graph ("+tmpGraphIndex+" / "+lookup_graphCache[tmpGraphIndex]+")is not found for this date ("+tmp_currentDate+").");
-              continue;
-            }
-
-            tmp_currentValue = tmp_dataSet.graphs[tmp_currentDate][lookup_graphCache[tmpGraphIndex]];
-  //          console.info(tmpGraphIndex + " (" + lookup_graphCache[tmpGraphIndex] + ") on " + tmp_currentDate + " = " + tmp_currentValue);
-
-            if(!tmp_sum[lookup_graphCache[tmpGraphIndex]]) {
-              tmp_sum[lookup_graphCache[tmpGraphIndex]] = {};
-            }
-
-            tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex] = ("undefined" === typeof tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex-1]) ? tmp_currentValue : tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex-1] + tmp_currentValue;
-            tmp_average[dayCounterIndex] = tmp_sum[lookup_graphCache[tmpGraphIndex]] / (dayCounterIndex+1);
-
-            if("undefined" === typeof sidebarData[lookup_graphCache[tmpGraphIndex]]) {
-              sidebarData[lookup_graphCache[tmpGraphIndex]] = {};
-            }
-
-            sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate] = {
-              'value': tmp_currentValue,
-              'sum': tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex],
-              'avg': tmp_average[dayCounterIndex]
-            };
+        if('new' === columns[columnName].colType) {
+          try {
+            addColumn(tmp_currentRow,
+                columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix,
+                newCol_idPrefix+columnName,
+                ''
+                );
+          }
+          catch(e) {
+            errorLog('error with new column - '+columnName+' ::\n',e);
           }
         }
       }
-
-      debugLog('sidebarData = ',sidebarData);
-
-      var header = tl8("Totals between ") + startDay + tl8(" Days Ago and ") + (endDay+1) + tl8(" Days Ago");
-
-      if(0 == startDay) {
-        header = tl8("The last ") + (endDay+1) + tl8(" Days <small>(incl. Today)</small>");
-      }
-      if(1 == startDay) {
-        header = tl8("The last ") + (endDay+1) + tl8(" Days <small>(excl. Today)</small>");
-      }
-
-      if(startDay == endDay) {
-        if(0 == endDay) { header = tl8("Today Only"); showProjected = true; }
-      else if(1 == endDay) { header = tl8("Yesterday Only"); }
-      else { header = startDay + tl8("Days Ago"); }
     }
-    var numberOfDays = (endDay - startDay) + 1;
+  }
 
-    var tmp_income = (sidebarData['referralClicks_rented'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue) + (sidebarData['referralClicks_direct'][dates_array[endDay]].sum * currentUser.directReferralClickValue);
-    var tmp_income_inclOwnClicks = tmp_income + (sidebarData['ownClicks_localTime'][dates_array[endDay]].sum * currentUser.ownClickValue);
-    var tmp_expenses = sidebarData['recycleFees'][dates_array[endDay]].sum +
-        sidebarData['extensions'][dates_array[endDay]].sum +
-        sidebarData['autopay'][dates_array[endDay]].sum +
-        (numberOfDays * Neobux.accountDefaults['goldenPackCost'][currentUser.accountType.verbose] / 365);
+  this.init = function (arg_options)
+  {
+    var settings = {};
+    var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
+    var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
+    var tmp_currentRow;
+
+    var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
+
+    var colIndexes = {
+      refID: 3,
+      refSince: 5
+    };
+    var tmp_referralsData = getPref('referrals', {}, { prefType: 'JSON' });
+    debugLog(tmp_referralsData);
+  }
+};
 
 
-    tmp += "<h5 class='bold grey'>[ "+header+" ]</h5>";
-    if(!dataIsComplete) {
-      tmp += "<span style='font-colour:pink;'>" + tl8('Incomplete') + "</span><br>";
+function insertSidebar()
+{
+  // Function which inserts the 'Statistics Sidebar' to the referral statistics page
+
+  // Location to insert the sidebar (right hand side)
+  var locationToInsertSidebar = {
+    right: docEvaluate("//td[@width='729']").snapshotItem(0).parentNode || document.body,
+    left: document.body.children[1].children[1].children[0].children[0].children[0] || document.body
+  };
+
+
+  // Time periods for the statistics sidebar where:
+  // 0=today, 1=1day ago, 14=14days ago etc
+  // [
+  //    [starting day, ending day],
+  //    [next time periods....],
+  //    [another time period....],
+  //    [etc..]
+  // ]
+  var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,9],[1,9]];
+  var tmp_dataSet = getPref('accountCache', {}, { prefType: 'JSON' });
+
+  var sidebarData = {};
+  var currentSidebarTimePeriod;
+  var showProjected;
+
+  var tmp_sum = [], tmp_currentValue = [], tmp_average = [];
+  var tmp_currentDate;
+  var tmp_foobar;
+
+  var dataIsComplete = {};
+
+  var tmp_projectedClicks_rented = parseFloat(document.querySelectorAll('span.f_b')[4].textContent);
+  var tmp_projectedClicks_direct = parseFloat(document.querySelectorAll('span.f_b')[2].textContent);
+
+  sidebarData.projectedClicks = {};
+  sidebarData.projectedClicks['Rented'] = currentUser.numberOfRefs.Rented * tmp_projectedClicks_rented;
+  sidebarData.projectedClicks['Direct'] = currentUser.numberOfRefs.Direct * tmp_projectedClicks_direct;
+  sidebarData.projectedClicks['Total'] = sidebarData.projectedClicks['Rented'] + sidebarData.projectedClicks['Direct'];
+
+  sidebarData.projectedIncome = {};
+  sidebarData.projectedIncome['Rented'] = (sidebarData.projectedClicks['Rented'] * currentUser.rentedReferralClickValue);
+  sidebarData.projectedIncome['Direct'] = (sidebarData.projectedClicks['Direct'] * currentUser.directReferralClickValue);
+  sidebarData.projectedIncome['Total'] = (sidebarData.projectedIncome['Rented'] + sidebarData.projectedIncome['Direct']);
+
+  // // NOW CREATE THE ACTUAL SIDEBAR ////
+  if(document.getElementById("sidebarContainer")) {
+    document.getElementById("sidebarContainer").parentNode.removeChild(document.getElementById("sidebarContainer"));
+  }
+
+  var sidebarContainer = document.createElement("div");
+  sidebarContainer.id = "sidebarContainer";
+
+  GM_addStyle("#sidebarContainer { background-color:#FFFFFF; background-repeat:no-repeat; border:1px solid #AAAAAA; margin-left:5px; padding:0 10px 15px 8px; vertical-align:top; width:182px; }" +
+      ".leftSide { position: inline-block; opacity: 1; }" +
+//      ".rightSide { position: fixed; right: 2px; top:117px; opacity: 0.5; }" +
+      ".rightSide { position: relative; right: 2px; top:0; }" +
+      ".sidebarContent { font-family: Verdana, Arial, Helvetica, sans-serif; font-size: x-small !important; }" +
+      ".sidebarHeader { display:block; font-size:1.1em; text-align:center; } " +
+      ".sidebarDetails { font-size: x-small; margin-left: 5px; } " +
+      "h4 { color: #444; margin-top: 10px; margin-bottom:2px } " +
+      "h5 { margin-top: 7px; margin-bottom:2px; margin-left:2px; } " +
+      "h6 { font-size: xx-small !important; margin-top: 2px; margin-bottom:2px } " +
+      ".h5_subHead { margin-top:2px; font-size:xx-small; } " +
+      ".bold { font-weight: bold; } " +
+      ".grey { color: #aaa; }");
+
+
+  //Functions to quickly decide if info should be shown
+  function showInfo(arg_toDisplay, arg_refType) { return (0 < currentUser.numberOfRefs[arg_refType]) ? arg_toDisplay : ''; }
+  /*Show if user has rented referrals*/
+  function SIRR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
+  /*Show if user has direct referrals*/
+  function SIDR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct) ? arg_toDisplay : ''; }
+  /*Show if user has referrals*/
+  function SIR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct || 0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
+
+  function outputIfExists(arg_varToOutput,arg_textToDisplayOtherwise)
+  {
+    try { return arg_varToOutput; }
+    catch(e) { return arg_textToDisplayOtherwise; }
+  }
+
+
+  var tmp = "";
+  tmp += "<span class='sidebarContent'>";
+  tmp += "<span class='sidebarHeader'>";
+  tmp += "<h4 class='bold'>"+tl8('Statistics Summary')+"</h4>";
+  tmp += "<i>"+tl8('Rented')+": " + currentUser.numberOfRefs.Rented + " / "+tl8('Direct')+": " + currentUser.numberOfRefs.Direct + "</i><br>";
+  tmp += "<i>"+tl8('Total')+": " + (currentUser.numberOfRefs.Rented + currentUser.numberOfRefs.Direct) + "</i>";
+  tmp += " </span>";
+
+
+  for(var i=0; i < sidebarTimePeriods.length; i++)
+  {
+    currentSidebarTimePeriod = sidebarTimePeriods[i];
+
+    //Default showing the projected values for the current time period to false and only enable it if required
+    showProjected = false;
+
+    /**
+     * CHECK IF THE CURRENTLY SELECTED TIME PERIOD IS VALID
+     * IF NOT, CONTINUE TO THE NEXT SIDEBAR TIME PERIOD
+     **/
+    if (2 !== currentSidebarTimePeriod.length) {
+      errorLog("ERROR!\n\n", "Sidebar Timeperiods incorrect length (" + currentSidebarTimePeriod.length + ") not 2. Moving onto next time period.");
+      continue;
     }
-    tmp += "<span class='bold h5_subHead'>&nbsp; - "+tl8('Net')+" : $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) +"</span>";
-    tmp += "<hr width= '155px' height='1px' color='#cccccc'/>";
+    if(!(0 <= currentSidebarTimePeriod[0]) || !(0 <= currentSidebarTimePeriod[1])) {
+      errorLog("ERROR!\n\n", "Sidebar Timeperiod #" + i + " is not numerical. Moving onto next time period.");
+      continue;
+    }
 
-    tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+"'> + Income</h6>";
-    tmp += "<div class='sidebarDetails'>";
-    tmp += "- "+tl8('Personal Clicks')+": " + sidebarData['ownClicks_localTime'][dates_array[endDay]].sum + " / $"+(sidebarData['ownClicks_localTime'][dates_array[endDay]].sum * currentUser.ownClickValue).toFixed(3)+"<br>";
-    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['referralClicks_rented'][dates_array[endDay]].sum + " / $"+(sidebarData['referralClicks_rented'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
-    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['referralClicks_direct'][dates_array[endDay]].sum + " / $"+(sidebarData['referralClicks_direct'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
-    tmp += "</div>";
+    if(currentSidebarTimePeriod[0] > currentSidebarTimePeriod[1]) {
+      errorLog("Error!\n\n", "Sidebar Timeperiod #" + i + ' is not in the correct order (end day is earlier than the start day). Moving onto next time period');
+      continue;
+    }
 
-    if(showProjected)
+    //Determine which one is the start or end day & fix the order of the time periods if the order is malformed
+    if(currentSidebarTimePeriod[0] <= currentSidebarTimePeriod[1]){
+      startDay = currentSidebarTimePeriod[0];
+      endDay = currentSidebarTimePeriod[1];
+    }
+    else {
+      startDay = currentSidebarTimePeriod[1];
+      endDay = currentSidebarTimePeriod[0];
+    }
+
+
+    for(var dayCounterIndex = startDay; dayCounterIndex <= endDay; dayCounterIndex++)
     {
-      tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+tl8(', based on the projected values')+"'> + "+tl8('Projected Income')+"</h6>";
-      tmp += "<div class='sidebarDetails'>";
-      tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['projectedClicks'].Rented.toFixed(2) + " / $"+(sidebarData['projectedIncome'].Rented).toFixed(3) + "<br>");
-      tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['projectedClicks'].Direct.toFixed(2) + " / $"+(sidebarData['projectedClicks'].Direct).toFixed(3) + "<br>");
-      tmp += "</div>";
+      tmp_currentDate = dates_array[dayCounterIndex];
+
+      //Check whether data is stored for the current date
+      if("undefined" === typeof tmp_dataSet.graphs[tmp_currentDate]) {
+        errorLog("Data for this for this date ("+tmp_currentDate+") is not found.");
+
+        //Dataset for current date is missing, thus mark it as such
+        dataIsComplete[tmp_currentDate] = 'missing';
+        continue;
+      }
+
+      //Loop through the data contained for the current date,
+      for(var tmpGraphIndex in lookup_graphCache) {
+        if(lookup_graphCache.hasOwnProperty(tmpGraphIndex))
+        {
+          if(tmpGraphIndex.match(/ch_ext_schedule/i)){
+            continue;
+          }
+          if("undefined" === typeof tmp_dataSet.graphs[tmp_currentDate][lookup_graphCache[tmpGraphIndex]]) {
+            //Data for this specific graph is not found for this date
+            errorLog("Data for this specific graph ("+tmpGraphIndex+" / "+lookup_graphCache[tmpGraphIndex]+")is not found for this date ("+tmp_currentDate+").");
+            continue;
+          }
+
+          tmp_currentValue = tmp_dataSet.graphs[tmp_currentDate][lookup_graphCache[tmpGraphIndex]];
+//          console.info(tmpGraphIndex + " (" + lookup_graphCache[tmpGraphIndex] + ") on " + tmp_currentDate + " = " + tmp_currentValue);
+
+          if(!tmp_sum[lookup_graphCache[tmpGraphIndex]]) {
+            tmp_sum[lookup_graphCache[tmpGraphIndex]] = {};
+          }
+
+          tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex] = ("undefined" === typeof tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex-1]) ? tmp_currentValue : tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex-1] + tmp_currentValue;
+          tmp_average[dayCounterIndex] = tmp_sum[lookup_graphCache[tmpGraphIndex]] / (dayCounterIndex+1);
+
+          if("undefined" === typeof sidebarData[lookup_graphCache[tmpGraphIndex]]) {
+            sidebarData[lookup_graphCache[tmpGraphIndex]] = {};
+          }
+
+          sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate] = {
+            'value': tmp_currentValue,
+            'sum': tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex],
+            'avg': tmp_average[dayCounterIndex]
+          };
+        }
+      }
     }
 
-    tmp += "<h6 title='"+tl8('Details about your expenses for ')+header.toLowerCase()+"'> + "+tl8('Expenses')+"</h6>";
-    tmp += "<div class='sidebarDetails'>";
-    tmp += "- "+tl8('Recycles')+": $" + sidebarData['recycleFees'][dates_array[endDay]].sum.toFixed(2) + " / " + (sidebarData['recycleFees'][dates_array[endDay]].sum / currentUser.recycleFee).toFixed(0) + "<br>";
-    tmp += "- "+tl8('Extensions')+": $" + sidebarData['extensions'][dates_array[endDay]].sum.toFixed(2) + "<br>";
-    tmp += "- "+tl8('Autopay')+": $" + sidebarData['autopay'][dates_array[endDay]].sum.toFixed(3) + " / " + (sidebarData['autopay'][dates_array[endDay]].sum / currentUser.autopayFee) + "<br>";
-    tmp += "- "+tl8('Golden Pack')+": $" + (numberOfDays * currentUser.accountType['cost'] / 365).toFixed(3) + "<br>";
-    tmp += "</div>";
+    debugLog('sidebarData = ',sidebarData);
 
-    tmp += "<h6 title='Some statistics for clicks made "+header.toLowerCase()+"'> + Stats</h6>";
-    tmp += "<div class='sidebarDetails'>";
-    tmp += SIRR("- "+tl8('Rented Average')+": " + (sidebarData['referralClicks_rented'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Rented'] * numberOfDays)).toFixed(3) + "<br>");
-    tmp += SIRR("- "+tl8("Rented 'Real' Average")+": " + "---" + "<br>");
-    tmp += SIDR("- "+tl8('Direct Average')+": " + (sidebarData['referralClicks_direct'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Direct'] * numberOfDays)).toFixed(3) + "<br>");
-    tmp += SIDR("- "+tl8("Direct 'Real' Average")+": " + "---" + "<br>");
-    tmp += SIRR(SIDR("- "+tl8('Total Average')+": " + ((sidebarData['referralClicks_rented'][dates_array[endDay]].sum + sidebarData['referralClicks_direct'][dates_array[endDay]].sum)/((currentUser.numberOfRefs['Rented'] + currentUser.numberOfRefs['Direct']) * numberOfDays)).toFixed(3) + "<br>"));
-    tmp += SIRR(SIDR("- "+tl8("Total 'Real' Average")+": " + "---" + "<br>"));
-    tmp += "</div>";
+    var header = tl8("Totals between ") + startDay + tl8(" Days Ago and ") + (endDay+1) + tl8(" Days Ago");
 
-    tmp += "<h6 title='"+tl8('Summary of Income / Projected Income / Expenses / Profit for ')+header.toLowerCase()+tl8(' [nb: the second value includes an estimate of your personal clicks]')+"'> + "+tl8('Summary Totals')+"</h6>";
+    if(0 == startDay) {
+      header = tl8("The last ") + (endDay+1) + tl8(" Days <small>(incl. Today)</small>");
+    }
+    if(1 == startDay) {
+      header = tl8("The last ") + (endDay+1) + tl8(" Days <small>(excl. Today)</small>");
+    }
+
+    if(startDay == endDay) {
+      if(0 == endDay) { header = tl8("Today Only"); showProjected = true; }
+    else if(1 == endDay) { header = tl8("Yesterday Only"); }
+    else { header = startDay + tl8("Days Ago"); }
+  }
+  var numberOfDays = (endDay - startDay) + 1;
+
+  var tmp_income = (sidebarData['referralClicks_rented'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue) + (sidebarData['referralClicks_direct'][dates_array[endDay]].sum * currentUser.directReferralClickValue);
+  var tmp_income_inclOwnClicks = tmp_income + (sidebarData['ownClicks_localTime'][dates_array[endDay]].sum * currentUser.ownClickValue);
+  var tmp_expenses = sidebarData['recycleFees'][dates_array[endDay]].sum +
+      sidebarData['extensions'][dates_array[endDay]].sum +
+      sidebarData['autopay'][dates_array[endDay]].sum +
+      (numberOfDays * Neobux.accountDefaults['goldenPackCost'][currentUser.accountType.verbose] / 365);
+
+
+  tmp += "<h5 class='bold grey'>[ "+header+" ]</h5>";
+  if(!dataIsComplete) {
+    tmp += "<span style='font-colour:pink;'>" + tl8('Incomplete') + "</span><br>";
+  }
+  tmp += "<span class='bold h5_subHead'>&nbsp; - "+tl8('Net')+" : $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) +"</span>";
+  tmp += "<hr width= '155px' height='1px' color='#cccccc'/>";
+
+  tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+"'> + Income</h6>";
+  tmp += "<div class='sidebarDetails'>";
+  tmp += "- "+tl8('Personal Clicks')+": " + sidebarData['ownClicks_localTime'][dates_array[endDay]].sum + " / $"+(sidebarData['ownClicks_localTime'][dates_array[endDay]].sum * currentUser.ownClickValue).toFixed(3)+"<br>";
+  tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['referralClicks_rented'][dates_array[endDay]].sum + " / $"+(sidebarData['referralClicks_rented'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
+  tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['referralClicks_direct'][dates_array[endDay]].sum + " / $"+(sidebarData['referralClicks_direct'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
+  tmp += "</div>";
+
+  if(showProjected)
+  {
+    tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+tl8(', based on the projected values')+"'> + "+tl8('Projected Income')+"</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += "- "+tl8('Gross Income')+": $" + tmp_income.toFixed(3) + " / $" + tmp_income_inclOwnClicks.toFixed(3) + "<br>";
-    if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + (sidebarData['projectedIncome'].Total.toFixed(3)) + "<br>"; }
-    tmp += "- "+tl8('Expenses')+": $" + (tmp_expenses).toFixed(3) + "<br>";
-    tmp += "- "+tl8('Net Income')+": $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
+    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['projectedClicks'].Rented.toFixed(2) + " / $"+(sidebarData['projectedIncome'].Rented).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['projectedClicks'].Direct.toFixed(2) + " / $"+(sidebarData['projectedClicks'].Direct).toFixed(3) + "<br>");
     tmp += "</div>";
   }
 
-  tmp += "</span>";
+  tmp += "<h6 title='"+tl8('Details about your expenses for ')+header.toLowerCase()+"'> + "+tl8('Expenses')+"</h6>";
+  tmp += "<div class='sidebarDetails'>";
+  tmp += "- "+tl8('Recycles')+": $" + sidebarData['recycleFees'][dates_array[endDay]].sum.toFixed(2) + " / " + (sidebarData['recycleFees'][dates_array[endDay]].sum / currentUser.recycleFee).toFixed(0) + "<br>";
+  tmp += "- "+tl8('Extensions')+": $" + sidebarData['extensions'][dates_array[endDay]].sum.toFixed(2) + "<br>";
+  tmp += "- "+tl8('Autopay')+": $" + sidebarData['autopay'][dates_array[endDay]].sum.toFixed(3) + " / " + (sidebarData['autopay'][dates_array[endDay]].sum / currentUser.autopayFee) + "<br>";
+  tmp += "- "+tl8('Golden Pack')+": $" + (numberOfDays * currentUser.accountType['cost'] / 365).toFixed(3) + "<br>";
+  tmp += "</div>";
 
-  sidebarContainer.innerHTML = tmp;
+  tmp += "<h6 title='Some statistics for clicks made "+header.toLowerCase()+"'> + Stats</h6>";
+  tmp += "<div class='sidebarDetails'>";
+  tmp += SIRR("- "+tl8('Rented Average')+": " + (sidebarData['referralClicks_rented'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Rented'] * numberOfDays)).toFixed(3) + "<br>");
+  tmp += SIRR("- "+tl8("Rented 'Real' Average")+": " + "---" + "<br>");
+  tmp += SIDR("- "+tl8('Direct Average')+": " + (sidebarData['referralClicks_direct'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Direct'] * numberOfDays)).toFixed(3) + "<br>");
+  tmp += SIDR("- "+tl8("Direct 'Real' Average")+": " + "---" + "<br>");
+  tmp += SIRR(SIDR("- "+tl8('Total Average')+": " + ((sidebarData['referralClicks_rented'][dates_array[endDay]].sum + sidebarData['referralClicks_direct'][dates_array[endDay]].sum)/((currentUser.numberOfRefs['Rented'] + currentUser.numberOfRefs['Direct']) * numberOfDays)).toFixed(3) + "<br>"));
+  tmp += SIRR(SIDR("- "+tl8("Total 'Real' Average")+": " + "---" + "<br>"));
+  tmp += "</div>";
 
-  // // *** INSERT STATISTICS SUMMARY INTO PAGE *** ////
-  var wrapperTD = document.createElement('td');
-  wrapperTD.setAttribute('valign','top');
-  wrapperTD.appendChild(sidebarContainer);
+  tmp += "<h6 title='"+tl8('Summary of Income / Projected Income / Expenses / Profit for ')+header.toLowerCase()+tl8(' [nb: the second value includes an estimate of your personal clicks]')+"'> + "+tl8('Summary Totals')+"</h6>";
+  tmp += "<div class='sidebarDetails'>";
+  tmp += "- "+tl8('Gross Income')+": $" + tmp_income.toFixed(3) + " / $" + tmp_income_inclOwnClicks.toFixed(3) + "<br>";
+  if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + (sidebarData['projectedIncome'].Total.toFixed(3)) + "<br>"; }
+  tmp += "- "+tl8('Expenses')+": $" + (tmp_expenses).toFixed(3) + "<br>";
+  tmp += "- "+tl8('Net Income')+": $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
+  tmp += "</div>";
+}
 
-  var statsSidebarPosition = getPref('statsSidebarPosition','right',{ prefType: 'text' });
-  debugLog('statsSidebarPosition = ',statsSidebarPosition,'\n','locationToInsertSidebar[statsSidebarPosition] = ',locationToInsertSidebar[statsSidebarPosition]);
+tmp += "</span>";
 
-  if('right' === statsSidebarPosition) {
+sidebarContainer.innerHTML = tmp;
+
+// // *** INSERT STATISTICS SUMMARY INTO PAGE *** ////
+var wrapperTD = document.createElement('td');
+wrapperTD.setAttribute('valign','top');
+wrapperTD.appendChild(sidebarContainer);
+
+var statsSidebarPosition = getPref('statsSidebarPosition','right',{ prefType: 'text' });
+debugLog('statsSidebarPosition = ',statsSidebarPosition,'\n','locationToInsertSidebar[statsSidebarPosition] = ',locationToInsertSidebar[statsSidebarPosition]);
+
+if('right' === statsSidebarPosition) {
 //    sidebarContainer.setAttribute('onmouseover','document.getElementById("sidebarContainer").style.opacity = "1";');
 //    sidebarContainer.setAttribute('onmouseout','document.getElementById("sidebarContainer").style.opacity = "0.5";');
-  }
+}
 
-  sidebarContainer.setAttribute('class',statsSidebarPosition+'Side');
-  locationToInsertSidebar[statsSidebarPosition].appendChild(wrapperTD);
+sidebarContainer.setAttribute('class',statsSidebarPosition+'Side');
+locationToInsertSidebar[statsSidebarPosition].appendChild(wrapperTD);
 
 
 }
@@ -5458,6 +5653,7 @@ if(currentPage.pageCode.match(/referralListings/i))
   catch(e) {
     console.info("ERROR!\n\n referralListings.init() failed\n\n"+e);
     alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
+    throw e;
   }
 
   widenPages.referralListings();
@@ -5490,7 +5686,7 @@ if(currentPage.pageCode.match(/referralListings/i))
     refID: 3,
     refSince: 5
   };
-  var tmp_referralsData = JSON.parse(localStorage.getItem('referrals'));
+  var tmp_referralsData = getPref('referrals', {}, { prefType: 'JSON' });
   debugLog(tmp_referralsData);
 
 
@@ -5526,6 +5722,7 @@ if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/refe
   catch(e) {
     console.info("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
     alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
+    throw e;
   }
   try {
     exportTabs.init();
@@ -5533,6 +5730,7 @@ if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/refe
   catch(e) {
     console.info("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
     alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
+    throw e;
   }
 
 }
@@ -5578,8 +5776,8 @@ if (!currentPage.pageCode.match(tmp_iframePages) && (top === self))
 
 
 if(0 < tl8_counter) {
-  debugLog("NOTE!!\n\nUntranslated strings on this page!!");
-  debugLog(localStorage.getItem('translationStringsNeeded'));
+  debugLog("NOTE!!\n\n Untranslated strings on this page!!");
+  debugLog(getPref('translationStringsNeeded', '', { prefType: 'string' }));
 }
 
 
