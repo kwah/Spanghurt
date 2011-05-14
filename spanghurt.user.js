@@ -6,399 +6,548 @@
 // @icon           http://kwah.org/images/SpanghurtScriptIcon.png
 // ==/UserScript==
 
-  //var tl8strings = {};
-  var tl8strings = {
-    'EN': {
-      " Days <small>(excl. Today)</small>" : " Days <small>(excl. Today)</small>",
-      " Days <small>(incl. Today)</small>" : " Days <small>(incl. Today)</small>",
-      " Days Ago and " : " Days Ago and ",
-      " Days Ago" : " Days Ago",
-      " [nb: the second value includes an estimate of your personal clicks]" : " [nb: the second value includes an estimate of your personal clicks]",
-      ", based on the projected values" : ", based on the projected values",
-      "15 days (The \"Base Rate\")" : "15 days (The \"Base Rate\")",
-      "150 days (25% discount)" : "150 days (25% discount)",
-      "240 days (30% discount)" : "240 days (30% discount)",
-      "30 days (5% discount)" : "30 days (5% discount)",
-      "60 days (10% discount)" : "60 days (10% discount)",
-      "90 days (18% discount)" : "90 days (18% discount)",
-      "Amanhã" : "Amanhã",
-      "Aujourd'hui" : "Aujourd'hui",
-      "AutoPay value" : "AutoPay value",
-      "Autopay" : "Autopay",
-      "Average Free Recycles: " : "Average Free Recycles: ",
-      "Avg. #Recycles: " : "Avg. #Recycles: ",
-      "Avg. Clicks: " : "Avg. Clicks: ",
-      "Avg. Expense: " : "Avg. Expense: ",
-      "Avg. Income: " : "Avg. Income: ",
-      "Avg. Transfer: " : "Avg. Transfer: ",
-      "Ayer" : "Ayer",
-      "Blue" : "Blue",
-      "Close" : "Close",
-      "Credited clicks" : "Credited clicks",
-      "Demain" : "Demain",
-      "Details about your expenses for " : "Details about your expenses for ",
-      "Details about your income sources for " : "Details about your income sources for ",
-      "Direct 'Real' Average" : "Direct 'Real' Average",
-      "Direct Average" : "Direct Average",
-      "Direct Clicks" : "Direct Clicks",
-      "Direct" : "Direct",
-      "Do you use autopay?" : "Do you use autopay?",
-      "Eilen" : "Eilen",
-      "Expenses" : "Expenses",
-      "Extended:" : "Extended:",
-      "Extension value" : "Extension value",
-      "Extensions" : "Extensions",
-      "Fixed (Micro):" : "Fixed (Micro):",
-      "Fixed:" : "Fixed:",
-      "For how long do you usually renew your referrals?" : "For how long do you usually renew your referrals?",
-      "Gestern" : "Gestern",
-      "Golden Pack" : "Golden Pack",
-      "Green" : "Green",
-      "Gross Income" : "Gross Income",
-      "Heute" : "Heute",
-      "Hier" : "Hier",
-      "Hoje" : "Hoje",
-      "How many direct referrals do you have?" : "How many direct referrals do you have?",
-      "How many rented referrals do you have?" : "How many rented referrals do you have?",
-      "Hoy" : "Hoy",
-      "Huomenna" : "Huomenna",
-      "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you." : "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.",
-      "Local Time" : "Local Time",
-      "Mañana" : "Mañana",
-      "Micro:" : "Micro:",
-      "Mini:" : "Mini:",
-      "Morgen" : "Morgen",
-      "Net Income" : "Net Income",
-      "Net" : "Net",
-      "Ontem" : "Ontem",
-      "Orange" : "Orange",
-      "Personal Clicks" : "Personal Clicks",
-      "Projected Gross Income" : "Projected Gross Income",
-      "Projected Income" : "Projected Income",
-      "Recycle value" : "Recycle value",
-      "Recycles" : "Recycles",
-      "Red" : "Red",
-      "Referrals" : "Referrals",
-      "Regular:" : "Regular:",
-      "Rented 'Real' Average" : "Rented 'Real' Average",
-      "Rented Average" : "Rented Average",
-      "Rented Clicks" : "Rented Clicks",
-      "Rented" : "Rented",
-      "Save Settings" : "Save Settings",
-      "Spanghurt Script Preferences" : "Spanghurt Script Preferences",
-      "Spanghurt! Initial Setup" : "Spanghurt! Initial Setup",
-      "Statistics Summary" : "Statistics Summary",
-      "Sum: " : "Sum: ",
-      "Summary Totals" : "Summary Totals",
-      "Summary of Income / Projected Income / Expenses / Profit for " : "Summary of Income / Projected Income / Expenses / Profit for ",
-      "The last " : "The last ",
-      "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it." : "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.",
-      "Today Only" : "Today Only",
-      "Today" : "Today",
-      "Tomorrow" : "Tomorrow",
-      "Total 'Real' Average" : "Total 'Real' Average",
-      "Total Average" : "Total Average",
-      "Total number of referrals" : "Total number of referrals",
-      "Total" : "Total",
-      "Totals between " : "Totals between ",
-      "Transfer value" : "Transfer value",
-      "Tänään" : "Tänään",
-      "What is the time difference between your time and the server's time?" : "What is the time difference between your time and the server's time?",
-      "White" :  "White",
-      "Yellow" : "Yellow",
-      "Yesterday Only" : "Yesterday Only",
-      "Yesterday" : "Yesterday",
-      "Αύριο" : "Αύριο",
-      "Σήμερα" : "Σήμερα",
-      "Χθες" : "Χθες"
-    }
+//var tl8strings = {};
+
+
+/**
+ * Compatibility functions
+ */
+if('undefined' === typeof GM_log) {
+  function GM_log() {
+    //console.info(arguments);
+    //location.href = "javascript:void(console.info('JSON.parse('"+JSON.stringify(arguments)+"')'));";
+  }
+}
+
+if('undefined' === typeof console) {
+  var console = {
+    info: function() {
+      location.href = "javascript:void(console.group());";
+      for(var i=0; i<arguments.length; i++) {
+        location.href = "javascript:void(console.info('"+arguments[i]+"'));";
+      }
+      location.href = "javascript:void(console.groupEnd());";
+    },
+    group: function() { location.href = "javascript:void(console.group());"; },
+    groupEnd: function() { location.href = "javascript:void(console.groupEnd());"; }
   };
+  console.info('console not defined');
+}
 
-  var tmp_translationStringsNeeded = {};
-  tmp_translationStringsNeeded = JSON.parse(localStorage.getItem('translationStringsNeeded')) || {};
-
-  var tl8_counter = 0;
-
-  function tl8(arg_originalString)
-  {
-  //  console.info('start translation of ',arg_originalString);
-    if('undefined' === typeof tl8strings[localStorage.getItem('neobuxLanguageCode')]) {
-      tl8strings[localStorage.getItem('neobuxLanguageCode')] = {};
+if('undefined' === typeof GM_addStyle) {
+  function GM_addStyle(arg_css) {
+    var head = document.getElementsByTagName("head")[0];
+    if (head) {
+      var style = document.createElement("style");
+      style.textContent = arg_css;
+      style.type = "text/css";
+      head.appendChild(style);
     }
-    if('undefined' === typeof tl8strings[localStorage.getItem('neobuxLanguageCode')][arg_originalString])
-    {
-      console.group();
-  //    console.info('Error!\n\nTranslation string for "',arg_originalString, '" not found');
-      tmp_translationStringsNeeded[arg_originalString] = arg_originalString;
-      localStorage.setItem('translationStringsNeeded',JSON.stringify(tmp_translationStringsNeeded));
+    return style;
+  }
+}
 
-      console.info('Record of the translation strings yet to be translated has been updated\n\n missing string = '+arg_originalString);
+var preferredStorageOrder_getValue = [
+  ('undefined' === typeof GM_getValue) ? null : GM_getValue,
+  ('undefined' === typeof localStorage.getItem) ? null : localStorage.getItem
+];
+var preferredStorageOrder_setValue = [
+  ('undefined' === typeof GM_setValue) ? null : GM_setValue,
+  ('undefined' === typeof localStorage.setItem) ? null : localStorage.setItem
+];
+//
+//console.info('preferredStorageOrder_getValue = ',preferredStorageOrder_getValue);
+//console.info('preferredStorageOrder_setValue = ',preferredStorageOrder_setValue);
 
-      tl8_counter++;
-      if(0 > tl8_counter) {
-        console.info('arg_originalString = ', arg_originalString);
-        console.info('tmp_translationStringsNeeded[arg_originalString] = ',tmp_translationStringsNeeded[arg_originalString]);
-        console.info('JSON.stringify(tmp_translationStringsNeeded) = ',JSON.stringify(tmp_translationStringsNeeded));
-        console.info(JSON.parse(localStorage.getItem('translationStringsNeeded')));
+var getValue;
+for(var i=0; i < preferredStorageOrder_getValue.length; i++) {
+  if(preferredStorageOrder_getValue[i]){
+    getValue = preferredStorageOrder_getValue[i];
+    break;
+  }
+}
+var setValue;
+for(var i=0; i < preferredStorageOrder_setValue.length; i++) {
+  if(preferredStorageOrder_setValue[i]){
+    setValue = preferredStorageOrder_setValue[i];
+    break;
+  }
+}
+
+//console.info('getValue.toString() = ',getValue.toString());
+//console.info('getValue = ',getValue);
+//console.info('setValue = ',setValue);
+
+
+
+/**
+ * :Handles stored preferences (eg, referral listings column preferences) and locally cached values (eg, username / number of referrals)
+ * @param arg_prefName The name of the stored value that is stored to / fetched from.
+ * @param arg_defaultValue The value to return if the value isn't found in storage.
+ * @param arg_options Indicates the data type that the value will be stored as (where possible) / the data type that the stored value will be returned as. Useful for indicating JSON data. Defaults to string.
+ **/
+
+function getPref(arg_prefName, arg_defaultValue, arg_options)
+{
+  if(!setValue) {
+    errorLog('ERROR: function: getPref()','No preferred storage method for setValue available, cannot store value!');
+  }
+  if(!getValue) {
+    errorLog('ERROR: function: getPref()','No preferred storage method for getValue available, cannot store value!\n', 'Returning default value: ', arg_defaultValue);
+    return arg_defaultValue;
+  }
+
+  if ("object" === typeof arg_options) {
+    //arg_options = arg_options;
+  }
+  else {
+    errorLog('ERROR: function: getPref()','arg_options is not an object!!','arguments:',arguments);
+    arg_options = {};
+  }
+
+  var returnType = arg_options.prefType || typeof arg_defaultValue;
+
+  var tmp = getValue(arg_prefName);
+  if(!tmp) {
+    errorLog('Error retrieving value from localStorage, adding default value to storage and returning the supplied default value.',arguments);
+    tmp = setPref(arg_prefName, arg_defaultValue, arg_options);
+  }
+
+  switch (returnType)
+  {
+    case 'float':
+      return parseFloat(tmp);
+    case 'integer':
+      return parseInt(tmp);
+    case 'string':
+      return tmp.toString();
+    case 'boolean':
+        if('true' === tmp.toString()) { return true; }
+        if('false' === tmp.toString()) { return false; }
+      return !!tmp;
+    case 'JSON':
+      try {
+        return JSON.parse(tmp);
       }
-      console.groupEnd();
-      return (arg_originalString);
-    }
-    return tl8strings[localStorage.getItem('neobuxLanguageCode')][arg_originalString];
-  }
-
-
-  /**
-   * Compatibility functions
-   */
-  if('undefined' === typeof GM_log) {
-    function GM_log() {
-      //console.info(arguments);
-      //location.href = "javascript:void(console.info('JSON.parse('"+JSON.stringify(arguments)+"')'));";
-    }
-  }
-
-  if('undefined' === typeof console) {
-    var console = {
-      info: function() {
-        location.href = "javascript:void(console.group());";
-        for(var i=0; i<arguments.length; i++) {
-          location.href = "javascript:void(console.info('"+arguments[i]+"'));";
-        }
-        location.href = "javascript:void(console.groupEnd());";
-      },
-      group: function() { location.href = "javascript:void(console.group());"; },
-      groupEnd: function() { location.href = "javascript:void(console.groupEnd());"; }
-    };
-    console.info('console not defined');
-  }
-
-  if('undefined' === typeof GM_addStyle) {
-    function GM_addStyle(arg_css) {
-      var head = document.getElementsByTagName("head")[0];
-      if (head) {
-        var style = document.createElement("style");
-        style.textContent = arg_css;
-        style.type = "text/css";
-        head.appendChild(style);
+      catch(e) {
+        errorLog('ERROR! Could not convert the stored value to object, returning supplied default value.');
+        return arg_defaultValue;
       }
-      return style;
-    }
+    default:
+      return tmp;
+  }
+}
+
+function setPref(arg_prefName, arg_defaultValue, arg_options)
+{
+  if(!setValue) {
+    errorLog('ERROR: function: getPref()','No preferred storage method for setValue available, cannot store value!\n', 'Returning default value: ', arg_defaultValue);
+    return arg_defaultValue;
   }
 
-  /**
-   * @param arg_input
-   * @return boolean
-   */
-  function isArray(arg_input) {
-    return !!arg_input.constructor.toString().match(/array/i);
+  if ("object" === typeof arg_options) {
+    //arg_options = arg_options;
+  }
+  else {
+    errorLog('ERROR: function: setPref()','arg_options is not an object!!','arguments:',arguments);
+    arg_options = {};
   }
 
-  /**
-   * Logging functions
-   */
-  function debugLog()
+  arg_options.prefType = arg_options.prefType || typeof arg_defaultValue;
+
+  var tmp_value;
+  switch (arg_options.prefType)
   {
-  //  addToLoggerBox(arguments);
-    if (2 >= arguments.length) {
-      console.group();
-    }
-  //  if('undefined' !== typeof GM_log) {
-  //    if (1 == arguments.length) {
-  //      GM_log(arguments[0]);
-  //    }else {
-  //      GM_log(arguments.join('\n----\n'));
-  //    }
-  //  }
-    for (var i = 0; i < arguments.length; i++) {
-      console.info(arguments[i]);
-      if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
-    }
-    if (2 >= arguments.length) {
-      console.groupEnd();
-    }
+    case 'float':
+      tmp_value = (setValue === GM_setValue) ? arg_defaultValue.toString() : parseFloat(arg_defaultValue);
+      break;
+    case 'integer':
+      tmp_value = parseInt(arg_defaultValue);
+      break;
+    case 'string':
+      tmp_value = arg_defaultValue.toString();
+      break;
+    case 'JSON':
+      tmp_value = JSON.stringify(arg_defaultValue);
+      break;
+    default:
+      tmp_value = arg_defaultValue;
+      break;
   }
 
-  function errorLog()
-  {
-    addToLoggerBox("ERROR!\n");
-    addToLoggerBox(arguments);
-    if (2 >= arguments.length) {
-  //    console.group();
-    }
-  //  if('undefined' !== typeof GM_log) {
-  //    if (1 == arguments.length) {
-  //      GM_log(arguments[0]);
-  //    }else {
-  //      GM_log(arguments.join('\n----\n'));
-  //    }
-  //  }
-    for (var i = 0; i < arguments.length; i++) {
-      console.info(arguments[i]);
-      if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
-    }
-    if (2 >= arguments.length) {
-  //    console.groupEnd();
-    }
-  }
+  setValue(arg_prefName, tmp_value);
 
-
-  /**
-   * Utility functions
-   */
-  function docEvaluate(arg_xpath)
-  {
-    return document.evaluate(arg_xpath,
-        document,
-        null,
-        XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
-        null);
-  }
-
-  // Append zeros to the _input until the _desiredStringLength is reached
-  function padZeros(arg_input,arg_desiredStringLength)
-  {
-    var currentLength = arg_input.toString().length;
-    var output = arg_input;
-    for(var i=0; i < (arg_desiredStringLength - currentLength); i++) {
-      output = '0' + output;
-    }
-    return output;
-  }
-
-  // Function that merges objects, appending the contents of _newObj to the existing object
-  // * Runs infinitely levels deep
-  // * Does not completely overwrite the existing object's children, instead only overwrites/adds when it exists in the arg_newObj
-  function Object_merge(arg_oldObj, arg_newObj)
-  {
-    if('object' !== typeof arg_oldObj) {
-      errorLog("ERROR!\nObject_merge(arg_oldObj, arg_newObj)\n\n arg_oldObj is not an Object!", arguments);
-      return -1;
-    }
-    if('object' !== typeof arg_newObj) {
-      errorLog("ERROR!\nObject_merge(arg_oldObj, arg_newObj)\n\n arg_newObj is not an Object!", arguments);
-      return -1;
-    }
-
-    // Loop through nodes that exist in the new object and add/replace them to the existing/old object
-    for (var newVar in arg_newObj)
+  /*Having issues with the localStorage being wiped occasionally [nb: caused by a privacy addon] so storing to GM_log too as a backup*/
+  // Also having issues with floats not being able to be stored :S
+  if("undefined" !== typeof GM_setValue) {
+    try
     {
-      switch(typeof arg_newObj[newVar])
-      {
-        //If data is a value (boolean/string/number/function) then "update" it to the 'new' value (or add if not present)
-        case "boolean":
-        //Fall-through
-        case "string":
-        //Fall-through
-        case "number":
+      GM_setValue(arg_prefName, tmp_value);
+    }
+    catch(e) {
+      GM_setValue(arg_prefName, tmp_value.toString());
+    }
+  }
+  return getPref(arg_prefName, tmp_value, arg_options);
+}
+
+
+
+
+var tl8strings = {
+  'EN': {
+    " Days <small>(excl. Today)</small>" : " Days <small>(excl. Today)</small>",
+    " Days <small>(incl. Today)</small>" : " Days <small>(incl. Today)</small>",
+    " Days Ago and " : " Days Ago and ",
+    " Days Ago" : " Days Ago",
+    " [nb: the second value includes an estimate of your personal clicks]" : " [nb: the second value includes an estimate of your personal clicks]",
+    ", based on the projected values" : ", based on the projected values",
+    "15 days (The \"Base Rate\")" : "15 days (The \"Base Rate\")",
+    "150 days (25% discount)" : "150 days (25% discount)",
+    "240 days (30% discount)" : "240 days (30% discount)",
+    "30 days (5% discount)" : "30 days (5% discount)",
+    "60 days (10% discount)" : "60 days (10% discount)",
+    "90 days (18% discount)" : "90 days (18% discount)",
+    "Amanhã" : "Amanhã",
+    "Aujourd'hui" : "Aujourd'hui",
+    "AutoPay value" : "AutoPay value",
+    "Autopay" : "Autopay",
+    "Average Free Recycles: " : "Average Free Recycles: ",
+    "Avg. #Recycles: " : "Avg. #Recycles: ",
+    "Avg. Clicks: " : "Avg. Clicks: ",
+    "Avg. Expense: " : "Avg. Expense: ",
+    "Avg. Income: " : "Avg. Income: ",
+    "Avg. Transfer: " : "Avg. Transfer: ",
+    "Ayer" : "Ayer",
+    "Blue" : "Blue",
+    "Close" : "Close",
+    "Credited clicks" : "Credited clicks",
+    "Demain" : "Demain",
+    "Details about your expenses for " : "Details about your expenses for ",
+    "Details about your income sources for " : "Details about your income sources for ",
+    "Direct 'Real' Average" : "Direct 'Real' Average",
+    "Direct Average" : "Direct Average",
+    "Direct Clicks" : "Direct Clicks",
+    "Direct" : "Direct",
+    "Do you use autopay?" : "Do you use autopay?",
+    "Eilen" : "Eilen",
+    "Expenses" : "Expenses",
+    "Extended:" : "Extended:",
+    "Extension value" : "Extension value",
+    "Extensions" : "Extensions",
+    "Fixed (Micro):" : "Fixed (Micro):",
+    "Fixed:" : "Fixed:",
+    "For how long do you usually renew your referrals?" : "For how long do you usually renew your referrals?",
+    "Gestern" : "Gestern",
+    "Golden Pack" : "Golden Pack",
+    "Green" : "Green",
+    "Gross Income" : "Gross Income",
+    "Heute" : "Heute",
+    "Hier" : "Hier",
+    "Hoje" : "Hoje",
+    "How many direct referrals do you have?" : "How many direct referrals do you have?",
+    "How many rented referrals do you have?" : "How many rented referrals do you have?",
+    "Hoy" : "Hoy",
+    "Huomenna" : "Huomenna",
+    "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you." : "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.",
+    "Local Time" : "Local Time",
+    "Mañana" : "Mañana",
+    "Micro:" : "Micro:",
+    "Mini:" : "Mini:",
+    "Morgen" : "Morgen",
+    "Net Income" : "Net Income",
+    "Net" : "Net",
+    "Ontem" : "Ontem",
+    "Orange" : "Orange",
+    "Personal Clicks" : "Personal Clicks",
+    "Projected Gross Income" : "Projected Gross Income",
+    "Projected Income" : "Projected Income",
+    "Recycle value" : "Recycle value",
+    "Recycles" : "Recycles",
+    "Red" : "Red",
+    "Referrals" : "Referrals",
+    "Regular:" : "Regular:",
+    "Rented 'Real' Average" : "Rented 'Real' Average",
+    "Rented Average" : "Rented Average",
+    "Rented Clicks" : "Rented Clicks",
+    "Rented" : "Rented",
+    "Save Settings" : "Save Settings",
+    "Spanghurt Script Preferences" : "Spanghurt Script Preferences",
+    "Spanghurt! Initial Setup" : "Spanghurt! Initial Setup",
+    "Statistics Summary" : "Statistics Summary",
+    "Sum: " : "Sum: ",
+    "Summary Totals" : "Summary Totals",
+    "Summary of Income / Projected Income / Expenses / Profit for " : "Summary of Income / Projected Income / Expenses / Profit for ",
+    "The last " : "The last ",
+    "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it." : "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.",
+    "Today Only" : "Today Only",
+    "Today" : "Today",
+    "Tomorrow" : "Tomorrow",
+    "Total 'Real' Average" : "Total 'Real' Average",
+    "Total Average" : "Total Average",
+    "Total number of referrals" : "Total number of referrals",
+    "Total" : "Total",
+    "Totals between " : "Totals between ",
+    "Transfer value" : "Transfer value",
+    "Tänään" : "Tänään",
+    "What is the time difference between your time and the server's time?" : "What is the time difference between your time and the server's time?",
+    "White" :  "White",
+    "Yellow" : "Yellow",
+    "Yesterday Only" : "Yesterday Only",
+    "Yesterday" : "Yesterday",
+    "Αύριο" : "Αύριο",
+    "Σήμερα" : "Σήμερα",
+    "Χθες" : "Χθες"
+  }
+};
+
+var tmp_translationStringsNeeded = {};
+tmp_translationStringsNeeded = getPref('translationStringsNeeded', {}, { prefType: 'JSON' }) || {};
+
+var tl8_counter = 0;
+
+function tl8(arg_originalString)
+{
+//  console.info('start translation of ',arg_originalString);
+  if('undefined' === typeof tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })]) {
+    tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })] = {};
+  }
+  if('undefined' === typeof tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })][arg_originalString])
+  {
+    console.group();
+//    console.info('Error!\n\nTranslation string for "',arg_originalString, '" not found');
+    tmp_translationStringsNeeded[arg_originalString] = arg_originalString;
+    setPref('translationStringsNeeded', tmp_translationStringsNeeded, { prefType: 'JSON' });
+
+    console.info('Record of the translation strings yet to be translated has been updated\n\n missing string = '+arg_originalString);
+
+    tl8_counter++;
+    if(0 > tl8_counter) {
+      console.info('arg_originalString = ', arg_originalString);
+      console.info('tmp_translationStringsNeeded[arg_originalString] = ',tmp_translationStringsNeeded[arg_originalString]);
+      console.info('JSON.stringify(tmp_translationStringsNeeded) = ',JSON.stringify(tmp_translationStringsNeeded));
+      console.info(JSON.parse(getPref('translationStringsNeeded',{}, { prefType: 'JSON' })));
+    }
+    console.groupEnd();
+    return (arg_originalString);
+  }
+  return tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })][arg_originalString];
+}
+
+
+/**
+ * @param arg_input
+ * @return boolean
+ */
+function isArray(arg_input) {
+  return !!arg_input.constructor.toString().match(/array/i);
+}
+
+/**
+ * Logging functions
+ */
+function debugLog()
+{
+//  addToLoggerBox(arguments);
+  if (2 >= arguments.length) {
+    console.group();
+  }
+//  if('undefined' !== typeof GM_log) {
+//    if (1 == arguments.length) {
+//      GM_log(arguments[0]);
+//    }else {
+//      GM_log(arguments.join('\n----\n'));
+//    }
+//  }
+  for (var i = 0; i < arguments.length; i++) {
+    console.info(arguments[i]);
+    if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
+  }
+  if (2 >= arguments.length) {
+    console.groupEnd();
+  }
+}
+
+function errorLog()
+{
+  addToLoggerBox("ERROR!\n");
+  addToLoggerBox(arguments);
+  if (2 >= arguments.length) {
+//    console.group();
+  }
+//  if('undefined' !== typeof GM_log) {
+//    if (1 == arguments.length) {
+//      GM_log(arguments[0]);
+//    }else {
+//      GM_log(arguments.join('\n----\n'));
+//    }
+//  }
+  for (var i = 0; i < arguments.length; i++) {
+    console.info(arguments[i]);
+    if('undefined' !== typeof GM_log) { GM_log(arguments[i]); }
+  }
+  if (2 >= arguments.length) {
+//    console.groupEnd();
+  }
+}
+
+
+/**
+ * Utility functions
+ */
+function docEvaluate(arg_xpath)
+{
+  return document.evaluate(arg_xpath,
+      document,
+      null,
+      XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
+      null);
+}
+
+// Append zeros to the _input until the _desiredStringLength is reached
+function padZeros(arg_input,arg_desiredStringLength)
+{
+  var currentLength = arg_input.toString().length;
+  var output = arg_input;
+  for(var i=0; i < (arg_desiredStringLength - currentLength); i++) {
+    output = '0' + output;
+  }
+  return output;
+}
+
+// Function that merges objects, appending the contents of _newObj to the existing object
+// * Runs infinitely levels deep
+// * Does not completely overwrite the existing object's children, instead only overwrites/adds when it exists in the arg_newObj
+function Object_merge(arg_oldObj, arg_newObj)
+{
+  if('object' !== typeof arg_oldObj) {
+    errorLog("ERROR!\nObject_merge(arg_oldObj, arg_newObj)\n\n arg_oldObj is not an Object!", arguments);
+    return -1;
+  }
+  if('object' !== typeof arg_newObj) {
+    errorLog("ERROR!\nObject_merge(arg_oldObj, arg_newObj)\n\n arg_newObj is not an Object!", arguments);
+    return -1;
+  }
+
+  // Loop through nodes that exist in the new object and add/replace them to the existing/old object
+  for (var newVar in arg_newObj)
+  {
+    switch(typeof arg_newObj[newVar])
+    {
+      //If data is a value (boolean/string/number/function) then "update" it to the 'new' value (or add if not present)
+      case "boolean":
+      //Fall-through
+      case "string":
+      //Fall-through
+      case "number":
+        arg_oldObj[newVar] = arg_newObj[newVar];
+        break;
+
+      case "function":
+        // stop the 'merge' function being copied
+        // nb, applies when this function is added to object.prototype
+        if('merge' !== newVar) {
           arg_oldObj[newVar] = arg_newObj[newVar];
-          break;
+        }
+        break;
 
-        case "function":
-          // stop the 'merge' function being copied
-          // nb, applies when this function is added to object.prototype
-          if('merge' !== newVar) {
-            arg_oldObj[newVar] = arg_newObj[newVar];
-          }
-          break;
+      //Else if the data is an object, it will have sub-items of its own
+      // run the merge() function on this object to recurse deeper and merge these sub-items.
+      case "object":
+        arg_oldObj[newVar] = arg_oldObj[newVar] || {};
+        Object_merge(arg_oldObj[newVar], arg_newObj[newVar]);
+        break;
 
-        //Else if the data is an object, it will have sub-items of its own
-        // run the merge() function on this object to recurse deeper and merge these sub-items.
-        case "object":
-          arg_oldObj[newVar] = arg_oldObj[newVar] || {};
-          Object_merge(arg_oldObj[newVar], arg_newObj[newVar]);
-          break;
-
-        default:
-          errorLog('Error! Object_merge(arg_oldObj, arg_newObj);\nCannot detect type of arg_newObj'+newVar+arg_newObj[newVar]+typeof arg_newObj[newVar]);
-      }
+      default:
+        errorLog('Error! Object_merge(arg_oldObj, arg_newObj);\nCannot detect type of arg_newObj'+newVar+arg_newObj[newVar]+typeof arg_newObj[newVar]);
     }
-    return arg_oldObj;
   }
+  return arg_oldObj;
+}
 
-  /**
-   * Creates an alert-style pop-up on screen which fades out the rest of the page, creating a page-modal type effect
-   * Usage:
-   *  var importantMessage = new ModalDialog(string 'idOfDialog', string 'the innerHTML of the dialog');
-   * followed by:
-   *  importantMessage.show();
-   * and
-   *  importantMessage.hide();
-   *
-   * Depends on:
-   *  GM_addStyle()
-   */
-  function ModalDialog(arg_dialogId) {
-    this.create = function (arg_Css, arg_innerHTML)
-    {
-      var tmp_cssText;
-      var shadowBackdrop;
+/**
+ * Creates an alert-style pop-up on screen which fades out the rest of the page, creating a page-modal type effect
+ * Usage:
+ *  var importantMessage = new ModalDialog(string 'idOfDialog', string 'the innerHTML of the dialog');
+ * followed by:
+ *  importantMessage.show();
+ * and
+ *  importantMessage.hide();
+ *
+ * Depends on:
+ *  GM_addStyle()
+ */
+function ModalDialog(arg_dialogId) {
+  this.create = function (arg_Css, arg_innerHTML)
+  {
+    var tmp_cssText;
+    var shadowBackdrop;
 
-      tmp_cssText = arg_Css;
-      if(null === typeof arg_Css) {
-        tmp_cssText = 'background-color: white; margin: 8em auto; padding: 2em; width: 30em;';
-      }
+    tmp_cssText = arg_Css;
+    if(null === typeof arg_Css) {
+      tmp_cssText = 'background-color: white; margin: 8em auto; padding: 2em; width: 30em;';
+    }
 
-      shadowBackdrop = document.getElementById('shadowBackdrop_'+arg_dialogId);
-      if(shadowBackdrop) {
-        shadowBackdrop.parentNode.removeChild(shadowBackdrop);
-      }
+    shadowBackdrop = document.getElementById('shadowBackdrop_'+arg_dialogId);
+    if(shadowBackdrop) {
+      shadowBackdrop.parentNode.removeChild(shadowBackdrop);
+    }
 
-      GM_addStyle('#shadowBackdrop_'+arg_dialogId+' { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; z-index: 2; }');
+    GM_addStyle('#shadowBackdrop_'+arg_dialogId+' { background-color: black; height: 100%; left: 0; opacity: 0.3; position: fixed; top: 0; width: 100%; z-index: 2; }');
 
-      shadowBackdrop = document.createElement('div');
-      shadowBackdrop.id = 'shadowBackdrop_'+arg_dialogId;
-      shadowBackdrop.setAttribute('class',"overlay");
+    shadowBackdrop = document.createElement('div');
+    shadowBackdrop.id = 'shadowBackdrop_'+arg_dialogId;
+    shadowBackdrop.setAttribute('class',"overlay");
 
-      shadowBackdrop.innerHTML = '';
+    shadowBackdrop.innerHTML = '';
 
-      shadowBackdrop.style.display = 'none';
+    shadowBackdrop.style.display = 'none';
 
-      document.body.appendChild(shadowBackdrop);
-
-
-      GM_addStyle('#modalDialogWrapper_'+arg_dialogId+' { height: 100%; left: 0; position: absolute; top: 0; width: 100%; z-index: 3;  }');
-      GM_addStyle('#modalDialogElement_'+arg_dialogId+' { '+tmp_cssText+' }');
-
-      var modalDialogWrapper = document.getElementById('modalDialogWrapper_'+arg_dialogId);
-      if(modalDialogWrapper) {
-        modalDialogWrapper.parentNode.removeChild(modalDialogWrapper);
-      }
-
-      modalDialogWrapper = document.createElement('div');
-      modalDialogWrapper.id = 'modalDialogWrapper_'+arg_dialogId;
-      modalDialogWrapper.style.display = 'none';
-
-      var modalDialogElement = document.createElement('div');
-      modalDialogElement.innerHTML = arg_innerHTML;
-      modalDialogElement.id = 'modalDialogElement_'+arg_dialogId;
-
-      modalDialogWrapper.appendChild(modalDialogElement);
-      document.body.appendChild(modalDialogWrapper);
+    document.body.appendChild(shadowBackdrop);
 
 
-      this.dialogElement = modalDialogWrapper;
+    GM_addStyle('#modalDialogWrapper_'+arg_dialogId+' { height: 100%; left: 0; position: absolute; top: 0; width: 100%; z-index: 3;  }');
+    GM_addStyle('#modalDialogElement_'+arg_dialogId+' { '+tmp_cssText+' }');
 
-      return modalDialogWrapper;
-    };
-    this.show = function()
-    {
-      document.getElementById('shadowBackdrop_'+arg_dialogId).style.display = '';
-      document.getElementById('modalDialogWrapper_'+arg_dialogId).style.display = '';
-      return this;
-    };
-    this.hide = function()
-    {
-      document.getElementById('shadowBackdrop_'+arg_dialogId).style.display = 'none';
-      document.getElementById('modalDialogWrapper_'+arg_dialogId).style.display = 'none';
-      return this;
-    };
+    var modalDialogWrapper = document.getElementById('modalDialogWrapper_'+arg_dialogId);
+    if(modalDialogWrapper) {
+      modalDialogWrapper.parentNode.removeChild(modalDialogWrapper);
+    }
+
+    modalDialogWrapper = document.createElement('div');
+    modalDialogWrapper.id = 'modalDialogWrapper_'+arg_dialogId;
+    modalDialogWrapper.style.display = 'none';
+
+    var modalDialogElement = document.createElement('div');
+    modalDialogElement.innerHTML = arg_innerHTML;
+    modalDialogElement.id = 'modalDialogElement_'+arg_dialogId;
+
+    modalDialogWrapper.appendChild(modalDialogElement);
+    document.body.appendChild(modalDialogWrapper);
+
+
+    this.dialogElement = modalDialogWrapper;
+
+    return modalDialogWrapper;
+  };
+  this.show = function()
+  {
+    document.getElementById('shadowBackdrop_'+arg_dialogId).style.display = '';
+    document.getElementById('modalDialogWrapper_'+arg_dialogId).style.display = '';
     return this;
-  }
+  };
+  this.hide = function()
+  {
+    document.getElementById('shadowBackdrop_'+arg_dialogId).style.display = 'none';
+    document.getElementById('modalDialogWrapper_'+arg_dialogId).style.display = 'none';
+    return this;
+  };
+  return this;
+}
 
 
 
-  /////////////////////
+/////////////////////
 
 
 ////  alert('foo');
@@ -407,590 +556,1021 @@
 //     throw 'notNeobuxPage';
 //  }
 
-  //////
+//////
 
-  var loggerBox = new ModalDialog('loggerBox');
-  loggerBox.create(
-      'background-color: white; margin: 3em; padding: 2em; width: 30em; z-index:3;',
-      '' +
-          '<button id="loggerBox_Close" style="float: right;">Close</button>' +
-          '<button id="loggerBox_Clear" style="float: right;">Clear</button>' +
-          '<h4>Debugging Output</h4>' +
-          '<div style="background-color:#e3e3e3; height:40em; overflow: auto;">'+
-          '<ul id="loggerBox_Output">' +
-          '<li>&nbsp;</li>' +
-          '</ul>' +
-          '</div>');
+var loggerBox = new ModalDialog('loggerBox');
+loggerBox.create(
+    'background-color: white; margin: 3em; padding: 2em; width: 30em; z-index:3;',
+    '' +
+        '<button id="loggerBox_Close" style="float: right;">Close</button>' +
+        '<button id="loggerBox_Clear" style="float: right;">Clear</button>' +
+        '<h4>Debugging Output</h4>' +
+        '<div style="background-color:#e3e3e3; height:40em; overflow: auto;">'+
+        '<ul id="loggerBox_Output">' +
+        '<li>&nbsp;</li>' +
+        '</ul>' +
+        '</div>');
 
-  //loggerBox.show();
+//loggerBox.show();
 
-  document.getElementById('loggerBox_Clear').addEventListener('click',function() {
-    var tmpLoggerOutput = document.getElementById('loggerBox_Output');
-    for(var i=0, tmp_loggerOutputLength = tmpLoggerOutput.children.length; i<tmp_loggerOutputLength; i++) {
-      tmpLoggerOutput.removeChild(tmpLoggerOutput.children[0]);
-    }
-  },false);
+document.getElementById('loggerBox_Clear').addEventListener('click',function() {
+  var tmpLoggerOutput = document.getElementById('loggerBox_Output');
+  for(var i=0, tmp_loggerOutputLength = tmpLoggerOutput.children.length; i<tmp_loggerOutputLength; i++) {
+    tmpLoggerOutput.removeChild(tmpLoggerOutput.children[0]);
+  }
+},false);
 
-  document.getElementById('loggerBox_Close').addEventListener('click',function() {
-    loggerBox.hide();
-  },false);
+document.getElementById('loggerBox_Close').addEventListener('click',function() {
+  loggerBox.hide();
+},false);
 
 
 
-  function addToLoggerBox(arg_message)
+function addToLoggerBox(arg_message)
+{
+  var tmp_message = '';
+  for(var j = 0; j < arguments.length; j++ )
   {
-    var tmp_message = '';
-    for(var j = 0; j < arguments.length; j++ )
+    switch(typeof arguments[j])
     {
-      switch(typeof arguments[j])
-      {
-        case 'object':
-          tmp_message += "\n<br>" + JSON.stringify(arguments[j]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        break;
-        default:
-          tmp_message += arguments[j].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        break;
-      }
-      tmp_message += (j=== (arguments.length-1)) ? '' : '\n<br>';
+      case 'object':
+        tmp_message += "\n<br>" + JSON.stringify(arguments[j]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      break;
+      default:
+        tmp_message += arguments[j].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      break;
     }
-
-    var tmpLoggerOutput = document.getElementById('loggerBox_Output');
-    var tmp_now = new Date();
-    tmpLoggerOutput.innerHTML += "\n<li>" +
-        "<small><i>" +
-          tmp_now.toTimeString().match(/[0-9]+:[0-9]+:[0-9]+/)[0] + "." + tmp_now.getMilliseconds() +
-        " " + tmp_now.toTimeString().match(/[a-z]+\+?\-?[0-9]+/i)[0] +
-        "</i></small>: "+
-          tmp_message+
-        "</li>";
+    tmp_message += (j=== (arguments.length-1)) ? '' : '\n<br>';
   }
 
-  /**
-   * Initial Setup of the script
-   */
+  var tmpLoggerOutput = document.getElementById('loggerBox_Output');
+  var tmp_now = new Date();
+  tmpLoggerOutput.innerHTML += "\n<li>" +
+      "<small><i>" +
+        tmp_now.toTimeString().match(/[0-9]+:[0-9]+:[0-9]+/)[0] + "." + tmp_now.getMilliseconds() +
+      " " + tmp_now.toTimeString().match(/[a-z]+\+?\-?[0-9]+/i)[0] +
+      "</i></small>: "+
+        tmp_message+
+      "</li>";
+}
 
-  // Depending upon the storage method used, a true value may be stored as boolean or string type so shall test for both
-  if(("true" !== localStorage.getItem('setupComplete') && true !== localStorage.getItem('setupComplete')))
-  {
-    var shadowBackdrop;
-    var initialSetupDiv;
+/**
+ * Initial Setup of the script
+ */
 
-    var initialSetupDialog = new ModalDialog('initialSetup');
-    initialSetupDialog.create(
-        'background-color: white; margin: 8em auto; padding: 2em; width: 30em;',
-        '' +
-        '<strong>' + tl8('Spanghurt! Initial Setup') + '</strong><br>' +
-        '<br>' +
-        '<hr>' +
-        tl8('To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.') + "<br>" +
-        '<hr>' +
-        '<br>' +
-        '' + tl8('How many direct referrals do you have?') + ' <input id="initialSetup_directReferrals" size="4" value="0" type="text" /><br>' +
-        '' + tl8('How many rented referrals do you have?') + ' <input id="initialSetup_rentedReferrals" size="4" value="0" type="text" /><br>' +
-        '' + tl8('Do you use autopay?') + ' <input id="initialSetup_autopay" type="checkbox" /><br>' +
-        '<br>' +
-        '' + tl8('For how long do you usually renew your referrals?') + ' <select id="initialSetup_normalRenewalLength">' +
-        '<option value="15">' + tl8('15 days (The "Base Rate")') + '</option>' +
-        '<option value="30" selected="selected">' + tl8('30 days (5% discount)') + '</option>' +
-        '<option value="60">' + tl8('60 days (10% discount)') + '</option>' +
-        '<option value="90">' + tl8('90 days (18% discount)') + '</option>' +
-        '<option value="150">' + tl8('150 days (25% discount)') + '</option>' +
-        '<option value="240">' + tl8('240 days (30% discount)') + '</option>' +
-        '</select> <br>' +
-        '<br>' +
-        '' + tl8('What is the time difference between your time and the server\'s time?') + ' <input id="initialSetup_timeDifference" size="4" value="" type="text" /><br>' +
-        '<br>' +
-        '<small><i>' + tl8("If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.") + '</i></small>' +
-        '<br>' +
-        '<input id="initialSetup_save" value="' + tl8('Save Settings') + '" type="button"/>' +
-        '<input id="initialSetup_close" value="' + tl8('Close') + '" type="button"/>' +
-        ''
-        );
+// Depending upon the storage method used, a true value may be stored as boolean or string type so shall test for both
+if(("true" !== getValue('setupComplete') && true !== getValue('setupComplete')))
+{
+  var shadowBackdrop;
+  var initialSetupDiv;
+
+  var initialSetupDialog = new ModalDialog('initialSetup');
+  initialSetupDialog.create(
+      'background-color: white; margin: 8em auto; padding: 2em; width: 30em;',
+      '' +
+      '<strong>' + tl8('Spanghurt! Initial Setup') + '</strong><br>' +
+      '<br>' +
+      '<hr>' +
+      tl8('To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.') + "<br>" +
+      '<hr>' +
+      '<br>' +
+      '' + tl8('How many direct referrals do you have?') + ' <input id="initialSetup_directReferrals" size="4" value="0" type="text" /><br>' +
+      '' + tl8('How many rented referrals do you have?') + ' <input id="initialSetup_rentedReferrals" size="4" value="0" type="text" /><br>' +
+      '' + tl8('Do you use autopay?') + ' <input id="initialSetup_autopay" type="checkbox" /><br>' +
+      '<br>' +
+      '' + tl8('For how long do you usually renew your referrals?') + ' <select id="initialSetup_normalRenewalLength">' +
+      '<option value="15">' + tl8('15 days (The "Base Rate")') + '</option>' +
+      '<option value="30" selected="selected">' + tl8('30 days (5% discount)') + '</option>' +
+      '<option value="60">' + tl8('60 days (10% discount)') + '</option>' +
+      '<option value="90">' + tl8('90 days (18% discount)') + '</option>' +
+      '<option value="150">' + tl8('150 days (25% discount)') + '</option>' +
+      '<option value="240">' + tl8('240 days (30% discount)') + '</option>' +
+      '</select> <br>' +
+      '<br>' +
+      '' + tl8('What is the time difference between your time and the server\'s time?') + ' <input id="initialSetup_timeDifference" size="4" value="" type="text" /><br>' +
+      '<br>' +
+      '<small><i>' + tl8("If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.") + '</i></small>' +
+      '<br>' +
+      '<input id="initialSetup_save" value="' + tl8('Save Settings') + '" type="button"/>' +
+      '<input id="initialSetup_close" value="' + tl8('Close') + '" type="button"/>' +
+      ''
+      );
 
 
-    initialSetupDialog.show();
+  initialSetupDialog.show();
 
 
-    document.getElementById('initialSetup_save').addEventListener('click',function() {
-      var tmp_directRefs = document.getElementById('initialSetup_directReferrals').value.match(/([0-9]+)/) || [,0];
-      var tmp_rentedRefs = document.getElementById('initialSetup_rentedReferrals').value.match(/([0-9]+)/) || [,0];
-      var tmp_autopay = document.getElementById('initialSetup_autopay').checked;
-      var tmp_renewalLength = document.getElementById('initialSetup_normalRenewalLength').value;
-      var tmp_timeDifference = document.getElementById('initialSetup_timeDifference').value.match(/([+-]?[0-9]+)/) || [,0];
+  document.getElementById('initialSetup_save').addEventListener('click',function() {
+    var tmp_directRefs = document.getElementById('initialSetup_directReferrals').value.match(/([0-9]+)/) || [,0];
+    var tmp_rentedRefs = document.getElementById('initialSetup_rentedReferrals').value.match(/([0-9]+)/) || [,0];
+    var tmp_autopay = document.getElementById('initialSetup_autopay').checked;
+    var tmp_renewalLength = document.getElementById('initialSetup_normalRenewalLength').value;
+    var tmp_timeDifference = document.getElementById('initialSetup_timeDifference').value.match(/([+-]?[0-9]+)/) || [,0];
 
-      if(0 <= tmp_directRefs[1] &&
-              0 <= tmp_directRefs[1] &&
-              0 <= tmp_renewalLength &&
-              (0 <= tmp_timeDifference[1] || 0 >= tmp_timeDifference[1])
+    if(0 <= tmp_directRefs[1] &&
+            0 <= tmp_directRefs[1] &&
+            0 <= tmp_renewalLength &&
+            (0 <= tmp_timeDifference[1] || 0 >= tmp_timeDifference[1])
+        )
+    {
+
+      if(confirm(tl8('Please check that this is what you have entered then click okay to save it or cancel to retry:')+'\n\n' +
+          tl8('Direct Referrals: ')   + tmp_directRefs[1] + '\n' +
+          tl8('Rented Referrals ')    + tmp_rentedRefs[1]+'\n' +
+          tl8('Autopay On: ')         + tmp_autopay+'\n' +
+          tl8('Length of Renewals: ') + tmp_renewalLength+'\n' +
+          tl8('Time Difference: ')    + tmp_timeDifference[1])
           )
       {
 
-        if(confirm(tl8('Please check that this is what you have entered then click okay to save it or cancel to retry:')+'\n\n' +
-            tl8('Direct Referrals: ')   + tmp_directRefs[1] + '\n' +
-            tl8('Rented Referrals ')    + tmp_rentedRefs[1]+'\n' +
-            tl8('Autopay On: ')         + tmp_autopay+'\n' +
-            tl8('Length of Renewals: ') + tmp_renewalLength+'\n' +
-            tl8('Time Difference: ')    + tmp_timeDifference[1])
-            )
-        {
+        setValue('numberOfDirectReferrals', tmp_directRefs[1]);
+        setValue('numberOfRentedReferrals', tmp_rentedRefs[1]);
+        setValue('autopayOn', tmp_autopay);
+        setValue('renewalsLength', tmp_renewalLength);
+        setValue('serverTimeOffset', tmp_timeDifference[1]);
 
-          localStorage.setItem('numberOfDirectReferrals', tmp_directRefs[1]);
-          localStorage.setItem('numberOfRentedReferrals', tmp_rentedRefs[1]);
-          localStorage.setItem('autopayOn', tmp_autopay);
-          localStorage.setItem('renewalsLength', tmp_renewalLength);
-          localStorage.setItem('serverTimeOffset', tmp_timeDifference[1]);
-
-          localStorage.setItem('setupComplete', true);
+        setValue('setupComplete', true);
 
 
-          alert(tl8('Settings saved! The script will run on the next Neobux page that you load.'));
+        alert(tl8('Settings saved! The script will run on the next Neobux page that you load.'));
 
-          initialSetupDialog.hide();
+        initialSetupDialog.hide();
 
-        }
       }
-      else{
-        alert(tl8('There was an error with what you have entered. Please correct what you have entered and try again:')+'\n\n' +
-            tl8('Direct Referrals: ')   + tmp_directRefs[1] + '\n' +
-            tl8('Rented Referrals ')    + tmp_rentedRefs[1]+'\n' +
-            tl8('Autopay On: ')         + tmp_autopay+'\n' +
-            tl8('Length of Renewals: ') + tmp_renewalLength+'\n' +
-            tl8('Time Difference: ')    + tmp_timeDifference[1]);
-      }
+    }
+    else{
+      alert(tl8('There was an error with what you have entered. Please correct what you have entered and try again:')+'\n\n' +
+          tl8('Direct Referrals: ')   + tmp_directRefs[1] + '\n' +
+          tl8('Rented Referrals ')    + tmp_rentedRefs[1]+'\n' +
+          tl8('Autopay On: ')         + tmp_autopay+'\n' +
+          tl8('Length of Renewals: ') + tmp_renewalLength+'\n' +
+          tl8('Time Difference: ')    + tmp_timeDifference[1]);
+    }
 
-    },false);
+  },false);
 
-    document.getElementById('initialSetup_close').addEventListener('click',function() {
-      initialSetupDialog.hide();
-    },false);
-
-
-    //stop the remainder of the script
-    //return;
-  }
+  document.getElementById('initialSetup_close').addEventListener('click',function() {
+    initialSetupDialog.hide();
+  },false);
 
 
+  //stop the remainder of the script
+  //return;
+}
 
-  var dateToday = new Date();
-  var dateYesterday = new Date();
-  dateYesterday.setDate(dateToday.getDate() - 1);
 
-  // Date strings for the last 90 days and the next 720days
-  var dates_array = [];
-  var i=-720;
-  do
+
+var dateToday = new Date();
+var dateYesterday = new Date();
+dateYesterday.setDate(dateToday.getDate() - 1);
+
+// Date strings for the last 90 days and the next 720days
+var dates_array = [];
+var i=-720;
+do
+{
+  var tmpDate = new Date();
+  tmpDate.setDate(new Date().getDate() - i);
+  dates_array[i] = tmpDate.getFullYear() + '/' + padZeros(tmpDate.getMonth()+1, 2) + '/' + padZeros(tmpDate.getDate(), 2);
+  i++;
+
+}while(90 >= i);
+
+var TODAY_STRING = dates_array[0];
+var YESTERDAY_STRING = dates_array[1];
+var TOMORROW_STRING = dates_array[-1];
+
+
+var Neobux = {};
+Neobux.possibleAccTypes = [
+  'Standard',
+  'Golden',
+  'Emerald',
+  'Sapphire',
+  'Platinum',
+  'Diamond',
+  'Ultimate',
+  'Pioneer'
+];
+
+
+var rentalBands = [];
+var tmp_baseBandPrice = 0.20; //The lowest price band starts at $0.20
+var AUTOPAY_DISCOUNT = 0.85; // 15% discount when paying via autopay
+
+for(var i=0; 8 > i; i++)
+{
+  // Minimum number of referrals for this price band to apply:
+  // Maximum number of referrals for this price band to apply:
+  // Base cost of initial purchase of a single referral for 30days:
+  // Cost of autopay:
+  rentalBands[i] =
   {
-    var tmpDate = new Date();
-    tmpDate.setDate(new Date().getDate() - i);
-    dates_array[i] = tmpDate.getFullYear() + '/' + padZeros(tmpDate.getMonth()+1, 2) + '/' + padZeros(tmpDate.getDate(), 2);
-    i++;
+    minRefs: ( (i*250) + 1 ), //                1,      251,    501,    751,    1001,   1251,   1501,   1751
+    maxRefs: ( (i+1) * 250 ), //                250,    500,    750,    1000,   1250,   1500,   1750,   2000
+    costOfRent: tmp_baseBandPrice + (i*0.01), //$0.20,  $0.21,  $0.22,  $0.23,  $0.24,  $0.25,  $0.26,  $0.27
+    costOfAutopay: Math.round(((tmp_baseBandPrice + (i*0.01)) / 30) * AUTOPAY_DISCOUNT * 10000) / 10000 //NB: rounded to 4 decimal places
+  };
+}
+//The first band includes people who have zero refs (eg, cost to rent)
+rentalBands[0].minRefs = 0;
 
-  }while(90 >= i);
+//The final band has no upper limit on the max number of refs
+rentalBands[7].maxRefs = Infinity;
 
-  var TODAY_STRING = dates_array[0];
-  var YESTERDAY_STRING = dates_array[1];
-  var TOMORROW_STRING = dates_array[-1];
+var bulkRenewalDiscounts = {
+  15: 1.00, // 0% discount
+  30: 0.95, // 5% discount
+  60: 0.90, // 10% discount
+  90: 0.82, // 18% discount
+  150: 0.75, // 25% discount
+  240: 0.70 // 30% discount
+};
+
+var tmp_NeobuxAccountTypeDetails = {
+  'Standard': { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0},
+  'Golden':   { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0},
+  'Emerald':  { 'minDaysForAutopay': 20, 'recycleCost': 0.06, 'goldenCost': 90, 'goldenPackCost': 200,  'rentalBandAdjuster': -1},
+  'Sapphire': { 'minDaysForAutopay': 18, 'recycleCost': 0.07, 'goldenCost': 90, 'goldenPackCost': 200,  'rentalBandAdjuster': 0},
+  'Platinum': { 'minDaysForAutopay': 20, 'recycleCost': 0.06, 'goldenCost': 90, 'goldenPackCost': 400,  'rentalBandAdjuster': -1},
+  'Diamond':  { 'minDaysForAutopay': 14, 'recycleCost': 0.07, 'goldenCost': 90, 'goldenPackCost': 400,  'rentalBandAdjuster': 0},
+  'Ultimate': { 'minDaysForAutopay': 10, 'recycleCost': 0.04, 'goldenCost': 90, 'goldenPackCost': 800,  'rentalBandAdjuster': -3},
+  'Pioneer':  { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0}
+};
 
 
-  var Neobux = {};
-  Neobux.possibleAccTypes = [
-    'Standard',
-    'Golden',
-    'Emerald',
-    'Sapphire',
-    'Platinum',
-    'Diamond',
-    'Ultimate',
-    'Pioneer'
-  ];
 
 
-  var rentalBands = [];
-  var tmp_baseBandPrice = 0.20; //The lowest price band starts at $0.20
-  var AUTOPAY_DISCOUNT = 0.85; // 15% discount when paying via autopay
+function getRenewalFees(arg_accountType, arg_numberOfRentedRefs, arg_lengthOfRenewal)
+{
+  var tmp_rentingBand = Math.floor(arg_numberOfRentedRefs / 250) + tmp_NeobuxAccountTypeDetails[arg_accountType].rentalBandAdjuster;
+  tmp_rentingBand = (0 < tmp_rentingBand) ? tmp_rentingBand : 0;
 
-  for(var i=0; 8 > i; i++)
+  var tmp_rentingCost = ((rentalBands[tmp_rentingBand].costOfRent / 30) * arg_lengthOfRenewal * bulkRenewalDiscounts[arg_lengthOfRenewal]).toFixed(2);
+
+  return tmp_rentingCost;
+}
+
+
+/*
+for(var accountType in tmp_NeobuxAccountTypeDetails) {
+  if(tmp_NeobuxAccountTypeDetails.hasOwnProperty(accountType))
   {
-    // Minimum number of referrals for this price band to apply:
-    // Maximum number of referrals for this price band to apply:
-    // Base cost of initial purchase of a single referral for 30days:
-    // Cost of autopay:
-    rentalBands[i] =
-    {
-      minRefs: ( (i*250) + 1 ), //                1,      251,    501,    751,    1001,   1251,   1501,   1751
-      maxRefs: ( (i+1) * 250 ), //                250,    500,    750,    1000,   1250,   1500,   1750,   2000
-      costOfRent: tmp_baseBandPrice + (i*0.01), //$0.20,  $0.21,  $0.22,  $0.23,  $0.24,  $0.25,  $0.26,  $0.27
-      costOfAutopay: Math.round(((tmp_baseBandPrice + (i*0.01)) / 30) * AUTOPAY_DISCOUNT * 10000) / 10000 //NB: rounded to 4 decimal places
+    tmp_NeobuxAccountTypeDetails[accountType].referralPrices = {
+      initialRent: 0,
+          autopay: 0
     };
-  }
-  //The first band includes people who have zero refs (eg, cost to rent)
-  rentalBands[0].minRefs = 0;
 
-  //The final band has no upper limit on the max number of refs
-  rentalBands[7].maxRefs = Infinity;
-
-  var bulkRenewalDiscounts = {
-    15: 1.00, // 0% discount
-    30: 0.95, // 5% discount
-    60: 0.90, // 10% discount
-    90: 0.82, // 18% discount
-    150: 0.75, // 25% discount
-    240: 0.70 // 30% discount
-  };
-
-  var tmp_NeobuxAccountTypeDetails = {
-    'Standard': { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0},
-    'Golden':   { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0},
-    'Emerald':  { 'minDaysForAutopay': 20, 'recycleCost': 0.06, 'goldenCost': 90, 'goldenPackCost': 200,  'rentalBandAdjuster': -1},
-    'Sapphire': { 'minDaysForAutopay': 18, 'recycleCost': 0.07, 'goldenCost': 90, 'goldenPackCost': 200,  'rentalBandAdjuster': 0},
-    'Platinum': { 'minDaysForAutopay': 20, 'recycleCost': 0.06, 'goldenCost': 90, 'goldenPackCost': 400,  'rentalBandAdjuster': -1},
-    'Diamond':  { 'minDaysForAutopay': 14, 'recycleCost': 0.07, 'goldenCost': 90, 'goldenPackCost': 400,  'rentalBandAdjuster': 0},
-    'Ultimate': { 'minDaysForAutopay': 10, 'recycleCost': 0.04, 'goldenCost': 90, 'goldenPackCost': 800,  'rentalBandAdjuster': -3},
-    'Pioneer':  { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0}
-  };
-
-
-
-
-  function getRenewalFees(arg_accountType, arg_numberOfRentedRefs, arg_lengthOfRenewal)
-  {
-    var tmp_rentingBand = Math.floor(arg_numberOfRentedRefs / 250) + tmp_NeobuxAccountTypeDetails[arg_accountType].rentalBandAdjuster;
-    tmp_rentingBand = (0 < tmp_rentingBand) ? tmp_rentingBand : 0;
-
-    var tmp_rentingCost = ((rentalBands[tmp_rentingBand].costOfRent / 30) * arg_lengthOfRenewal * bulkRenewalDiscounts[arg_lengthOfRenewal]).toFixed(2);
-
-    return tmp_rentingCost;
-  }
-
-
-  /*
-  for(var accountType in tmp_NeobuxAccountTypeDetails) {
-    if(tmp_NeobuxAccountTypeDetails.hasOwnProperty(accountType))
-    {
-      tmp_NeobuxAccountTypeDetails[accountType].referralPrices = {
-        initialRent: 0,
-            autopay: 0
-      };
-
-      for(var renewalLength in bulkRenewalDiscounts) {
-        if(bulkRenewalDiscounts.hasOwnProperty(renewalLength)) {
-          tmp_NeobuxAccountTypeDetails[accountType].referralPrices[renewalLength] = tmp_NeobuxAccountTypeDetails[accountType].referralPrices.initialRent * renewalLength * bulkRenewalDiscounts[renewalLength];
-        }
+    for(var renewalLength in bulkRenewalDiscounts) {
+      if(bulkRenewalDiscounts.hasOwnProperty(renewalLength)) {
+        tmp_NeobuxAccountTypeDetails[accountType].referralPrices[renewalLength] = tmp_NeobuxAccountTypeDetails[accountType].referralPrices.initialRent * renewalLength * bulkRenewalDiscounts[renewalLength];
       }
     }
   }
-  */
+}
+*/
 
-  debugLog(tmp_NeobuxAccountTypeDetails);
+debugLog(tmp_NeobuxAccountTypeDetails);
 
-  Neobux.accountDefaults =
-  {
-    'minDaysForAutopay': {
-      'Standard': 20,
-      'Golden':   20,
-      'Emerald':  20,
-      'Sapphire': 18,
-      'Platinum': 20,
-      'Diamond':  14,
-      'Ultimate': 10,
-      'Pioneer':  20
+Neobux.accountDefaults =
+{
+  'minDaysForAutopay': {
+    'Standard': 20,
+    'Golden':   20,
+    'Emerald':  20,
+    'Sapphire': 18,
+    'Platinum': 20,
+    'Diamond':  14,
+    'Ultimate': 10,
+    'Pioneer':  20
+  },
+
+  'recycleCost': {
+    'Standard': 0.07,
+    'Golden':   0.07,
+    'Emerald':  0.06,
+    'Sapphire': 0.07,
+    'Platinum': 0.06,
+    'Diamond':  0.07,
+    'Ultimate': 0.04,
+    'Pioneer':  0.07
+  },
+
+  'goldenPackCost': {
+    'Standard': 0,
+    'Golden':   90,
+    'Emerald':  290,
+    'Sapphire': 290,
+    'Platinum': 490,
+    'Diamond':  490,
+    'Ultimate': 890,
+    'Pioneer':  0
+  },
+
+  // Values taken from the help files (quoted above)
+  'autopayValues': {
+    'Standard': [
+      {'minRefs': 0, 'cost': 0.0060},
+      {'minRefs': 501, 'cost': 0.0065},
+      {'minRefs': 751, 'cost': 0.0070},
+      {'minRefs': 1001, 'cost': 0.0075},
+      {'minRefs': 1501, 'cost': 0.0080}
+    ],
+    'Golden': [
+      {'minRefs': 0, 'cost': 0.0060},
+      {'minRefs': 501, 'cost': 0.0065},
+      {'minRefs': 751, 'cost': 0.0070},
+      {'minRefs': 1001, 'cost': 0.0075},
+      {'minRefs': 1501, 'cost': 0.0080}
+    ],
+    'Emerald': [
+      {'minRefs': 0, 'cost': 0.0060},
+      {'minRefs': 501, 'cost': 0.0065},
+      {'minRefs': 751, 'cost': 0.0070},
+      {'minRefs': 1251, 'cost': 0.0075},
+      {'minRefs': 1501, 'cost': 0.0080}
+    ],
+    'Sapphire': [
+      {'minRefs': 0, 'cost': 0.0060},
+      {'minRefs': 751, 'cost': 0.0065},
+      {'minRefs': 1001, 'cost': 0.0070},
+      {'minRefs': 1501, 'cost': 0.0075},
+      {'minRefs': 1751, 'cost': 0.0080}
+    ],
+    'Platinum': [
+      {'minRefs': 0, 'cost': 0.0060},
+      {'minRefs': 501, 'cost': 0.0065},
+      {'minRefs': 751, 'cost': 0.0070},
+      {'minRefs': 1251, 'cost': 0.0075},
+      {'minRefs': 1501, 'cost': 0.0080}
+    ],
+    'Diamond': [
+      {'minRefs': 0, 'cost': 0.0060},
+      {'minRefs': 1001, 'cost': 0.0065},
+      {'minRefs': 1251, 'cost': 0.0070},
+      {'minRefs': 1751, 'cost': 0.0075}
+    ],
+    'Ultimate': [
+      {'minRefs': 0, 'cost': 0.0060},
+      {'minRefs': 1251, 'cost': 0.0065},
+      {'minRefs': 1501, 'cost': 0.0070}
+    ]
+  },
+
+  'renewalFees': {
+    15: -1,
+    30: -1,
+    60: -1,
+    90: -1,
+    150: -1,
+    240: -1
+  }
+};
+
+var defaultSettings =
+{
+  columnPrefixes: {
+    flag: " | ",
+    referralName: "",
+    referralSince: "",
+    nextPayment: "",
+    lastClick: "",
+    totalClicks: "",
+    average: "",
+    clickText: "",
+    average1: "",
+    average2: "",
+    RSA: "",
+    SD: "",
+    profit: "$"
+  },
+
+  shrinkColumnContents: {
+    flag: true,
+    referralName: true,
+    referralSince: true,
+    nextPayment: true,
+    lastClick: true,
+    totalClicks: false,
+    average: false,
+    clickText: true,
+    average1: true,
+    average2: true,
+    RSA: true,
+    SD: true,
+    profit: false
+  },
+
+  numeriseDates: {
+    flag: null,
+    referralName: null,
+    referralSince: true,
+    nextPayment: null,
+    lastClick: true,
+    totalClicks: null,
+    average: null,
+    clickText: null,
+    average1: null,
+    average2: null,
+    RSA: null,
+    SD: null,
+    profit: null
+  },
+
+  shortFormatTimer: {
+    flag: null,
+    referralName: null,
+    referralSince: true,
+    nextPayment: null,
+    lastClick: true,
+    totalClicks: null,
+    average: null,
+    clickText: null,
+    average1: null,
+    average2: null,
+    RSA: null,
+    SD: null,
+    profit: null
+  },
+
+  showColumn: {
+    flag: true,
+    referralName: true,
+    referralSince: true,
+    nextPayment: true,
+    lastClick: true,
+    totalClicks: true,
+    average: true,
+    clickText: true,
+    average1: true,
+    average2: true,
+    RSA: true,
+    SD: true,
+    profit: true
+  },
+
+  numberOfRefs: {"Rented":-1,"Direct":-1},
+
+  timePeriods: {
+    smallGraph: [5,7,10],// Time Periods for 'smaller' 10day graphs
+    largeGraph: [5,10,15],// Time Periods for larger 15day graphs
+    recent: 7,// Time Period for 'recent' section of the Referral statistics sidebar
+    minigraphs: 5,// Time Period for footer row clicks average
+    averageCols: [10,7],// Time Period for the 'average1' & 'average2' column (previously defined as the A10&A7 column)
+    extensionsGraph: [7,15,30,60,90]
+  }
+};
+
+var friendlyNameLookup =
+{
+  'ch_cliques': 'personalClicks',
+  'ch_cr': 'rentedClicks',
+  'ch_cd': 'directClicks',
+  'ch_recycle': 'recycleCost',
+  'ch_extensions': 'renewalCost',
+  'ch_autopay': 'autopayCost',
+  'ch_trrb': 'transfersToRentalBalance',
+
+  'ch_earnings': 'referralEarnings',
+  'ch_profit': 'referralProfit',
+  'ch_trar': 'automaticRecycles',
+  'ch_trpb': 'transferToPackBalance',
+
+  'ch_ext_schedule8': 'extensions_631To720',
+  'ch_ext_schedule7': 'extensions_541To630',
+  'ch_ext_schedule6': 'extensions_451To540',
+  'ch_ext_schedule5': 'extensions_361To450',
+  'ch_ext_schedule4': 'extensions_271To360',
+  'ch_ext_schedule3': 'extensions_181To270',
+  'ch_ext_schedule2': 'extensions_91To180',
+  'ch_ext_schedule1': 'extensions_0To90',
+  'ch_ext_schedule': 'extensions'
+};
+
+
+var lookup_graphCache = {
+  'ch_cliques': 'ownClicks_localTime', //Use the local graphs in databars etc
+  'ch_cr': 'referralClicks_rented',
+  'ch_cd': 'referralClicks_direct',
+  'ch_recycle': 'recycleFees',
+  'ch_trar': 'automaticRecycles',
+  'ch_extensions': 'extensions',
+  'ch_autopay': 'autopay',
+  'ch_trrb': 'transfersToRentalBalance',
+  'ch_trpb': 'transfersToGoldenPackBalance',
+//  'ch_earnings': 'referralEarnings',
+//  'ch_profit': 'referralProfit',
+
+  'ch_ext_schedule8': 'extensionsDue',
+  'ch_ext_schedule7': 'extensionsDue',
+  'ch_ext_schedule6': 'extensionsDue',
+  'ch_ext_schedule5': 'extensionsDue',
+  'ch_ext_schedule4': 'extensionsDue',
+  'ch_ext_schedule3': 'extensionsDue',
+  'ch_ext_schedule2': 'extensionsDue',
+  'ch_ext_schedule1': 'extensionsDue',
+  'ch_ext_schedule':  'extensionsDue'
+};
+
+var graphLengthLookup =
+{
+  'ch_cliques': 10,
+  'ch_cr': 10,
+  'ch_cd': 10,
+  'ch_recycle': 15,
+  'ch_extensions': 15,
+  'ch_autopay': 15,
+  'ch_trrb': 15,
+
+  'ch_earnings': 15,
+  'ch_profit': 15,
+  'ch_trar': 15,
+  'ch_trpb': 15,
+
+  'ch_ext_schedule8': 90,
+  'ch_ext_schedule7': 90,
+  'ch_ext_schedule6': 90,
+  'ch_ext_schedule5': 90,
+  'ch_ext_schedule4': 90,
+  'ch_ext_schedule3': 90,
+  'ch_ext_schedule2': 90,
+  'ch_ext_schedule1': 90
+};
+
+
+
+
+var clickValues = {
+  Standard: {
+    Extended: {
+      value: 0.015,
+      commission: {
+        rented: 0.01,
+        direct: 0.01
+      }
     },
-
-    'recycleCost': {
-      'Standard': 0.07,
-      'Golden':   0.07,
-      'Emerald':  0.06,
-      'Sapphire': 0.07,
-      'Platinum': 0.06,
-      'Diamond':  0.07,
-      'Ultimate': 0.04,
-      'Pioneer':  0.07
-    },
-
-    'goldenPackCost': {
-      'Standard': 0,
-      'Golden':   90,
-      'Emerald':  290,
-      'Sapphire': 290,
-      'Platinum': 490,
-      'Diamond':  490,
-      'Ultimate': 890,
-      'Pioneer':  0
-    },
-
-    // Values taken from the help files (quoted above)
-    'autopayValues': {
-      'Standard': [
-        {'minRefs': 0, 'cost': 0.0060},
-        {'minRefs': 501, 'cost': 0.0065},
-        {'minRefs': 751, 'cost': 0.0070},
-        {'minRefs': 1001, 'cost': 0.0075},
-        {'minRefs': 1501, 'cost': 0.0080}
-      ],
-      'Golden': [
-        {'minRefs': 0, 'cost': 0.0060},
-        {'minRefs': 501, 'cost': 0.0065},
-        {'minRefs': 751, 'cost': 0.0070},
-        {'minRefs': 1001, 'cost': 0.0075},
-        {'minRefs': 1501, 'cost': 0.0080}
-      ],
-      'Emerald': [
-        {'minRefs': 0, 'cost': 0.0060},
-        {'minRefs': 501, 'cost': 0.0065},
-        {'minRefs': 751, 'cost': 0.0070},
-        {'minRefs': 1251, 'cost': 0.0075},
-        {'minRefs': 1501, 'cost': 0.0080}
-      ],
-      'Sapphire': [
-        {'minRefs': 0, 'cost': 0.0060},
-        {'minRefs': 751, 'cost': 0.0065},
-        {'minRefs': 1001, 'cost': 0.0070},
-        {'minRefs': 1501, 'cost': 0.0075},
-        {'minRefs': 1751, 'cost': 0.0080}
-      ],
-      'Platinum': [
-        {'minRefs': 0, 'cost': 0.0060},
-        {'minRefs': 501, 'cost': 0.0065},
-        {'minRefs': 751, 'cost': 0.0070},
-        {'minRefs': 1251, 'cost': 0.0075},
-        {'minRefs': 1501, 'cost': 0.0080}
-      ],
-      'Diamond': [
-        {'minRefs': 0, 'cost': 0.0060},
-        {'minRefs': 1001, 'cost': 0.0065},
-        {'minRefs': 1251, 'cost': 0.0070},
-        {'minRefs': 1751, 'cost': 0.0075}
-      ],
-      'Ultimate': [
-        {'minRefs': 0, 'cost': 0.0060},
-        {'minRefs': 1251, 'cost': 0.0065},
-        {'minRefs': 1501, 'cost': 0.0070}
-      ]
-    },
-
-    'renewalFees': {
-      15: -1,
-      30: -1,
-      60: -1,
-      90: -1,
-      150: -1,
-      240: -1
-    }
-  };
-
-  var defaultSettings =
-  {
-    columnPrefixes: {
-      flag: " | ",
-      referralName: "",
-      referralSince: "",
-      nextPayment: "",
-      lastClick: "",
-      totalClicks: "",
-      average: "",
-      clickText: "",
-      average1: "",
-      average2: "",
-      RSA: "",
-      SD: "",
-      profit: "$"
-    },
-
-    shrinkColumnContents: {
-      flag: true,
-      referralName: true,
-      referralSince: true,
-      nextPayment: true,
-      lastClick: true,
-      totalClicks: false,
-      average: false,
-      clickText: true,
-      average1: true,
-      average2: true,
-      RSA: true,
-      SD: true,
-      profit: false
-    },
-
-    numeriseDates: {
-      flag: null,
-      referralName: null,
-      referralSince: true,
-      nextPayment: null,
-      lastClick: true,
-      totalClicks: null,
-      average: null,
-      clickText: null,
-      average1: null,
-      average2: null,
-      RSA: null,
-      SD: null,
-      profit: null
-    },
-
-    shortFormatTimer: {
-      flag: null,
-      referralName: null,
-      referralSince: true,
-      nextPayment: null,
-      lastClick: true,
-      totalClicks: null,
-      average: null,
-      clickText: null,
-      average1: null,
-      average2: null,
-      RSA: null,
-      SD: null,
-      profit: null
-    },
-
-    showColumn: {
-      flag: true,
-      referralName: true,
-      referralSince: true,
-      nextPayment: true,
-      lastClick: true,
-      totalClicks: true,
-      average: true,
-      clickText: true,
-      average1: true,
-      average2: true,
-      RSA: true,
-      SD: true,
-      profit: true
-    },
-
-    numberOfRefs: {"Rented":-1,"Direct":-1},
-
-    timePeriods: {
-      smallGraph: [5,7,10],// Time Periods for 'smaller' 10day graphs
-      largeGraph: [5,10,15],// Time Periods for larger 15day graphs
-      recent: 7,// Time Period for 'recent' section of the Referral statistics sidebar
-      minigraphs: 5,// Time Period for footer row clicks average
-      averageCols: [10,7],// Time Period for the 'average1' & 'average2' column (previously defined as the A10&A7 column)
-      extensionsGraph: [7,15,30,60,90]
-    }
-  };
-
-  var friendlyNameLookup =
-  {
-    'ch_cliques': 'personalClicks',
-    'ch_cr': 'rentedClicks',
-    'ch_cd': 'directClicks',
-    'ch_recycle': 'recycleCost',
-    'ch_extensions': 'renewalCost',
-    'ch_autopay': 'autopayCost',
-    'ch_trrb': 'transfersToRentalBalance',
-
-    'ch_earnings': 'referralEarnings',
-    'ch_profit': 'referralProfit',
-    'ch_trar': 'automaticRecycles',
-    'ch_trpb': 'transferToPackBalance',
-
-    'ch_ext_schedule8': 'extensions_631To720',
-    'ch_ext_schedule7': 'extensions_541To630',
-    'ch_ext_schedule6': 'extensions_451To540',
-    'ch_ext_schedule5': 'extensions_361To450',
-    'ch_ext_schedule4': 'extensions_271To360',
-    'ch_ext_schedule3': 'extensions_181To270',
-    'ch_ext_schedule2': 'extensions_91To180',
-    'ch_ext_schedule1': 'extensions_0To90',
-    'ch_ext_schedule': 'extensions'
-  };
-
-
-  var lookup_graphCache = {
-    'ch_cliques': 'ownClicks_localTime', //Use the local graphs in databars etc
-    'ch_cr': 'referralClicks_rented',
-    'ch_cd': 'referralClicks_direct',
-    'ch_recycle': 'recycleFees',
-    'ch_trar': 'automaticRecycles',
-    'ch_extensions': 'extensions',
-    'ch_autopay': 'autopay',
-    'ch_trrb': 'transfersToRentalBalance',
-    'ch_trpb': 'transfersToGoldenPackBalance',
-  //  'ch_earnings': 'referralEarnings',
-  //  'ch_profit': 'referralProfit',
-
-    'ch_ext_schedule8': 'extensionsDue',
-    'ch_ext_schedule7': 'extensionsDue',
-    'ch_ext_schedule6': 'extensionsDue',
-    'ch_ext_schedule5': 'extensionsDue',
-    'ch_ext_schedule4': 'extensionsDue',
-    'ch_ext_schedule3': 'extensionsDue',
-    'ch_ext_schedule2': 'extensionsDue',
-    'ch_ext_schedule1': 'extensionsDue',
-    'ch_ext_schedule':  'extensionsDue'
-  };
-
-  var graphLengthLookup =
-  {
-    'ch_cliques': 10,
-    'ch_cr': 10,
-    'ch_cd': 10,
-    'ch_recycle': 15,
-    'ch_extensions': 15,
-    'ch_autopay': 15,
-    'ch_trrb': 15,
-
-    'ch_earnings': 15,
-    'ch_profit': 15,
-    'ch_trar': 15,
-    'ch_trpb': 15,
-
-    'ch_ext_schedule8': 90,
-    'ch_ext_schedule7': 90,
-    'ch_ext_schedule6': 90,
-    'ch_ext_schedule5': 90,
-    'ch_ext_schedule4': 90,
-    'ch_ext_schedule3': 90,
-    'ch_ext_schedule2': 90,
-    'ch_ext_schedule1': 90
-  };
-
-
-
-
-  var clickValues = {
     Standard: {
-      Extended: {
-        value: 0.015,
-        commission: {
-          rented: 0.01,
-          direct: 0.01
-        }
-      },
-      Standard: {
-        value: 0.01,
-        commission: {
-          rented: 0.005,
-          direct: 0.005
-        }
-      },
-      Mini: {
-        value: 0.005,
-        commission: {
-          rented: 0,
-          direct: 0
-        }
-      },
-      Micro: {
-        value: 0.001,
-        commission: {
-          rented: 0,
-          direct: 0
-        }
-      },
-      Fixed: {
-        value: 0.001,
-        commission: {
-          rented: 0.005,
-          direct: 0.0005
-        }
+      value: 0.01,
+      commission: {
+        rented: 0.005,
+        direct: 0.005
       }
     },
-    Golden: {
-      Extended: {
+    Mini: {
+      value: 0.005,
+      commission: {
+        rented: 0,
+        direct: 0
+      }
+    },
+    Micro: {
+      value: 0.001,
+      commission: {
+        rented: 0,
+        direct: 0
+      }
+    },
+    Fixed: {
+      value: 0.001,
+      commission: {
+        rented: 0.005,
+        direct: 0.0005
+      }
+    }
+  },
+  Golden: {
+    Extended: {
+      value: 0.02,
+      commission: {
+        rented: 0.02,
+        direct: 0.02
+      }
+    },
+    Standard: {
+      value: 0.01,
+      commission: {
+        rented: 0.01,
+        direct: 0.01
+      }
+    },
+    Micro: {
+      value: 0.001,
+      commission: {
+        rented: 0,
+        direct: 0
+      }
+    },
+    Fixed: {
+      value: 0.01,
+      commission: {
+        rented: 0.01,
+        direct: 0.005
+      }
+    }
+  }
+};
+
+// Fixed Micro ads are the same value and commission for standard AND golden members
+clickValues['Standard'].FixedMicro = {
+  value: 0.001,
+  commission: {
+    rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
+    direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
+  }
+};
+clickValues['Golden'].FixedMicro = {
+  value: 0.001,
+  commission: {
+    rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
+    direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
+  }
+};
+
+// Mini ads are the same value and commission for standard AND golden members
+clickValues['Standard'].Mini = {
+  value: 0.005,
+  commission: {
+    rented: 0,
+    direct: 0
+  }
+};
+clickValues['Golden'].Mini = {
+  value: 0.005,
+  commission: {
+    rented: 0,
+    direct: 0
+  }
+};
+
+//Initially set all golden packs to be the same as the Golden values
+clickValues['Emerald'] = {};
+clickValues['Sapphire'] = {};
+clickValues['Platinum'] = {};
+clickValues['Diamond'] = {};
+clickValues['Ultimate'] = {};
+
+
+// The golden-pack prices are all based on the golden values so merge those into these and
+//   tweak just the parts that are different
+Object_merge(clickValues['Emerald'],clickValues['Golden']);
+Object_merge(clickValues['Sapphire'],clickValues['Golden']);
+Object_merge(clickValues['Platinum'],clickValues['Golden']);
+Object_merge(clickValues['Diamond'],clickValues['Golden']);
+Object_merge(clickValues['Ultimate'],clickValues['Golden']);
+
+
+
+//Now to do the golden-pack-specific settings::
+/*Standard Ads click value*/
+clickValues['Emerald'].Standard.value   = 0.012;
+clickValues['Sapphire'].Standard.value  = 0.012;
+clickValues['Platinum'].Standard.value  = 0.015;
+clickValues['Diamond'].Standard.value   = 0.015;
+clickValues['Ultimate'].Standard.value  = 0.02;
+
+
+/*Fixed Ads click value - same as standard ads for golden & golden-pack members*/
+clickValues['Emerald'].Fixed.value  = clickValues['Emerald'].Standard.value;
+clickValues['Sapphire'].Fixed.value = clickValues['Sapphire'].Standard.value;
+clickValues['Platinum'].Fixed.value = clickValues['Platinum'].Standard.value;
+clickValues['Diamond'].Fixed.value  = clickValues['Diamond'].Standard.value;
+clickValues['Ultimate'].Fixed.value = clickValues['Ultimate'].Standard.value;
+
+/*Fixed Ads direct-click value - same as standard ads for golden & golden-pack members
+* Except Golden members*/
+clickValues['Standard'].Fixed.commission.direct = 0.0005;
+clickValues['Golden'].Fixed.commission.direct   = 0.005;
+clickValues['Emerald'].Fixed.commission.direct  = clickValues['Emerald'].Standard.commission.direct;
+clickValues['Sapphire'].Fixed.commission.direct = clickValues['Sapphire'].Standard.commission.direct;
+clickValues['Platinum'].Fixed.commission.direct = clickValues['Platinum'].Standard.commission.direct;
+clickValues['Diamond'].Fixed.commission.direct  = clickValues['Diamond'].Standard.commission.direct;
+clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standard.commission.direct;
+
+
+
+function testAgainstUrlParameters(arg_urlVarTests)
+{
+  var tmpUrlVars = document.location.search.substring(1).split('&');
+  for(var tmpUrlVarTest in arg_urlVarTests) {
+    if(!(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]))) {
+      return false;
+    }
+  }
+
+  // debugLog('Found the following within the URL:',arg_urlVarTests);
+  return true;
+}
+function testAgainstUrlPath(arg_urlTests)
+{
+  var tmpUrlVars = document.location.pathname.substring(1).split('/');
+
+  for(var tmpUrlVarTest in arg_urlTests) {
+    if(!(0 <= tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]))) {
+      return false;
+    }
+  }
+
+//  debugLog('Found the following within the URL:',arg_urlTests);
+  return true;
+}
+
+var currentPage = new function()
+{
+  function detectLanguageCode()
+  {
+    var tmp_langCodes = {
+      'f-us': 'EN', // English
+      'f-pt': 'PT', // Portuguese
+      'f-es': 'ES', // Spanish
+      'f-gr': 'GR', // Greece
+      'f-fi': 'FI', // Finnish
+      'f-se': 'SE', // Serbian
+      'f-de': 'DE', // Denmark
+      'f-fr': 'FR'  // French
+    };
+
+    for(var tmp_langCode in tmp_langCodes) {
+      if(tmp_langCodes.hasOwnProperty(tmp_langCode)) {
+        if(0 < document.querySelectorAll('.band2').length && document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class').match(tmp_langCode))
+        {
+//          debugLog("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
+//          debugLog('tmp_langCode = '+tmp_langCode);
+          setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], { prefType: 'string' });
+        }
+      }
+    }
+
+    //Return the stored language code, defaulting to EN;
+    return getPref('neobuxLanguageCode', 'EN', { prefType: 'string' });
+  };
+
+  this.languageCode = detectLanguageCode();
+
+  function detectPageCode ()
+  {
+    if(testAgainstUrlPath(['forum'])) {
+      if(testAgainstUrlParameters(['u_x_u=replymsg']))  { return 'viewingForums_replyingToThread'; }
+      if(testAgainstUrlParameters(['u_x_u=editmsg']))   { return 'viewingForums_editingMessage'; }
+      if(testAgainstUrlParameters(['u_x_u=newtopic']))  { return 'viewingForums_creatingTopic'; }
+      if(testAgainstUrlParameters(['u_x_u=newpoll']))   { return 'viewingForums_creatingPoll'; }
+      return 'viewingForums';
+    }
+
+    if(testAgainstUrlPath(['c']))
+    {
+      if(testAgainstUrlParameters(['s=i'])) { return 'accSummary'; }
+      if(testAgainstUrlPath(['b'])) { return 'banners'; }
+      if(testAgainstUrlPath(['d'])) { return 'personalSettings'; }
+      if(testAgainstUrlPath(['a'])) {
+        if(testAgainstUrlParameters(['s1=pgt'])) { return 'advertisementSettings_purchasingClickPack'; }
+        return 'advertisementSettings';
+      }
+
+      if(testAgainstUrlPath(['rq'])) { return 'rentalQueueSettings'; }
+      if(testAgainstUrlPath(['rs'])) { return 'referralStatistics'; }
+
+      if(testAgainstUrlPath(['rl']))
+      {
+        if(testAgainstUrlParameters(['ss3=1']))
+        {
+          //WARNING: TODO: NOT TESTED LINKS / ARROW DIRECTIONS FOR DIRECT REFS PAGES
+
+          if(testAgainstUrlParameters(['ss2=1']))
+          {
+            if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Direct_name_Desc'; }
+            if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Direct_refSince_Asc'; }
+            if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Direct_nextPayment_Desc'; }
+            if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Direct_lastClick_Asc'; }
+            if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Direct_totalClicks_Desc'; }
+            if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Direct_clickAverage_Desc'; }
+            return 'referralListings_Direct_UNKNOWNSORT';
+          }
+
+          if(testAgainstUrlParameters(['ss2=2']))
+          {
+            if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Direct_name_Asc'; }
+            if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Direct_refSince_Desc'; }
+            if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Direct_nextPayment_Asc'; }
+            if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Direct_lastClick_Desc'; }
+            if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Direct_totalClicks_Asc'; }
+            if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Direct_clickAverage_Asc'; }
+            return 'referralListings_Direct_UNKNOWNSORT';
+          }
+
+          return 'referralListings_Direct_DEFAULTSORT';
+        }
+
+        if(testAgainstUrlParameters(['ss3=2']))
+        {
+            /**
+             * Name           &ss1=2 &ss2= (2Asc/1Desc)??
+             * Ref Since      &ss1=1 &ss2= (1Asc/2Desc)
+             * Next Payment   &ss1=5 &ss2= (2Asc/1Desc)
+             * Last Click     &ss1=4 &ss2= (1Asc/2Desc)
+             * Clicks         &ss1=3 &ss2= (2Asc/1Desc)
+             * Average        &ss1=7 &ss2= (2Asc/1Desc)
+             *
+             * &ss1 = column to be sorted by
+             * &ss2 = asc / desc
+             * &ss3 = direct / rented refs
+             *
+             *  vars[1] = [2,2,1,'Sort by Referral ID#'];
+                vars[2] = [1,1,2,'Sort by the total time that the referral has been Owned']; // Does not match existing arrow directions
+                vars[3] = [5,2,1,'Sort by time until Next Payment is Due'];
+                vars[4] = [4,1,2,"Sort by time since the referral's Last Click"];
+                vars[5] = [3,2,1,'Sort by Total Number of Clicks'];
+                vars[6] = [7,2,1,'Sort by Average number of clicks'];
+             */
+
+          if(testAgainstUrlParameters(['ss2=1']))
+          {
+            if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Rented_name_Desc'; }
+            if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Rented_refSince_Asc'; }
+            if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Rented_nextPayment_Desc'; }
+            if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Rented_lastClick_Asc'; }
+            if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Rented_totalClicks_Desc'; }
+            if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Rented_clickAverage_Desc'; }
+            return 'referralListings_Rented_UNKNOWNSORT';
+          }
+
+          if(testAgainstUrlParameters(['ss2=2']))
+          {
+            if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Rented_name_Asc'; }
+            if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Rented_refSince_Desc'; }
+            if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Rented_nextPayment_Asc'; }
+            if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Rented_lastClick_Desc'; }
+            if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Rented_totalClicks_Asc'; }
+            if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Rented_clickAverage_Asc'; }
+            return 'referralListings_Rented_UNKNOWNSORT';
+          }
+
+          return 'referralListings_Rented_DEFAULTSORT';
+        }
+      }
+      if(testAgainstUrlPath(['h'])) { return 'historyLogs'; }
+      if(testAgainstUrlPath(['ll'])) { return 'loginHistory'; }
+      if(testAgainstUrlPath(['rba'])) { return 'rentalBalancePage'; }
+      if(testAgainstUrlPath(['gm'])) { return 'goldenMembershipPage'; }
+      if(testAgainstUrlPath(['gpa'])) { return 'goldenPackBalancePage'; }
+
+      return 'accSummary';
+    }
+
+
+    if(testAgainstUrlPath(['m','v'])) { return 'viewAdvertisementsPage'; }
+    if(testAgainstUrlPath(['v']) && testAgainstUrlParameters(['a=l'])) { return 'viewingAdvertisement'; }
+    if(testAgainstUrlParameters(['u=p'])) { return 'neobuxFrontPage'; }
+
+
+
+    throw 'unrecognisedUrlParameters';
+    return 'unrecognisedUrlParameters';
+  }
+
+  this.pageCode = detectPageCode();
+
+};
+
+debugLog('currentPage.pageCode = ',currentPage.pageCode);
+debugLog('JSON.stringify(currentPage.pageCode) = ',JSON.stringify(currentPage.pageCode));
+
+function extractNumberOfRefs()
+{
+  // If currently viewing the rented/direct ref listings, update the stored values accordingly
+  if (currentPage.pageCode.match(/referralListings/))
+  {
+    // Deduce which page is being viewed
+    var _pageRefType = null;
+    if(0 <= currentPage.pageCode.split('_').indexOf('Rented')) {
+      _pageRefType = 'Rented';
+    } else {  _pageRefType = 'Direct';
+    }
+// debugLog('_pageRefType = ',_pageRefType);
+    var tmp_numberOfRefs = null;
+    var noOfRefsString = docEvaluate('//td[@class="f_r"]/descendant::span[@class="f_b"]');
+
+    // Only expecting one result if the user has referrals
+    if(1 == noOfRefsString.snapshotLength)
+    {
+      noOfRefsString = noOfRefsString.snapshotItem(0);
+
+      if (noOfRefsString.textContent.match(/\d+/)) {
+        tmp_numberOfRefs = parseInt(noOfRefsString.textContent.match(/\d+/), 10);
+      } else {
+        errorLog('An Error has occured.\n\r 1 == (noOfRefsString.snapshotLength) \n\r !(noOfRefsString.textContent.match(/\d+/))')
+      }
+    }
+    else
+    {
+      /**
+       * Most likely reason for incorrect snapshotLength is an error in page load or zero refs.
+       * Will now check for zero refs.
+       */
+      var zeroRefsXpath = {
+        'EN': '//span[contains(text(),"You don\'t have")]',
+        'PT': '//span[contains(text(),"Não tem referidos")]'
+      };
+      var zeroRefsString = docEvaluate(zeroRefsXpath[currentPage.languageCode]);
+
+      // If evidence of zero refs is found, set the number of refs to zero (0)
+      tmp_numberOfRefs = (1 == zeroRefsString.snapshotLength) ? 0 : false;
+    }
+
+    // Now store the number of detected referrals if numberOfRefs is not false
+//    debugLog('tmp_numberOfRefs = ',tmp_numberOfRefs);
+    if(0 <= tmp_numberOfRefs) {
+      setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'text' });
+    }
+    return tmp_numberOfRefs;
+  }
+  else if(currentPage.pageCode.match(/accSummary/))
+  {
+//    TODO: Extract number of refs from main page
+    var tmp_elmAccountInfo = docEvaluate('//td[@class="t_preto_r"]/parent::tr/parent::tbody/descendant::td');
+
+    function displayTextContent(arg_element) {
+      return arg_element.textContent.replace(/mk_tt\(.*\)/,'').replace(/[><+=;\s]+/g,'');
+    }
+
+    var tmp_currentTd;
+    var tmp_nextTd;
+
+    var tmp_lookupArray = [
+      [/since:/i, 'You have been a member since {value}'],
+      [/type:/i, 'You are a {value} member'],
+      [/expires:/i, 'Your membership expires on {value}'],
+      [/rented:/i, 'You have {value} rented referrals'],
+      [/direct:/i, 'You have {value} direct referrals'],
+      [/you:/i, 'As a member of Neobux you have clicked {value} ads'],
+      [/your referrals:/i, 'In total, you have been credited from {value} of your referrals ads'],
+      [/main balance:/i, 'Your main balance is {value}'],
+      [/rental balance:/i, 'Your golden pack balance is {value}'],
+      [/golden pack balance:/i, 'Your golden pack balance is {value}'],
+      [/received:/i, 'You have cashed out {value} from Neobux'],
+      [/direct purchases:/i, 'You have directly transferred {value} from your account balance back into Neobux'],
+      [/exposure clicks:/i, 'You have {value} exposure clicks available for you to show ads with']
+    ];
+
+    for(var i=0; i<tmp_elmAccountInfo.snapshotLength; i++)
+    {
+      tmp_currentTd = tmp_elmAccountInfo.snapshotItem(i);
+      tmp_nextTd = tmp_elmAccountInfo.snapshotItem(i+1);
+
+      for(var j=0; j<tmp_lookupArray.length; j++) {
+        if(tmp_currentTd.textContent.match(tmp_lookupArray[j][0])) {
+//          debugLog(tmp_lookupArray[j][1].replace(/{value}/, displayTextContent(tmp_nextTd)));
+        }
+      }
+    }
+  }
+
+}
+
+extractNumberOfRefs();
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+function getUsername() {
+  if(document.getElementById('t_conta')) {
+    setPref('username', document.getElementById('t_conta').textContent, { prefType: 'string' });
+  }
+  var tmp_username = getPref('username', 'unknownUsername', { prefType: 'string' }) || 'failedToGetUsername';
+
+  return tmp_username;
+}
+
+
+function getMembershipType()
+{
+  var xpath_elmt_accountBadge = '//div[@class="tag"][last()]';
+  var elmt_accountBadge = document.evaluate(
+      xpath_elmt_accountBadge,
+      document,
+      null,
+      XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
+      null);
+
+  var tmp_membershipType_name = '';
+  if (0 < elmt_accountBadge.snapshotLength)
+  {
+    var tmp_membershipType_name = elmt_accountBadge.snapshotItem(
+        0).textContent.match(
+        /\w+/);
+    setPref('membershipType', tmp_membershipType_name, { prefType: 'string' });
+  }
+  tmp_membershipType_name = getPref('membershipType','unableToFetchNameFromStorage',{ prefType: 'string' });
+
+  return tmp_membershipType_name;
+}
+;
+
+function getClickValues(arg_memberType)
+{
+  var clickValues = {
+    Extended: {
+      Golden: {
         value: 0.02,
         commission: {
           rented: 0.02,
@@ -998,38 +1578,73 @@
         }
       },
       Standard: {
-        value: 0.01,
+        value: 0.015,
         commission: {
           rented: 0.01,
           direct: 0.01
         }
+      }
+    },
+    Regular: {
+      Golden: {
+        value: 0.01,
+        commission: {
+          rented: 0.010,
+          direct: 0.005
+        }
       },
-      Micro: {
+      Standard: {
+        value: 0.01,
+        commission: {
+          rented: 0.005,
+          direct: 0.005
+        }
+      }
+    },
+    Micro: {
+      Golden: {
         value: 0.001,
         commission: {
           rented: 0,
           direct: 0
         }
       },
-      Fixed: {
-        value: 0.01,
+      Standard: {
+        value: 0.001,
         commission: {
-          rented: 0.01,
-          direct: 0.005
+          rented: 0,
+          direct: 0
+        }
+      }
+    },
+    Fixed: {
+      Golden: {
+        value: 0.001,
+        commission: {
+          rented: 0,
+          direct: 0
+        }
+      },
+      Standard: {
+        value: 0.001,
+        commission: {
+          rented: 0,
+          direct: 0
         }
       }
     }
   };
 
   // Fixed Micro ads are the same value and commission for standard AND golden members
-  clickValues['Standard'].FixedMicro = {
+  clickValues.FixedMicro = {};
+  clickValues.FixedMicro['Standard'] = {
     value: 0.001,
     commission: {
       rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
       direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
     }
   };
-  clickValues['Golden'].FixedMicro = {
+  clickValues.FixedMicro['Golden'] = {
     value: 0.001,
     commission: {
       rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
@@ -1038,14 +1653,15 @@
   };
 
   // Mini ads are the same value and commission for standard AND golden members
-  clickValues['Standard'].Mini = {
+  clickValues.Mini = {};
+  clickValues.Mini['Standard'] = {
     value: 0.005,
     commission: {
       rented: 0,
       direct: 0
     }
   };
-  clickValues['Golden'].Mini = {
+  clickValues.Mini['Golden'] = {
     value: 0.005,
     commission: {
       rented: 0,
@@ -1053,796 +1669,622 @@
     }
   };
 
-  //Initially set all golden packs to be the same as the Golden values
-  clickValues['Emerald'] = {};
-  clickValues['Sapphire'] = {};
-  clickValues['Platinum'] = {};
-  clickValues['Diamond'] = {};
-  clickValues['Ultimate'] = {};
-
-
-  // The golden-pack prices are all based on the golden values so merge those into these and
-  //   tweak just the parts that are different
-  Object_merge(clickValues['Emerald'],clickValues['Golden']);
-  Object_merge(clickValues['Sapphire'],clickValues['Golden']);
-  Object_merge(clickValues['Platinum'],clickValues['Golden']);
-  Object_merge(clickValues['Diamond'],clickValues['Golden']);
-  Object_merge(clickValues['Ultimate'],clickValues['Golden']);
-
-
+  //The golden-pack values are based on the golden membership details
+  //   Create them with the golden values initially then add more specific detail later
+  for(var tmp_advertisementType in clickValues) {
+    if(clickValues.hasOwnProperty((tmp_advertisementType)))
+    {
+      clickValues[tmp_advertisementType].Emerald = {};
+      Object_merge(clickValues[tmp_advertisementType].Emerald,  clickValues[tmp_advertisementType].Golden);
+      clickValues[tmp_advertisementType].Sapphire = {};
+      Object_merge(clickValues[tmp_advertisementType].Sapphire, clickValues[tmp_advertisementType].Golden);
+      clickValues[tmp_advertisementType].Platinum = {};
+      Object_merge(clickValues[tmp_advertisementType].Platinum, clickValues[tmp_advertisementType].Golden);
+      clickValues[tmp_advertisementType].Diamond = {};
+      Object_merge(clickValues[tmp_advertisementType].Diamond,  clickValues[tmp_advertisementType].Golden);
+      clickValues[tmp_advertisementType].Ultimate = {};
+      Object_merge(clickValues[tmp_advertisementType].Ultimate, clickValues[tmp_advertisementType].Golden);
+    }
+  }
 
   //Now to do the golden-pack-specific settings::
   /*Standard Ads click value*/
-  clickValues['Emerald'].Standard.value   = 0.012;
-  clickValues['Sapphire'].Standard.value  = 0.012;
-  clickValues['Platinum'].Standard.value  = 0.015;
-  clickValues['Diamond'].Standard.value   = 0.015;
-  clickValues['Ultimate'].Standard.value  = 0.02;
+  clickValues.Regular['Emerald'].value   = 0.012;
+  clickValues.Regular['Sapphire'].value  = 0.012;
+  clickValues.Regular['Platinum'].value  = 0.015;
+  clickValues.Regular['Diamond'].value   = 0.015;
+  clickValues.Regular['Ultimate'].value  = 0.02;
 
 
   /*Fixed Ads click value - same as standard ads for golden & golden-pack members*/
-  clickValues['Emerald'].Fixed.value  = clickValues['Emerald'].Standard.value;
-  clickValues['Sapphire'].Fixed.value = clickValues['Sapphire'].Standard.value;
-  clickValues['Platinum'].Fixed.value = clickValues['Platinum'].Standard.value;
-  clickValues['Diamond'].Fixed.value  = clickValues['Diamond'].Standard.value;
-  clickValues['Ultimate'].Fixed.value = clickValues['Ultimate'].Standard.value;
+  clickValues.Fixed['Emerald'].value  = clickValues.Regular['Emerald'].value;
+  clickValues.Fixed['Sapphire'].value = clickValues.Regular['Sapphire'].value;
+  clickValues.Fixed['Platinum'].value = clickValues.Regular['Platinum'].value;
+  clickValues.Fixed['Diamond'].value  = clickValues.Regular['Diamond'].value;
+  clickValues.Fixed['Ultimate'].value = clickValues.Regular['Ultimate'].value;
 
   /*Fixed Ads direct-click value - same as standard ads for golden & golden-pack members
   * Except Golden members*/
-  clickValues['Standard'].Fixed.commission.direct = 0.0005;
-  clickValues['Golden'].Fixed.commission.direct   = 0.005;
-  clickValues['Emerald'].Fixed.commission.direct  = clickValues['Emerald'].Standard.commission.direct;
-  clickValues['Sapphire'].Fixed.commission.direct = clickValues['Sapphire'].Standard.commission.direct;
-  clickValues['Platinum'].Fixed.commission.direct = clickValues['Platinum'].Standard.commission.direct;
-  clickValues['Diamond'].Fixed.commission.direct  = clickValues['Diamond'].Standard.commission.direct;
-  clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standard.commission.direct;
+  clickValues.Fixed['Standard'].commission.direct = 0.0005;
+  clickValues.Fixed['Golden'].commission.direct   = 0.005;
+  clickValues.Fixed['Emerald'].commission.direct  = clickValues.Regular['Emerald'].commission.direct;
+  clickValues.Fixed['Sapphire'].commission.direct = clickValues.Regular['Sapphire'].commission.direct;
+  clickValues.Fixed['Platinum'].commission.direct = clickValues.Regular['Platinum'].commission.direct;
+  clickValues.Fixed['Diamond'].commission.direct  = clickValues.Regular['Diamond'].commission.direct;
+  clickValues.Fixed['Ultimate'].commission.direct = clickValues.Regular['Ultimate'].commission.direct;
 
-
-
-  /**
-   * :Handles stored preferences (eg, referral listings column preferences) and locally cached values (eg, username / number of referrals)
-   * @param arg_prefName The name of the stored value that is stored to / fetched from.
-   * @param arg_defaultValue The value to return if the value isn't found in storage.
-   * @param arg_options Indicates the data type that the value will be stored as (where possible) / the data type that the stored value will be returned as. Useful for indicating JSON data. Defaults to string.
-   **/
-
-  function getPref(arg_prefName, arg_defaultValue, arg_options)
-  {
-    if ("object" === typeof arg_options) {
-      //arg_options = arg_options;
-    }
-    else {
-      errorLog('ERROR: function: getPref()','arg_options is not an object!!','arguments:',arguments);
-      arg_options = {};
-    }
-
-    var returnType = arg_options.prefType || typeof arg_defaultValue;
-
-    var tmp = localStorage.getItem(arg_prefName);
-    if(!tmp) {
-      errorLog('Error retrieving value from localStorage, using supplied default value.',arguments);
-      tmp = setPref(arg_prefName, arg_defaultValue, arg_options);
-    }
-
-    switch (returnType)
-    {
-      case 'float':
-        return parseFloat(tmp);
-      case 'integer':
-        return parseInt(tmp);
-      case 'string':
-        return tmp.toString();
-      case 'boolean':
-          if('true' === tmp.toString()) { return true; }
-          if('false' === tmp.toString()) { return false; }
-        return !!tmp;
-      case 'JSON':
-        try {
-          return JSON.parse(tmp);
-        }
-        catch(e) {
-          return {};
-        }
-      default:
-        return tmp;
-    }
-  }
-
-  function setPref(arg_prefName, arg_defaultValue, arg_options)
-  {
-    if ("object" === typeof arg_options) {
-      //arg_options = arg_options;
-    }
-    else {
-      errorLog('ERROR: function: setPref()','arg_options is not an object!!','arguments:',arguments);
-      arg_options = {};
-    }
-
-    arg_options.prefType = arg_options.prefType || typeof arg_defaultValue;
-
-    var tmp_value;
-    switch (arg_options.prefType)
-    {
-      case 'float':
-        tmp_value = parseFloat(arg_defaultValue);
-        break;
-      case 'integer':
-        tmp_value = parseInt(arg_defaultValue);
-        break;
-      case 'string':
-        tmp_value = arg_defaultValue.toString();
-        break;
-      case 'JSON':
-        tmp_value = JSON.stringify(arg_defaultValue);
-        break;
-      default:
-        tmp_value = arg_defaultValue;
-        break;
-    }
-
-    localStorage.setItem(arg_prefName, tmp_value);
-
-    /*Having issues with the localStorage being wiped occasionally [nb: caused by a privacy addon] so storing to GM_log too as a backup*/
-    // Also having issues with floats not being able to be stored :S
-    if("undefined" !== typeof GM_setValue) {
-      try
-      {
-        GM_setValue(arg_prefName, tmp_value);
-      }
-      catch(e) {
-        GM_setValue(arg_prefName, tmp_value.toString());
-      }
-    }
-    return getPref(arg_prefName, tmp_value, arg_options);
-  }
-
-
-
-  function testAgainstUrlParameters(arg_urlVarTests)
-  {
-    var tmpUrlVars = document.location.search.substring(1).split('&');
-    for(var tmpUrlVarTest in arg_urlVarTests) {
-      if(!(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]))) {
-        return false;
-      }
-    }
-
-    // debugLog('Found the following within the URL:',arg_urlVarTests);
-    return true;
-  }
-  function testAgainstUrlPath(arg_urlTests)
-  {
-    var tmpUrlVars = document.location.pathname.substring(1).split('/');
-
-    for(var tmpUrlVarTest in arg_urlTests) {
-      if(!(0 <= tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]))) {
-        return false;
-      }
-    }
-
-  //  debugLog('Found the following within the URL:',arg_urlTests);
-    return true;
-  }
-
-  var currentPage = new function()
-  {
-    function detectLanguageCode()
-    {
-      var tmp_langCodes = {
-        'f-us': 'EN', // English
-        'f-pt': 'PT', // Portuguese
-        'f-es': 'ES', // Spanish
-        'f-gr': 'GR', // Greece
-        'f-fi': 'FI', // Finnish
-        'f-se': 'SE', // Serbian
-        'f-de': 'DE', // Denmark
-        'f-fr': 'FR'  // French
-      };
-
-      for(var tmp_langCode in tmp_langCodes) {
-        if(tmp_langCodes.hasOwnProperty(tmp_langCode)) {
-          if(0 < document.querySelectorAll('.band2').length && document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class').match(tmp_langCode))
-          {
-  //          debugLog("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
-  //          debugLog('tmp_langCode = '+tmp_langCode);
-            setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], { prefType: 'string' });
-          }
-        }
-      }
-
-      //Return the stored language code, defaulting to EN;
-      return getPref('neobuxLanguageCode', 'EN', { prefType: 'string' });
+  var tmp_clickValueToReturn = {};
+  tmp_clickValueToReturn.own = {
+      Extended:   clickValues.Extended[arg_memberType],
+      Regular:    clickValues.Regular[arg_memberType],
+      Mini:       clickValues.Mini[arg_memberType],
+      Fixed:      clickValues.Fixed[arg_memberType],
+      FixedMicro: clickValues.FixedMicro[arg_memberType],
+      Micro:      clickValues.Micro[arg_memberType]
     };
+  tmp_clickValueToReturn.rented = clickValues.Fixed[arg_memberType].commission.rented;
+  tmp_clickValueToReturn.direct = clickValues.Fixed[arg_memberType].commission.direct;
 
-    this.languageCode = detectLanguageCode();
+  return tmp_clickValueToReturn;
 
-    function detectPageCode ()
+  /*return {
+    own: {
+      extended: 0.020,
+      regular: 0.010,
+      mini: 0.005,
+      fixed: 0.010,
+      fixedMicro: 0.001,
+      micro: 0.001
+    },
+    rented: 0.010,
+    direct: 0.005
+  };*/
+}
+
+/**
+ * :Object used for holding information about the account that the current user of the script is logged into
+ *
+ **/
+var userAccount = new function ()
+{
+  this.membershipType = getMembershipType();
+  this.override_showUltimateFeatures = false;
+  this.clickValues = getClickValues(this.membershipType);
+  this.numberOfReferrals = {};
+  this.feesCosts = {
+    autopay: 0,
+    expiredReferral: 0,
+    golden: 0,
+    goldenPack: 0,
+    initialRent: 0,
+    recycle: 0,
+    extensions: {
+      15:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 15),
+      30:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 30),
+      60:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 60),
+      90:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 90),
+      150: getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 150),
+      240: getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 240)
+    }
+  };
+  this.username = getUsername();
+};
+
+var preferences = new function()
+{
+  this.preferredExtensionLength = getPref('renewalsLength',90, { prefType: 'string' });
+}
+
+var currentUser = new function()
+{
+  function getPerAutoPayFee(arg_accountType, arg_numberOfRentedReferrals)
+  {
+    var defaultAutopayValues = Neobux.accountDefaults.autopayValues[arg_accountType.verbose];
+
+    var totalRentedRefs = (0 <= arg_numberOfRentedReferrals) ? arg_numberOfRentedReferrals : 0;
+    var perAutoPayCost = 0;
+
+    var j = defaultAutopayValues.length - 1;
+    var currentTest;
+    do
     {
-      if(testAgainstUrlPath(['forum'])) {
-        if(testAgainstUrlParameters(['u_x_u=replymsg']))  { return 'viewingForums_replyingToThread'; }
-        if(testAgainstUrlParameters(['u_x_u=editmsg']))   { return 'viewingForums_editingMessage'; }
-        if(testAgainstUrlParameters(['u_x_u=newtopic']))  { return 'viewingForums_creatingTopic'; }
-        if(testAgainstUrlParameters(['u_x_u=newpoll']))   { return 'viewingForums_creatingPoll'; }
-        return 'viewingForums';
+      currentTest = defaultAutopayValues[j];
+
+//      debugLog('currentTest.minRefs = '+currentTest.minRefs+'\n'+
+//          'totalRentedRefs = '+totalRentedRefs+'\n'+
+//          'currentTest.cost = '+currentTest.cost);
+
+      if(parseInt(currentTest.minRefs, 10) < parseInt(totalRentedRefs, 10)) {
+        perAutoPayCost = currentTest.cost;
       }
 
-      if(testAgainstUrlPath(['c']))
+    } while((parseInt(defaultAutopayValues[j--].minRefs, 10) > parseInt(totalRentedRefs, 10)));
+
+    return perAutoPayCost;
+  }
+
+
+  if(document.getElementById('t_conta')) {
+    this.username = setPref('username', document.getElementById('t_conta').textContent, { prefType: 'string' });
+  } else {
+    this.username = getPref('username', 'unknownUsername', { prefType: 'string' });
+  }
+
+  this.accountType = new function ()
+  {
+    var accDiv = docEvaluate('//div[@class="tag"][last()]');
+    var tmp_accountType;
+
+    // If the accType can be grabbed from the page, cache it
+    if(0 < accDiv.snapshotLength) {
+      accDiv = accDiv.snapshotItem(0);
+
+      for (var i = 0; i < Neobux.possibleAccTypes.length; i++)
       {
-        if(testAgainstUrlParameters(['s=i'])) { return 'accSummary'; }
-        if(testAgainstUrlPath(['b'])) { return 'banners'; }
-        if(testAgainstUrlPath(['d'])) { return 'personalSettings'; }
-        if(testAgainstUrlPath(['a'])) {
-          if(testAgainstUrlParameters(['s1=pgt'])) { return 'advertisementSettings_purchasingClickPack'; }
-          return 'advertisementSettings';
-        }
-
-        if(testAgainstUrlPath(['rq'])) { return 'rentalQueueSettings'; }
-        if(testAgainstUrlPath(['rs'])) { return 'referralStatistics'; }
-
-        if(testAgainstUrlPath(['rl']))
+        if (accDiv.textContent.match(Neobux.possibleAccTypes[i]))
         {
-          if(testAgainstUrlParameters(['ss3=1']))
-          {
-            //WARNING: TODO: NOT TESTED LINKS / ARROW DIRECTIONS FOR DIRECT REFS PAGES
-
-            if(testAgainstUrlParameters(['ss2=1']))
-            {
-              if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Direct_name_Desc'; }
-              if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Direct_refSince_Asc'; }
-              if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Direct_nextPayment_Desc'; }
-              if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Direct_lastClick_Asc'; }
-              if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Direct_totalClicks_Desc'; }
-              if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Direct_clickAverage_Desc'; }
-              return 'referralListings_Direct_UNKNOWNSORT';
-            }
-
-            if(testAgainstUrlParameters(['ss2=2']))
-            {
-              if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Direct_name_Asc'; }
-              if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Direct_refSince_Desc'; }
-              if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Direct_nextPayment_Asc'; }
-              if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Direct_lastClick_Desc'; }
-              if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Direct_totalClicks_Asc'; }
-              if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Direct_clickAverage_Asc'; }
-              return 'referralListings_Direct_UNKNOWNSORT';
-            }
-
-            return 'referralListings_Direct_DEFAULTSORT';
-          }
-
-          if(testAgainstUrlParameters(['ss3=2']))
-          {
-              /**
-               * Name           &ss1=2 &ss2= (2Asc/1Desc)??
-               * Ref Since      &ss1=1 &ss2= (1Asc/2Desc)
-               * Next Payment   &ss1=5 &ss2= (2Asc/1Desc)
-               * Last Click     &ss1=4 &ss2= (1Asc/2Desc)
-               * Clicks         &ss1=3 &ss2= (2Asc/1Desc)
-               * Average        &ss1=7 &ss2= (2Asc/1Desc)
-               *
-               * &ss1 = column to be sorted by
-               * &ss2 = asc / desc
-               * &ss3 = direct / rented refs
-               *
-               *  vars[1] = [2,2,1,'Sort by Referral ID#'];
-                  vars[2] = [1,1,2,'Sort by the total time that the referral has been Owned']; // Does not match existing arrow directions
-                  vars[3] = [5,2,1,'Sort by time until Next Payment is Due'];
-                  vars[4] = [4,1,2,"Sort by time since the referral's Last Click"];
-                  vars[5] = [3,2,1,'Sort by Total Number of Clicks'];
-                  vars[6] = [7,2,1,'Sort by Average number of clicks'];
-               */
-
-            if(testAgainstUrlParameters(['ss2=1']))
-            {
-              if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Rented_name_Desc'; }
-              if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Rented_refSince_Asc'; }
-              if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Rented_nextPayment_Desc'; }
-              if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Rented_lastClick_Asc'; }
-              if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Rented_totalClicks_Desc'; }
-              if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Rented_clickAverage_Desc'; }
-              return 'referralListings_Rented_UNKNOWNSORT';
-            }
-
-            if(testAgainstUrlParameters(['ss2=2']))
-            {
-              if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Rented_name_Asc'; }
-              if(testAgainstUrlParameters(['ss1=1'])) { return 'referralListings_Rented_refSince_Desc'; }
-              if(testAgainstUrlParameters(['ss1=5'])) { return 'referralListings_Rented_nextPayment_Asc'; }
-              if(testAgainstUrlParameters(['ss1=4'])) { return 'referralListings_Rented_lastClick_Desc'; }
-              if(testAgainstUrlParameters(['ss1=3'])) { return 'referralListings_Rented_totalClicks_Asc'; }
-              if(testAgainstUrlParameters(['ss1=7'])) { return 'referralListings_Rented_clickAverage_Asc'; }
-              return 'referralListings_Rented_UNKNOWNSORT';
-            }
-
-            return 'referralListings_Rented_DEFAULTSORT';
-          }
+          tmp_accountType = {
+            "numerical": i,
+            'verbose': Neobux.possibleAccTypes[i]
+          };
+          setPref('accountType', tmp_accountType, { prefType: 'JSON' });
         }
-        if(testAgainstUrlPath(['h'])) { return 'historyLogs'; }
-        if(testAgainstUrlPath(['ll'])) { return 'loginHistory'; }
-        if(testAgainstUrlPath(['rba'])) { return 'rentalBalancePage'; }
-        if(testAgainstUrlPath(['gm'])) { return 'goldenMembershipPage'; }
-        if(testAgainstUrlPath(['gpa'])) { return 'goldenPackBalancePage'; }
-
-        return 'accSummary';
       }
-
-
-      if(testAgainstUrlPath(['m','v'])) { return 'viewAdvertisementsPage'; }
-      if(testAgainstUrlPath(['v']) && testAgainstUrlParameters(['a=l'])) { return 'viewingAdvertisement'; }
-      if(testAgainstUrlParameters(['u=p'])) { return 'neobuxFrontPage'; }
-
-
-
-      throw 'unrecognisedUrlParameters';
-      return 'unrecognisedUrlParameters';
     }
 
-    this.pageCode = detectPageCode();
+    // If the accountType info was on the page, the stored copy will have been updated
+    // (else we'll just be grabbing the cached version)
+    tmp_accountType = getPref('accountType',{numerical:0, verbose:'unknown'},{ prefType: 'JSON' });
 
+    this.numerical = tmp_accountType.numerical;
+    this.verbose = tmp_accountType.verbose;
+
+    this.showUltimateFeatures = (6 == tmp_accountType.numerical);
+    this.isUltimate = 6 === tmp_accountType.numerical;
+    this.isStandard = 0 === tmp_accountType.numerical;
+
+    this.cost = getPref('accountTypeCost',Neobux.accountDefaults.goldenPackCost[this.verbose], { prefType: 'float' });
+
+    return this;
   };
 
-  debugLog('currentPage.pageCode = ',currentPage.pageCode);
-  debugLog('JSON.stringify(currentPage.pageCode) = ',JSON.stringify(currentPage.pageCode));
+  this.ownClickValue = clickValues[this.accountType.verbose].Fixed.value;
+  this.rentedReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.rented;
+  this.directReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.direct;
 
-  function extractNumberOfRefs()
+  this.numberOfRefs = {
+    Rented: getPref('numberOfRentedReferrals',defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
+    Direct: getPref('numberOfDirectReferrals',defaultSettings.numberOfRefs['Direct'], { prefType: 'integer' })
+  };
+
+  this.recycleFee = getPref('recycleFee',Neobux.accountDefaults['recycleCost'][this.accountType.verbose], { prefType: 'float' });
+
+  this.autopayFee = getPerAutoPayFee(this.accountType,this.numberOfRefs.Rented);
+
+
+  this.renewalsLength = getPref('renewalsLength',90, { prefType: 'string' });
+  this.renewalFees = getRenewalFees(this.accountType.verbose, this.numberOfRefs.Rented, this.renewalsLength);
+
+  this.preferences = new function ()
   {
-    // If currently viewing the rented/direct ref listings, update the stored values accordingly
-    if (currentPage.pageCode.match(/referralListings/))
+//    this.columnPrefixes = getPref(tmp_prefs[i],defaultSettings['columnPrefixes'], { prefType: 'JSON' });
+//    this.numeriseDate = getPref(tmp_prefs[i],defaultSettings['numeriseDate'], { prefType: 'JSON' });
+//    this.shortFormatTimer = getPref(tmp_prefs[i],defaultSettings['shortFormatTimer'], { prefType: 'JSON' });
+//    this.showColumn = getPref(tmp_prefs[i],defaultSettings['showColumn'], { prefType: 'JSON' });
+//    this.shrinkColumnContents = getPref(tmp_prefs[i],defaultSettings['shrinkColumnContents'], { prefType: 'JSON' });
+//    this.timePeriods = getPref(tmp_prefs[i],defaultSettings['timePeriods'], { prefType: 'JSON' });
+
+    //JSON vars
+    var tmp_prefs = ['columnPrefixes','numeriseDates','shortFormatTimer','showColumn','shrinkColumnContents','timePeriods'];
+    for(var i=0; i<tmp_prefs.length; i++) {
+      this[tmp_prefs[i]] = getPref(tmp_prefs[i],defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
+    }
+    //Boolean vars
+    this['flag_textify'] = getPref('flag_textify',true, { prefType: 'boolean' });
+  };
+};
+
+debugLog('currentUser', currentUser);
+
+function getGraphData()
+{
+  // Decode evalString using the w(i) function from the Neobux page
+  function U(arg_a) {
+    return arg_a * 10;
+  }
+
+  function u0(arg_a) {
+    return String.fromCharCode(U(arg_a));
+  }
+
+  // function w(_i) {
+  function NeobuxDecodeEvalString(arg_input)
+  {
+    var k = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var o = "";
+    var c1, c2, c3, e1, e2, e3, e4;
+    var j = 0;
+    arg_input = arg_input.replace(/[^A-Za-z0-9\+\/=]/g, "");
+    do {
+      e1 = k.indexOf(arg_input.charAt(j++));
+      e2 = k.indexOf(arg_input.charAt(j++));
+      e3 = k.indexOf(arg_input.charAt(j++));
+      e4 = k.indexOf(arg_input.charAt(j++));
+      c1 = e1 << 2 | e2 >> 4;
+      c2 = (e2 & 15) << 4 | e3 >> 2;
+      c3 = (e3 & 3) << 6 | e4;
+      o = o + u0(c1 / 10);
+      if (64 != e3)
+      {
+        o = o + u0(c2 / 10);
+      }
+      if (64 != e4)
+      {
+        o = o + u0(c3 / 10);
+      }
+    } while (j < arg_input.length);
+
+    return o;
+  }
+
+
+  var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
+  //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snapshotLength
+
+  for(var i=0; i<xpathResults_graphData.snapshotLength; i++)
+  {
+    //debugLog(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval/g).length);
+    if(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval\(w\('/g)) {
+      /**
+     *  If only one matching <script> ... </script> tag found, it is the correct one
+     * Now extract data::
+     */
+
+    /**
+     * First, remove instances of the word 'eval' and then split it up based on
+     * these rules ::
+     * eval(w('
+     * ')); eval(w('
+     */
+      var evals = xpathResults_graphData.snapshotItem(i).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
+    }
+  }
+
+  var graphData = new Array();
+
+  // Cycle through each individual eval (ie, graph / graphNumber)
+  for (var graphNumber = 0, length = evals.length - 1; graphNumber < length; graphNumber++)
+  {
+    // logger('graphNumber = '+graphNumber);
+    var evalString = evals[graphNumber];
+
+    // Decode evalString using the w(i) function from the Neobux page
+    var decodedEvalString = NeobuxDecodeEvalString(evalString);
+    eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
+  }
+
+  return graphData;
+}
+
+//NB: calling this on pages that do not have graphs will cause an error in the script
+//console.info(getGraphData());
+
+function createAccountCache()
+{
+  var tmp_blankAccountCache = new function()
+  {
+    var tmp_currentDateTime = new Date();
+    var tmp_currentDate = tmp_currentDateTime.getFullYear() + '/' +
+        padZeros(tmp_currentDateTime.getMonth()+1, 2) + '/' +
+        padZeros(tmp_currentDateTime.getDate(), 2);
+
+    this.ownClicks = {};
+    this.graphs = {};
+    this.referrals = { };
+    this.user = {};
+
+    this.ownClicks[tmp_currentDate] =
     {
-      // Deduce which page is being viewed
-      var _pageRefType = null;
-      if(0 <= currentPage.pageCode.split('_').indexOf('Rented')) {
-        _pageRefType = 'Rented';
-      } else {
-        _pageRefType = 'Direct';
-      }
-  // debugLog('_pageRefType = ',_pageRefType);
-      var tmp_numberOfRefs = null;
-      var noOfRefsString = docEvaluate('//td[@class="f_r"]/descendant::span[@class="f_b"]');
-
-      // Only expecting one result if the user has referrals
-      if(1 == noOfRefsString.snapshotLength)
-      {
-        noOfRefsString = noOfRefsString.snapshotItem(0);
-
-        if (noOfRefsString.textContent.match(/\d+/)) {
-          tmp_numberOfRefs = parseInt(noOfRefsString.textContent.match(/\d+/), 10);
-        } else {
-          errorLog('An Error has occured.\n\r 1 == (noOfRefsString.snapshotLength) \n\r !(noOfRefsString.textContent.match(/\d+/))')
-        }
-      }
-      else
-      {
-        /**
-         * Most likely reason for incorrect snapshotLength is an error in page load or zero refs.
-         * Will now check for zero refs.
-         */
-        var zeroRefsXpath = {
-          'EN': '//span[contains(text(),"You don\'t have")]',
-          'PT': '//span[contains(text(),"Não tem referidos")]'
-        };
-        var zeroRefsString = docEvaluate(zeroRefsXpath[currentPage.languageCode]);
-
-        // If evidence of zero refs is found, set the number of refs to zero (0)
-        tmp_numberOfRefs = (1 == zeroRefsString.snapshotLength) ? 0 : false;
-      }
-
-      // Now store the number of detected referrals if numberOfRefs is not false
-  //    debugLog('tmp_numberOfRefs = ',tmp_numberOfRefs);
-      if(0 <= tmp_numberOfRefs) {
-        setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'text' });
-      }
-      return tmp_numberOfRefs;
-    }
-    else if(currentPage.pageCode.match(/accSummary/))
-    {
-  //    TODO: Extract number of refs from main page
-      var tmp_elmAccountInfo = docEvaluate('//td[@class="t_preto_r"]/parent::tr/parent::tbody/descendant::td');
-
-      function displayTextContent(arg_element) {
-        return arg_element.textContent.replace(/mk_tt\(.*\)/,'').replace(/[><+=;\s]+/g,'');
-      }
-
-      var tmp_currentTd;
-      var tmp_nextTd;
-
-      var tmp_lookupArray = [
-        [/since:/i, 'You have been a member since {value}'],
-        [/type:/i, 'You are a {value} member'],
-        [/expires:/i, 'Your membership expires on {value}'],
-        [/rented:/i, 'You have {value} rented referrals'],
-        [/direct:/i, 'You have {value} direct referrals'],
-        [/you:/i, 'As a member of Neobux you have clicked {value} ads'],
-        [/your referrals:/i, 'In total, you have been credited from {value} of your referrals ads'],
-        [/main balance:/i, 'Your main balance is {value}'],
-        [/rental balance:/i, 'Your golden pack balance is {value}'],
-        [/golden pack balance:/i, 'Your golden pack balance is {value}'],
-        [/received:/i, 'You have cashed out {value} from Neobux'],
-        [/direct purchases:/i, 'You have directly transferred {value} from your account balance back into Neobux'],
-        [/exposure clicks:/i, 'You have {value} exposure clicks available for you to show ads with']
-      ];
-
-      for(var i=0; i<tmp_elmAccountInfo.snapshotLength; i++)
-      {
-        tmp_currentTd = tmp_elmAccountInfo.snapshotItem(i);
-        tmp_nextTd = tmp_elmAccountInfo.snapshotItem(i+1);
-
-        for(var j=0; j<tmp_lookupArray.length; j++) {
-          if(tmp_currentTd.textContent.match(tmp_lookupArray[j][0])) {
-  //          debugLog(tmp_lookupArray[j][1].replace(/{value}/, displayTextContent(tmp_nextTd)));
-          }
-        }
-      }
-    }
-
-  }
-
-  extractNumberOfRefs();
-
-  ////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////
-
-  function getUsername() {
-    if(document.getElementById('t_conta')) {
-      setPref('username', document.getElementById('t_conta').textContent, { prefType: 'string' });
-    }
-    var tmp_username = getPref('username', 'unknownUsername', { prefType: 'string' }) || 'failedToGetUsername';
-
-    return tmp_username;
-  }
-
-
-  function getMembershipType()
-  {
-    var xpath_elmt_accountBadge = '//div[@class="tag"][last()]';
-    var elmt_accountBadge = document.evaluate(
-        xpath_elmt_accountBadge,
-        document,
-        null,
-        XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
-        null);
-
-    var tmp_membershipType_name = '';
-    if (0 < elmt_accountBadge.snapshotLength)
-    {
-      var tmp_membershipType_name = elmt_accountBadge.snapshotItem(
-          0).textContent.match(
-          /\w+/);
-      setPref('membershipType', tmp_membershipType_name, { prefType: 'string' });
-    }
-    tmp_membershipType_name = getPref('membershipType','unableToFetchNameFromStorage',{ prefType: 'string' });
-
-    return tmp_membershipType_name;
-  }
-  ;
-
-  function getClickValues(arg_memberType)
-  {
-    var clickValues = {
-      Extended: {
-        Golden: {
-          value: 0.02,
-          commission: {
-            rented: 0.02,
-            direct: 0.02
-          }
-        },
-        Standard: {
-          value: 0.015,
-          commission: {
-            rented: 0.01,
-            direct: 0.01
-          }
-        }
-      },
-      Regular: {
-        Golden: {
-          value: 0.01,
-          commission: {
-            rented: 0.010,
-            direct: 0.005
-          }
-        },
-        Standard: {
-          value: 0.01,
-          commission: {
-            rented: 0.005,
-            direct: 0.005
-          }
-        }
-      },
-      Micro: {
-        Golden: {
-          value: 0.001,
-          commission: {
-            rented: 0,
-            direct: 0
-          }
-        },
-        Standard: {
-          value: 0.001,
-          commission: {
-            rented: 0,
-            direct: 0
-          }
-        }
-      },
-      Fixed: {
-        Golden: {
-          value: 0.001,
-          commission: {
-            rented: 0,
-            direct: 0
-          }
-        },
-        Standard: {
-          value: 0.001,
-          commission: {
-            rented: 0,
-            direct: 0
-          }
-        }
-      }
+      extended: 0,
+      regular: 0,
+      mini: 0,
+      fixed: 0,
+      fixedMicro: 0,
+      micro: 0
     };
 
-    // Fixed Micro ads are the same value and commission for standard AND golden members
-    clickValues.FixedMicro = {};
-    clickValues.FixedMicro['Standard'] = {
-      value: 0.001,
-      commission: {
-        rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
-        direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
-      }
-    };
-    clickValues.FixedMicro['Golden'] = {
-      value: 0.001,
-      commission: {
-        rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
-        direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
-      }
-    };
-
-    // Mini ads are the same value and commission for standard AND golden members
-    clickValues.Mini = {};
-    clickValues.Mini['Standard'] = {
-      value: 0.005,
-      commission: {
-        rented: 0,
-        direct: 0
-      }
-    };
-    clickValues.Mini['Golden'] = {
-      value: 0.005,
-      commission: {
-        rented: 0,
-        direct: 0
-      }
-    };
-
-    //The golden-pack values are based on the golden membership details
-    //   Create them with the golden values initially then add more specific detail later
-    for(var tmp_advertisementType in clickValues) {
-      if(clickValues.hasOwnProperty((tmp_advertisementType)))
-      {
-        clickValues[tmp_advertisementType].Emerald = {};
-        Object_merge(clickValues[tmp_advertisementType].Emerald,  clickValues[tmp_advertisementType].Golden);
-        clickValues[tmp_advertisementType].Sapphire = {};
-        Object_merge(clickValues[tmp_advertisementType].Sapphire, clickValues[tmp_advertisementType].Golden);
-        clickValues[tmp_advertisementType].Platinum = {};
-        Object_merge(clickValues[tmp_advertisementType].Platinum, clickValues[tmp_advertisementType].Golden);
-        clickValues[tmp_advertisementType].Diamond = {};
-        Object_merge(clickValues[tmp_advertisementType].Diamond,  clickValues[tmp_advertisementType].Golden);
-        clickValues[tmp_advertisementType].Ultimate = {};
-        Object_merge(clickValues[tmp_advertisementType].Ultimate, clickValues[tmp_advertisementType].Golden);
-      }
-    }
-
-    //Now to do the golden-pack-specific settings::
-    /*Standard Ads click value*/
-    clickValues.Regular['Emerald'].value   = 0.012;
-    clickValues.Regular['Sapphire'].value  = 0.012;
-    clickValues.Regular['Platinum'].value  = 0.015;
-    clickValues.Regular['Diamond'].value   = 0.015;
-    clickValues.Regular['Ultimate'].value  = 0.02;
-
-
-    /*Fixed Ads click value - same as standard ads for golden & golden-pack members*/
-    clickValues.Fixed['Emerald'].value  = clickValues.Regular['Emerald'].value;
-    clickValues.Fixed['Sapphire'].value = clickValues.Regular['Sapphire'].value;
-    clickValues.Fixed['Platinum'].value = clickValues.Regular['Platinum'].value;
-    clickValues.Fixed['Diamond'].value  = clickValues.Regular['Diamond'].value;
-    clickValues.Fixed['Ultimate'].value = clickValues.Regular['Ultimate'].value;
-
-    /*Fixed Ads direct-click value - same as standard ads for golden & golden-pack members
-    * Except Golden members*/
-    clickValues.Fixed['Standard'].commission.direct = 0.0005;
-    clickValues.Fixed['Golden'].commission.direct   = 0.005;
-    clickValues.Fixed['Emerald'].commission.direct  = clickValues.Regular['Emerald'].commission.direct;
-    clickValues.Fixed['Sapphire'].commission.direct = clickValues.Regular['Sapphire'].commission.direct;
-    clickValues.Fixed['Platinum'].commission.direct = clickValues.Regular['Platinum'].commission.direct;
-    clickValues.Fixed['Diamond'].commission.direct  = clickValues.Regular['Diamond'].commission.direct;
-    clickValues.Fixed['Ultimate'].commission.direct = clickValues.Regular['Ultimate'].commission.direct;
-
-    var tmp_clickValueToReturn = {};
-    tmp_clickValueToReturn.own = {
-        Extended:   clickValues.Extended[arg_memberType],
-        Regular:    clickValues.Regular[arg_memberType],
-        Mini:       clickValues.Mini[arg_memberType],
-        Fixed:      clickValues.Fixed[arg_memberType],
-        FixedMicro: clickValues.FixedMicro[arg_memberType],
-        Micro:      clickValues.Micro[arg_memberType]
-      };
-    tmp_clickValueToReturn.rented = clickValues.Fixed[arg_memberType].commission.rented;
-    tmp_clickValueToReturn.direct = clickValues.Fixed[arg_memberType].commission.direct;
-
-    return tmp_clickValueToReturn;
-
-    /*return {
-      own: {
-        extended: 0.020,
-        regular: 0.010,
-        mini: 0.005,
-        fixed: 0.010,
-        fixedMicro: 0.001,
-        micro: 0.001
-      },
-      rented: 0.010,
-      direct: 0.005
-    };*/
-  }
-
-  /**
-   * :Object used for holding information about the account that the current user of the script is logged into
-   *
-   **/
-  var userAccount = new function ()
-  {
-    this.membershipType = getMembershipType();
-    this.override_showUltimateFeatures = false;
-    this.clickValues = getClickValues(this.membershipType);
-    this.numberOfReferrals = {};
-    this.feesCosts = {
+    this.graphs[tmp_currentDate] = {
+      ownClicks_localTime: 0,
+      ownClicks_serverTime: 0,
+      referralClicks_rented: 0,
+      referralClicks_direct: 0,
+      recycleFees: 0,
+      automaticRecycles: 0,
+      extensions: 0,
       autopay: 0,
-      expiredReferral: 0,
-      initialRent: 0,
-      recycle: 0,
-      extensions: {
-        15:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 15),
-        30:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 30),
-        60:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 60),
-        90:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 90),
-        150: getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 150),
-        240: getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 240)
-      }
+      transfersToRentalBalance: 0,
+      transfersToGoldenPackBalance: 0,
+      extensionsDue: 0
     };
-    this.username = getUsername();
+
+    function createBlankReferral()
+    {
+      var tmp_blankReferral = {
+        referralType: "R",
+        referralSince: "2001/01/01 00:01",
+        lastSeen: 0,
+        goldenGraphClickData: { },
+        ultimateClickData: { },
+        referralListingsData: { }
+      };
+      tmp_blankReferral.goldenGraphClickData[tmp_currentDate] = {
+        creditedClicks: 0,
+        actualClicks: 0
+      };
+      tmp_blankReferral.ultimateClickData[tmp_currentDate] = {
+        creditedClicks: 0
+      };
+      tmp_blankReferral.referralListingsData[tmp_currentDate] = {
+          nextPayment: 0,
+          lastClick: 0,
+          totalClicks: 0,
+          average: 0,
+          realAverage: 0
+      };
+      return tmp_blankReferral;
+    }
+
+    this.user.registrationDate = 0;
+    this.user[tmp_currentDate] = {
+      totalClicks: 0,
+      goldenMembershipExpirationDate: 0,
+      goldenPackMembershipExpirationDate: 0,
+      numberOfReferrals: {
+        Rented: 0,
+        Direct: 0
+      },
+      seenAdvertisementsTotal: {
+        user: 0,
+        referrals: 0
+      },
+      account: {
+        accountType: 0,
+        mainBalance: 0,
+        rentalBalance: 0,
+        goldenPackBalance: 0,
+        received: 0,
+        directPurchases: 0,
+        exposureClicks: 0,
+        NeoPoints: 0
+      }
+    }
   };
 
-  var preferences = new function()
-  {
-    this.preferredExtensionLength = getPref('renewalsLength',90, { prefType: 'string' });
-  }
+  var storedAccountCache = getPref('accountCache', tmp_blankAccountCache, { prefType: 'JSON' });
+  var tmp_accountCache = {};
 
-  var currentUser = new function()
-  {
-    function getPerAutoPayFee(arg_accountType, arg_numberOfRentedReferrals)
+  Object_merge(tmp_accountCache, tmp_blankAccountCache);
+  Object_merge(tmp_accountCache, storedAccountCache);
+
+  //console.info(tmp_accountCache);
+  return tmp_accountCache;
+}
+
+var accountCache = createAccountCache();
+
+function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
+{
+  var tmp_currentGraph = '';
+  var tmp_accountCache = arg_accountCache;
+
+  var GRAPH_ID = 0;
+  var DATES = 2;
+  var DATA = 5;
+
+  // english | pt | es | greek | FI | SE | DE
+  var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+  var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+  var tl8_tomorrow = /tomorrow/i;
+
+  var tmp_currentDate = '';
+
+  for(var tmp_graphData in arg_rawGraphData) {
+    if(arg_rawGraphData.hasOwnProperty(tmp_graphData))
     {
-      var defaultAutopayValues = Neobux.accountDefaults.autopayValues[arg_accountType.verbose];
-
-      var totalRentedRefs = (0 <= arg_numberOfRentedReferrals) ? arg_numberOfRentedReferrals : 0;
-      var perAutoPayCost = 0;
-
-      var j = defaultAutopayValues.length - 1;
-      var currentTest;
-      do
+      tmp_currentGraph = arg_rawGraphData[tmp_graphData];
+      switch(tmp_currentGraph[0])
       {
-        currentTest = defaultAutopayValues[j];
+        case 'ch_cliques':
+            //Number of clicks done personally, that contribute to TOS#3.7 as reported by the graph
+            if(1 === tmp_currentGraph[DATA].length)
+            {
+              // Only server time clicks are being shown, thus both
+              //   server time and local time values are identical
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
-  //      debugLog('currentTest.minRefs = '+currentTest.minRefs+'\n'+
-  //          'totalRentedRefs = '+totalRentedRefs+'\n'+
-  //          'currentTest.cost = '+currentTest.cost);
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].ownClicks_localTime = tmp_currentGraph[DATA][0].data[i];
+                arg_accountCache.graphs[tmp_currentDate].ownClicks_serverTime = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+            else if(2 === tmp_currentGraph[DATA].length)
+            {
+              // First one is local time
+              // Second one is server time
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
-        if(parseInt(currentTest.minRefs, 10) < parseInt(totalRentedRefs, 10)) {
-          perAutoPayCost = currentTest.cost;
-        }
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].ownClicks_localTime = tmp_currentGraph[DATA][0].data[i];
+                arg_accountCache.graphs[tmp_currentDate].ownClicks_serverTime = tmp_currentGraph[DATA][1].data[i];
+              }
+            }
+        break;
+        case 'ch_cr':
+            //Number of rented referrals' clicks credited to you
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
-      } while((parseInt(defaultAutopayValues[j--].minRefs, 10) > parseInt(totalRentedRefs, 10)));
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].referralClicks_rented = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_cd':
+            //Number of direct referrals' clicks credited to you
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
-      return perAutoPayCost;
-    }
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].referralClicks_direct = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_recycle':
+            //Amount spent on recycling referrals
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].recycleFees = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_trar':
+            //Number of referrals recycled automatically for free
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
-    if(document.getElementById('t_conta')) {
-      this.username = setPref('username', document.getElementById('t_conta').textContent, { prefType: 'string' });
-    } else {
-      this.username = getPref('username', 'unknownUsername', { prefType: 'string' });
-    }
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].automaticRecycles = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_extensions':
+            //Amount spent on extending (renewing) referrals
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
-    this.accountType = new function ()
-    {
-      var accDiv = docEvaluate('//div[@class="tag"][last()]');
-      var tmp_accountType;
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].extensions = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_autopay':
+            //Amount spent on autopay
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
-      // If the accType can be grabbed from the page, cache it
-      if(0 < accDiv.snapshotLength) {
-        accDiv = accDiv.snapshotItem(0);
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].autopay = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_trrb':
+            //Transfers to rental balance
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
 
-        for (var i = 0; i < Neobux.possibleAccTypes.length; i++)
-        {
-          if (accDiv.textContent.match(Neobux.possibleAccTypes[i]))
-          {
-            tmp_accountType = {
-              "numerical": i,
-              'verbose': Neobux.possibleAccTypes[i]
-            };
-            setPref('accountType', tmp_accountType, { prefType: 'JSON' });
-          }
-        }
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].transfersToRentalBalance = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_trpb':
+            //Transfers to rental balance
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].transfersToGoldenPackBalance = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
+        case 'ch_ext_schedule8':
+        //fall-through
+        case 'ch_ext_schedule7':
+        //fall-through
+        case 'ch_ext_schedule6':
+        //fall-through
+        case 'ch_ext_schedule5':
+        //fall-through
+        case 'ch_ext_schedule4':
+        //fall-through
+        case 'ch_ext_schedule3':
+        //fall-through
+        case 'ch_ext_schedule2':
+        //fall-through
+        case 'ch_ext_schedule1':
+            //Number of referrals due to expire
+            if(1 === tmp_currentGraph[DATA].length) {
+              for(var i=0; i<tmp_currentGraph[DATES].length; i++)
+              {
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+
+                if(!arg_accountCache.graphs[tmp_currentDate]) {
+                  arg_accountCache.graphs[tmp_currentDate] = {};
+                }
+                arg_accountCache.graphs[tmp_currentDate].extensionsDue = tmp_currentGraph[DATA][0].data[i];
+              }
+            }
+        break;
       }
+    }
+  }
+  return tmp_accountCache;
+}
 
-      // If the accountType info was on the page, the stored copy will have been updated
-      // (else we'll just be grabbing the cached version)
-      tmp_accountType = getPref('accountType',{numerical:0, verbose:'unknown'},{ prefType: 'JSON' });
-
-      this.numerical = tmp_accountType.numerical;
-      this.verbose = tmp_accountType.verbose;
-
-      this.showUltimateFeatures = (6 == tmp_accountType.numerical);
-      this.isUltimate = 6 === tmp_accountType.numerical;
-      this.isStandard = 0 === tmp_accountType.numerical;
-
-      this.cost = getPref('accountTypeCost',Neobux.accountDefaults.goldenPackCost[this.verbose], { prefType: 'float' });
-
-      return this;
-    };
-
-    this.ownClickValue = clickValues[this.accountType.verbose].Fixed.value;
-    this.rentedReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.rented;
-    this.directReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.direct;
-
-    this.numberOfRefs = {
-      Rented: getPref('numberOfRentedReferrals',defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
-      Direct: getPref('numberOfDirectReferrals',defaultSettings.numberOfRefs['Direct'], { prefType: 'integer' })
-    };
-
-    this.recycleFee = getPref('recycleFee',Neobux.accountDefaults['recycleCost'][this.accountType.verbose], { prefType: 'float' });
-
-    this.autopayFee = getPerAutoPayFee(this.accountType,this.numberOfRefs.Rented);
-
-
-    this.renewalsLength = getPref('renewalsLength',90, { prefType: 'string' });
-    this.renewalFees = getRenewalFees(this.accountType.verbose, this.numberOfRefs.Rented, this.renewalsLength);
-
-    this.preferences = new function ()
-    {
-  //    this.columnPrefixes = getPref(tmp_prefs[i],defaultSettings['columnPrefixes'], { prefType: 'JSON' });
-  //    this.numeriseDate = getPref(tmp_prefs[i],defaultSettings['numeriseDate'], { prefType: 'JSON' });
-  //    this.shortFormatTimer = getPref(tmp_prefs[i],defaultSettings['shortFormatTimer'], { prefType: 'JSON' });
-  //    this.showColumn = getPref(tmp_prefs[i],defaultSettings['showColumn'], { prefType: 'JSON' });
-  //    this.shrinkColumnContents = getPref(tmp_prefs[i],defaultSettings['shrinkColumnContents'], { prefType: 'JSON' });
-  //    this.timePeriods = getPref(tmp_prefs[i],defaultSettings['timePeriods'], { prefType: 'JSON' });
-
-      //JSON vars
-      var tmp_prefs = ['columnPrefixes','numeriseDates','shortFormatTimer','showColumn','shrinkColumnContents','timePeriods'];
-      for(var i=0; i<tmp_prefs.length; i++) {
-        this[tmp_prefs[i]] = getPref(tmp_prefs[i],defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
-      }
-      //Boolean vars
-      this['flag_textify'] = getPref('flag_textify',true, { prefType: 'boolean' });
-    };
-  };
-
-  debugLog('currentUser', currentUser);
-
-  function getGraphData()
+var chartData = new function ()
+{
+  this.dataGrabbedFromCurrentPage = function()
   {
     // Decode evalString using the w(i) function from the Neobux page
-    function U(arg_a) {
+    function U(arg_a)
+    {
       return arg_a * 10;
     }
 
-    function u0(arg_a) {
+    function u0(arg_a)
+    {
       return String.fromCharCode(U(arg_a));
     }
 
@@ -1876,12 +2318,10 @@
       return o;
     }
 
-
     var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
     //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snapshotLength
 
-    for(var i=0; i<xpathResults_graphData.snapshotLength; i++)
-    {
+    for(var i=0; i<xpathResults_graphData.snapshotLength; i++) {
       //debugLog(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval/g).length);
       if(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval\(w\('/g)) {
         /**
@@ -1904,7 +2344,6 @@
     // Cycle through each individual eval (ie, graph / graphNumber)
     for (var graphNumber = 0, length = evals.length - 1; graphNumber < length; graphNumber++)
     {
-      // logger('graphNumber = '+graphNumber);
       var evalString = evals[graphNumber];
 
       // Decode evalString using the w(i) function from the Neobux page
@@ -1913,400 +2352,12 @@
     }
 
     return graphData;
-  }
+  };
 
-  //NB: calling this on pages that do not have graphs will cause an error in the script
-  //console.info(getGraphData());
-
-  function createAccountCache()
+  this.getAccountCache = function()
   {
-    var tmp_blankAccountCache = new function()
-    {
-      var tmp_currentDateTime = new Date();
-      var tmp_currentDate = tmp_currentDateTime.getFullYear() + '/' +
-          padZeros(tmp_currentDateTime.getMonth()+1, 2) + '/' +
-          padZeros(tmp_currentDateTime.getDate(), 2);
-
-      this.ownClicks = {};
-      this.graphs = {};
-      this.referrals = { };
-      this.user = {};
-
-      this.ownClicks[tmp_currentDate] =
-      {
-        extended: 0,
-        regular: 0,
-        mini: 0,
-        fixed: 0,
-        fixedMicro: 0,
-        micro: 0
-      };
-
-      this.graphs[tmp_currentDate] = {
-        ownClicks_localTime: 0,
-        ownClicks_serverTime: 0,
-        referralClicks_rented: 0,
-        referralClicks_direct: 0,
-        recycleFees: 0,
-        automaticRecycles: 0,
-        extensions: 0,
-        autopay: 0,
-        transfersToRentalBalance: 0,
-        transfersToGoldenPackBalance: 0,
-        extensionsDue: 0
-      };
-
-      function createBlankReferral()
-      {
-        var tmp_blankReferral = {
-          referralType: "R",
-          referralSince: "2001/01/01 00:01",
-          lastSeen: 0,
-          goldenGraphClickData: { },
-          ultimateClickData: { },
-          referralListingsData: { }
-        };
-        tmp_blankReferral.goldenGraphClickData[tmp_currentDate] = {
-          creditedClicks: 0,
-          actualClicks: 0
-        };
-        tmp_blankReferral.ultimateClickData[tmp_currentDate] = {
-          creditedClicks: 0
-        };
-        tmp_blankReferral.referralListingsData[tmp_currentDate] = {
-            nextPayment: 0,
-            lastClick: 0,
-            totalClicks: 0,
-            average: 0,
-            realAverage: 0
-        };
-        return tmp_blankReferral;
-      }
-
-      this.user.registrationDate = 0;
-      this.user[tmp_currentDate] = {
-        totalClicks: 0,
-        goldenMembershipExpirationDate: 0,
-        goldenPackMembershipExpirationDate: 0,
-        numberOfReferrals: {
-          Rented: 0,
-          Direct: 0
-        },
-        seenAdvertisementsTotal: {
-          user: 0,
-          referrals: 0
-        },
-        account: {
-          accountType: 0,
-          mainBalance: 0,
-          rentalBalance: 0,
-          goldenPackBalance: 0,
-          received: 0,
-          directPurchases: 0,
-          exposureClicks: 0,
-          NeoPoints: 0
-        }
-      }
-    };
-
-    var storedAccountCache = getPref('accountCache', tmp_blankAccountCache, { prefType: 'JSON' });
-    var tmp_accountCache = {};
-
-    Object_merge(tmp_accountCache, tmp_blankAccountCache);
-    Object_merge(tmp_accountCache, storedAccountCache);
-
-    //console.info(tmp_accountCache);
-    return tmp_accountCache;
-  }
-
-  var accountCache = createAccountCache();
-
-  function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
-  {
-    var tmp_currentGraph = '';
-    var tmp_accountCache = arg_accountCache;
-
-    var GRAPH_ID = 0;
-    var DATES = 2;
-    var DATA = 5;
-
-    // english | pt | es | greek | FI | SE | DE
-    var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-    var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-    var tl8_tomorrow = /tomorrow/i;
-
-    var tmp_currentDate = '';
-
-    for(var tmp_graphData in arg_rawGraphData) {
-      if(arg_rawGraphData.hasOwnProperty(tmp_graphData))
-      {
-        tmp_currentGraph = arg_rawGraphData[tmp_graphData];
-        switch(tmp_currentGraph[0])
-        {
-          case 'ch_cliques':
-              //Number of clicks done personally, that contribute to TOS#3.7 as reported by the graph
-              if(1 === tmp_currentGraph[DATA].length)
-              {
-                // Only server time clicks are being shown, thus both
-                //   server time and local time values are identical
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].ownClicks_localTime = tmp_currentGraph[DATA][0].data[i];
-                  arg_accountCache.graphs[tmp_currentDate].ownClicks_serverTime = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-              else if(2 === tmp_currentGraph[DATA].length)
-              {
-                // First one is local time
-                // Second one is server time
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].ownClicks_localTime = tmp_currentGraph[DATA][0].data[i];
-                  arg_accountCache.graphs[tmp_currentDate].ownClicks_serverTime = tmp_currentGraph[DATA][1].data[i];
-                }
-              }
-          break;
-          case 'ch_cr':
-              //Number of rented referrals' clicks credited to you
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].referralClicks_rented = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-          case 'ch_cd':
-              //Number of direct referrals' clicks credited to you
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].referralClicks_direct = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-          case 'ch_recycle':
-              //Amount spent on recycling referrals
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].recycleFees = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-          case 'ch_trar':
-              //Number of referrals recycled automatically for free
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].automaticRecycles = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-          case 'ch_extensions':
-              //Amount spent on extending (renewing) referrals
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].extensions = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-          case 'ch_autopay':
-              //Amount spent on autopay
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].autopay = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-          case 'ch_trrb':
-              //Transfers to rental balance
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].transfersToRentalBalance = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-          case 'ch_trpb':
-              //Transfers to rental balance
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].transfersToGoldenPackBalance = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-          case 'ch_ext_schedule8':
-          //fall-through
-          case 'ch_ext_schedule7':
-          //fall-through
-          case 'ch_ext_schedule6':
-          //fall-through
-          case 'ch_ext_schedule5':
-          //fall-through
-          case 'ch_ext_schedule4':
-          //fall-through
-          case 'ch_ext_schedule3':
-          //fall-through
-          case 'ch_ext_schedule2':
-          //fall-through
-          case 'ch_ext_schedule1':
-              //Number of referrals due to expire
-              if(1 === tmp_currentGraph[DATA].length) {
-                for(var i=0; i<tmp_currentGraph[DATES].length; i++)
-                {
-                  tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
-
-                  if(!arg_accountCache.graphs[tmp_currentDate]) {
-                    arg_accountCache.graphs[tmp_currentDate] = {};
-                  }
-                  arg_accountCache.graphs[tmp_currentDate].extensionsDue = tmp_currentGraph[DATA][0].data[i];
-                }
-              }
-          break;
-        }
-      }
-    }
-    return tmp_accountCache;
-  }
-
-  var chartData = new function ()
-  {
-    this.dataGrabbedFromCurrentPage = function()
-    {
-      // Decode evalString using the w(i) function from the Neobux page
-      function U(arg_a)
-      {
-        return arg_a * 10;
-      }
-
-      function u0(arg_a)
-      {
-        return String.fromCharCode(U(arg_a));
-      }
-
-      // function w(_i) {
-      function NeobuxDecodeEvalString(arg_input)
-      {
-        var k = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-        var o = "";
-        var c1, c2, c3, e1, e2, e3, e4;
-        var j = 0;
-        arg_input = arg_input.replace(/[^A-Za-z0-9\+\/=]/g, "");
-        do {
-          e1 = k.indexOf(arg_input.charAt(j++));
-          e2 = k.indexOf(arg_input.charAt(j++));
-          e3 = k.indexOf(arg_input.charAt(j++));
-          e4 = k.indexOf(arg_input.charAt(j++));
-          c1 = e1 << 2 | e2 >> 4;
-          c2 = (e2 & 15) << 4 | e3 >> 2;
-          c3 = (e3 & 3) << 6 | e4;
-          o = o + u0(c1 / 10);
-          if (64 != e3)
-          {
-            o = o + u0(c2 / 10);
-          }
-          if (64 != e4)
-          {
-            o = o + u0(c3 / 10);
-          }
-        } while (j < arg_input.length);
-
-        return o;
-      }
-
-      var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
-      //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snapshotLength
-
-      for(var i=0; i<xpathResults_graphData.snapshotLength; i++) {
-        //debugLog(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval/g).length);
-        if(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval\(w\('/g)) {
-          /**
-         *  If only one matching <script> ... </script> tag found, it is the correct one
-         * Now extract data::
-         */
-
-        /**
-         * First, remove instances of the word 'eval' and then split it up based on
-         * these rules ::
-         * eval(w('
-         * ')); eval(w('
-         */
-          var evals = xpathResults_graphData.snapshotItem(i).text.replace(/[ ]?eval\(w\('/g, '').split("'));");
-        }
-      }
-
-      var graphData = new Array();
-
-      // Cycle through each individual eval (ie, graph / graphNumber)
-      for (var graphNumber = 0, length = evals.length - 1; graphNumber < length; graphNumber++)
-      {
-        var evalString = evals[graphNumber];
-
-        // Decode evalString using the w(i) function from the Neobux page
-        var decodedEvalString = NeobuxDecodeEvalString(evalString);
-        eval(decodedEvalString.replace(');', ']').replace('mk_ch(', 'graphData[' + graphNumber + '] = ['));
-      }
-
-      return graphData;
-    };
-
-    this.getAccountCache = function()
-    {
-      var tmp_storedAccountCache = getPref('accountCache', {}, { prefType: 'JSON' });
-      if(!tmp_storedAccountCache) {
+    var tmp_storedAccountCache = getPref('accountCache', {}, { prefType: 'JSON' });
+    if(!tmp_storedAccountCache) {
         throw new Error();
       }
       return tmp_storedAccountCache;
