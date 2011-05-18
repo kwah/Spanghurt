@@ -1,3 +1,9 @@
+// ==UserScript==
+// @name           Spanghurt
+// @namespace      http://kwah.org/
+// @description    Spanghurt is the codename v5 of what was formerly the Neobux 2+ script for Neobux.. The script aims to plugin extra bits of info into Neobux to make your life easier when you're managing referrals or analysing your account.. Once this is a bit more fully formed there'll be more info at kwah.org but for now look out for Neobux 2+ (thread author:kwah) in the Neobux forums =]
+// @include        http*://www.neobux.com/*
+// @icon           http://kwah.org/images/SpanghurtScriptIcon.png
 // ==/UserScript==
 
 //var tl8strings = {};
@@ -5222,7 +5228,7 @@ var referralListings_columns = new function()
       }
     };
 
-
+    //Add header row columns
     for(var columnName in columns) {
       if(columns.hasOwnProperty(columnName))
       {
@@ -5317,18 +5323,26 @@ var referralListings_columns = new function()
             tmp_value = tmp_referralsData[tmp_currentID].flagColour.split('')[0] || "Unknown".split('')[0];
           break;
         }
-
-        if('new' === columns[columnName].colType) {
-          try {
-            addColumn(tmp_currentRow,
-                columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix,
-                newCol_idPrefix+columnName,
-                ''
-                );
-          }
-          catch(e) {
-            errorLog('error with new column - '+columnName+' ::\n',e);
-          }
+        switch(columns[columnName].colType)
+        {
+          case 'new':
+            try {
+              addColumn(tmp_currentRow,
+                  columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix,
+                  newCol_idPrefix+columnName,
+                  ''
+                  );
+            }
+            catch(e) {
+              errorLog('error with new column - '+columnName+' ::\n',e);
+            }
+          break;
+          case 'append':
+          break;
+          case 'prepend':
+          break;
+          case 'replace':
+          break;
         }
       }
     }
