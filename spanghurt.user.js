@@ -24,10 +24,12 @@ if('undefined' === typeof console) {
     info: function() {
       if(arguments.length>1){ location.href = "javascript:void(console.group());"; }
       for(var i=0; i<arguments.length; i++) {
-        if('undefined' === typeof arguments[i].toString) {
+        try {
+          tmp_msg = arguments[i].toString();
+          location.href = "javascript:void(console.info('"+tmp_msg+"'));";
+        } catch(e) {
           location.href = "javascript:void(console.info('cannot convert argument to string'));";
         }
-        location.href = "javascript:void(console.info('"+arguments[i]+"'));";
       }
       if(arguments.length>1){ location.href = "javascript:void(console.groupEnd());"; }
     },
@@ -1260,35 +1262,33 @@ clickValues['Diamond'].Fixed.commission.direct  = clickValues['Diamond'].Standar
 clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standard.commission.direct;
 
 
-
-function testAgainstUrlParameters(arg_urlVarTests)
-{
-  var tmpUrlVars = document.location.search.substring(1).split('&');
-  for(var tmpUrlVarTest in arg_urlVarTests) {
-    if(!(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]))) {
-      return false;
-    }
-  }
-
-  // debugLog('Found the following within the URL:',arg_urlVarTests);
-  return true;
-}
-function testAgainstUrlPath(arg_urlTests)
-{
-  var tmpUrlVars = document.location.pathname.substring(1).split('/');
-
-  for(var tmpUrlVarTest in arg_urlTests) {
-    if(!(0 <= tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]))) {
-      return false;
-    }
-  }
-
-//  debugLog('Found the following within the URL:',arg_urlTests);
-  return true;
-}
-
 var currentPage = new function()
 {
+  function testAgainstUrlParameters(arg_urlVarTests)
+  {
+    var tmpUrlVars = document.location.search.substring(1).split('&');
+    for(var tmpUrlVarTest in arg_urlVarTests) {
+      if(!(0 <= tmpUrlVars.indexOf(arg_urlVarTests[tmpUrlVarTest]))) {
+        return false;
+      }
+    }
+
+    // debugLog('Found the following within the URL:',arg_urlVarTests);
+    return true;
+  }
+  function testAgainstUrlPath(arg_urlTests)
+  {
+    var tmpUrlVars = document.location.pathname.substring(1).split('/');
+
+    for(var tmpUrlVarTest in arg_urlTests) {
+      if(!(0 <= tmpUrlVars.indexOf(arg_urlTests[tmpUrlVarTest]))) {
+        return false;
+      }
+    }
+
+  //  debugLog('Found the following within the URL:',arg_urlTests);
+    return true;
+  }
   function detectLanguageCode()
   {
     var tmp_langCodes = {
@@ -1764,7 +1764,10 @@ var userAccount = new function ()
   this.membershipType = getMembershipType();
   this.override_showUltimateFeatures = false;
   this.clickValues = getClickValues(this.membershipType);
-  this.numberOfReferrals = {};
+  this.numberOfReferrals = {
+    Rented: getPref('numberOfRentedReferrals', 0, { prefType: 'integer' }),
+    Direct: getPref('numberOfDirectReferrals', 0, { prefType: 'integer' })
+  };
   this.feesCosts = {
     autopay: 0,
     expiredReferral: 0,
@@ -1803,15 +1806,9 @@ var currentUser = new function()
     do
     {
       currentTest = defaultAutopayValues[j];
-
-//      debugLog('currentTest.minRefs = '+currentTest.minRefs+'\n'+
-//          'totalRentedRefs = '+totalRentedRefs+'\n'+
-//          'currentTest.cost = '+currentTest.cost);
-
       if(parseInt(currentTest.minRefs, 10) < parseInt(totalRentedRefs, 10)) {
         perAutoPayCost = currentTest.cost;
       }
-
     } while((parseInt(defaultAutopayValues[j--].minRefs, 10) > parseInt(totalRentedRefs, 10)));
 
     return perAutoPayCost;
@@ -1985,94 +1982,92 @@ function getGraphData()
 
 function createAccountCache()
 {
-  var tmp_blankAccountCache = new function()
+  var tmp_currentDateTime = new Date();
+  var tmp_currentDate = tmp_currentDateTime.getFullYear() + '/' +
+      padZeros(tmp_currentDateTime.getMonth()+1, 2) + '/' +
+      padZeros(tmp_currentDateTime.getDate(), 2);
+
+  var tmp_blankAccountCache = {};
+  tmp_blankAccountCache.ownClicks = {};
+  tmp_blankAccountCache.graphs = {};
+  tmp_blankAccountCache.referrals = { };
+  tmp_blankAccountCache.user = {};
+
+  tmp_blankAccountCache.ownClicks[tmp_currentDate] =
   {
-    var tmp_currentDateTime = new Date();
-    var tmp_currentDate = tmp_currentDateTime.getFullYear() + '/' +
-        padZeros(tmp_currentDateTime.getMonth()+1, 2) + '/' +
-        padZeros(tmp_currentDateTime.getDate(), 2);
-
-    this.ownClicks = {};
-    this.graphs = {};
-    this.referrals = { };
-    this.user = {};
-
-    this.ownClicks[tmp_currentDate] =
-    {
-      extended: 0,
-      regular: 0,
-      mini: 0,
-      fixed: 0,
-      fixedMicro: 0,
-      micro: 0
-    };
-
-    this.graphs[tmp_currentDate] = {
-      ownClicks_localTime: 0,
-      ownClicks_serverTime: 0,
-      referralClicks_rented: 0,
-      referralClicks_direct: 0,
-      recycleFees: 0,
-      automaticRecycles: 0,
-      extensions: 0,
-      autopay: 0,
-      transfersToRentalBalance: 0,
-      transfersToGoldenPackBalance: 0,
-      extensionsDue: 0
-    };
-
-    function createBlankReferral()
-    {
-      var tmp_blankReferral = {
-        referralType: "R",
-        referralSince: "2001/01/01 00:01",
-        lastSeen: 0,
-        goldenGraphClickData: { },
-        ultimateClickData: { },
-        referralListingsData: { }
-      };
-      tmp_blankReferral.goldenGraphClickData[tmp_currentDate] = {
-        creditedClicks: 0,
-        actualClicks: 0
-      };
-      tmp_blankReferral.ultimateClickData[tmp_currentDate] = {
-        creditedClicks: 0
-      };
-      tmp_blankReferral.referralListingsData[tmp_currentDate] = {
-          nextPayment: 0,
-          lastClick: 0,
-          totalClicks: 0,
-          average: 0,
-          realAverage: 0
-      };
-      return tmp_blankReferral;
-    }
-
-    this.user.registrationDate = 0;
-    this.user[tmp_currentDate] = {
-      totalClicks: 0,
-      goldenMembershipExpirationDate: 0,
-      goldenPackMembershipExpirationDate: 0,
-      numberOfReferrals: {
-        Rented: 0,
-        Direct: 0
-      },
-      seenAdvertisementsTotal: {
-        user: 0,
-        referrals: 0
-      },
-      account: {
-        accountType: 0,
-        mainBalance: 0,
-        rentalBalance: 0,
-        goldenPackBalance: 0,
-        received: 0,
-        directPurchases: 0,
-        exposureClicks: 0,
-        NeoPoints: 0
-      }
-    }
+    extended: 0,
+    regular: 0,
+    mini: 0,
+    fixed: 0,
+    fixedMicro: 0,
+    micro: 0
   };
+
+  tmp_blankAccountCache.graphs[tmp_currentDate] = {
+    ownClicks_localTime: 0,
+    ownClicks_serverTime: 0,
+    referralClicks_rented: 0,
+    referralClicks_direct: 0,
+    recycleFees: 0,
+    automaticRecycles: 0,
+    extensions: 0,
+    autopay: 0,
+    transfersToRentalBalance: 0,
+    transfersToGoldenPackBalance: 0,
+    extensionsDue: 0
+  };
+
+  function createBlankReferral()
+  {
+    var tmp_blankReferral = {
+      referralType: "",
+      referralSince: "2001/01/01 00:01",
+      lastSeen: 0,
+      goldenGraphClickData: { },
+      ultimateClickData: { },
+      referralListingsData: { }
+    };
+    tmp_blankReferral.goldenGraphClickData[tmp_currentDate] = {
+      creditedClicks: 0,
+      actualClicks: 0
+    };
+    tmp_blankReferral.ultimateClickData[tmp_currentDate] = {
+      creditedClicks: 0
+    };
+    tmp_blankReferral.referralListingsData[tmp_currentDate] = {
+        nextPayment: 0,
+        lastClick: 0,
+        totalClicks: 0,
+        average: 0,
+        realAverage: 0
+    };
+    return tmp_blankReferral;
+  }
+
+  tmp_blankAccountCache.user.registrationDate = 0;
+  tmp_blankAccountCache.user[tmp_currentDate] = {
+    totalClicks: 0,
+    goldenMembershipExpirationDate: 0,
+    goldenPackMembershipExpirationDate: 0,
+    numberOfReferrals: {
+      Rented: 0,
+      Direct: 0
+    },
+    seenAdvertisementsTotal: {
+      user: 0,
+      referrals: 0
+    },
+    account: {
+      accountType: 0,
+      mainBalance: 0,
+      rentalBalance: 0,
+      goldenPackBalance: 0,
+      received: 0,
+      directPurchases: 0,
+      exposureClicks: 0,
+      NeoPoints: 0
+    }
+  }
 
   var storedAccountCache = getPref('accountCache', tmp_blankAccountCache, { prefType: 'JSON' });
   var tmp_accountCache = {};
@@ -2913,240 +2908,280 @@ function ntl(arg_langString) {
   }
 }
 
-
-var referralListings = new function()
+//
+function REFERRAL(arg_refId, arg_referralProperties)
 {
-
-  //
-  function REFERRAL(arg_refId, arg_referralProperties)
-  {
 //      console.info('arg_refId = ',arg_refId);
-    var tmp_currentDateString = dates_array[0];
+  var tmp_currentDateString = dates_array[0];
+  
+  function createBlankReferral()
+  {
+    var tmp_blankReferral = {
+      referralType: "R",
+      referralSince: "2001/01/01 00:01",
+      lastSeen: 0,
+      goldenGraphClickData: { },
+      ultimateClickData: { },
+      referralListingsData: { }
+    };
+    tmp_blankReferral.goldenGraphClickData[tmp_currentDateString] = {
+      creditedClicks: 0,
+      actualClicks: 0
+    };
+    tmp_blankReferral.ultimateClickData[tmp_currentDateString] = {
+      creditedClicks: 0
+    };
+    tmp_blankReferral.referralListingsData[tmp_currentDateString] = {
+        nextPayment: 0,
+        lastClick: 0,
+        totalClicks: 0,
+        average: 0,
+        realAverage: 0
+    };
+    return tmp_blankReferral;
+  }
+  
+  var tmp_CurrentReferral = new createBlankReferral();
+  tmp_CurrentReferral.referralListingsData = tmp_CurrentReferral.referralListingsData || {};
+  tmp_CurrentReferral.referralListingsData[tmp_currentDateString] = tmp_CurrentReferral.referralListingsData[tmp_currentDateString] || {};
 
-    //arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
-    this.refId = arg_refId;
-    this.referralSince_raw =       arg_referralProperties['referralSince'] || null;
-    this.lastClick_raw =           arg_referralProperties['lastClick']     || null;
-    this.totalClicks =            (0 <= arg_referralProperties['totalClicks'])          ? arg_referralProperties['totalClicks']   : null;
-    this.clickAverage =           (0 <= arg_referralProperties['average'])              ? arg_referralProperties['average']       : null;
+  var tmp_crToday = tmp_CurrentReferral.referralListingsData[tmp_currentDateString];
 
-    //Ultimate mini click graph values
-    this.ultimateClickValues_raw = ('undefined' !== typeof arg_referralProperties['ultimateClickValues'])  ? arg_referralProperties['ultimateClickValues'] : null;
+  //arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
+  tmp_CurrentReferral.refId = arg_refId;
+  tmp_crToday.referralSince_raw =       arg_referralProperties['referralSince'] || null;
+  tmp_crToday.lastClick_raw =           arg_referralProperties['lastClick']     || null;
+  tmp_crToday.totalClicks =            (0 <= arg_referralProperties['totalClicks'])          ? arg_referralProperties['totalClicks']   : null;
+  tmp_crToday.clickAverage =           (0 <= arg_referralProperties['clickAverage'])         ? arg_referralProperties['clickAverage']  : null;
+
+  //Ultimate mini click graph values
+  tmp_crToday.ultimateClickValues_raw = ('undefined' !== typeof arg_referralProperties['ultimateClickValues'])  ? arg_referralProperties['ultimateClickValues'] : null;
+
+  if('R' === arg_referralProperties['referralType']) {
     //Rented referral properties
-    this.flagColour_Id =          (0 <= arg_referralProperties['flagColour_Id'])        ? arg_referralProperties['flagColour_Id'] : null;
-    this.locked =                 (0 <= arg_referralProperties['locked'])               ? !!arg_referralProperties['locked']      : null;
-    this.recycleable =            (0 <= arg_referralProperties['recycleable'])          ? arg_referralProperties['recycleable']   : null;
-    this.nextPayment_raw =         arg_referralProperties['nextPayment']   || null;
+    tmp_crToday.flagColour_Id =          (0 <= arg_referralProperties['flagColour_Id'])        ? arg_referralProperties['flagColour_Id'] : null;
+    tmp_crToday.locked =                 (0 <= arg_referralProperties['locked'])               ? !!arg_referralProperties['locked']      : null;
+    tmp_crToday.recycleable =            (0 <= arg_referralProperties['recycleable'])          ? arg_referralProperties['recycleable']   : null;
+    tmp_crToday.nextPayment_raw =         arg_referralProperties['nextPayment']   || null;
+  }
+  if('D' === arg_referralProperties['referralType']) {
     //Direct referral properties
-    this.cameFrom =               arg_referralProperties['cameFrom']      || null;
-    this.isSellable =             arg_referralProperties['isSellable']    || null;
-
-
-      // english | pt | es | greek | FI | SE | DE
-      var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-      var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-      var tl8_tomorrow = /tomorrow/i;
-
-
-    function flagIdToColour(arg_flagId)
-    {
-      var flagLookup = {
-        0: 'White',
-        1: 'Red',
-        2: 'Orange',
-        3: 'Yellow',
-        4: 'Green',
-        5: 'Blue'
-      };
-
-      if("undefined" === typeof tl8) {
-        return "Unkwown_no_tl8";
-      }
-      return tl8(flagLookup[arg_flagId] || "Unknown");
-    }
-    this.flagColour = flagIdToColour(this.flagColour_Id);
-
-    function referralSinceToDateObject(arg_referralSinceString)
-    {
-//        console.info('arg_referralSinceString = ',arg_referralSinceString);
-      //'2011/04/25 11:20'
-      var tmp_breakdown = arg_referralSinceString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
-      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
-      // NB:: month is zero-indexed thus needs to be reduced by 1
-      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
-    }
-    this.referralSince = referralSinceToDateObject(this.referralSince_raw).toString();
-
-    function lastClickToDateObject(arg_lastClickString)
-    {
-//        console.info('arg_lastClickString = ',arg_lastClickString);
-      //'Today' or 'Yesterday' or '2011/04/25'
-      var tmp_lastClickBreakdown_regex = /([0-9]+)\/([0-9]+)\/([0-9]+)/
-      var tmp_breakdown = arg_lastClickString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(tmp_lastClickBreakdown_regex);
-//        console.info('lastClickToDateObject - arg_lastClickString: ',arg_lastClickString);
-//        console.info('lastClickToDateObject - tmp_breakdown: ',tmp_breakdown);
-
-      //new Date(year, month, day, hours, minutes, seconds, milliseconds)
-      // NB:: month is zero-indexed thus needs to be reduced by 1
-      return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],0,0,0,0);
-    }
-    this.lastClick = lastClickToDateObject(this.lastClick_raw).toString();
-
-
-    function nextPaymentToDateObject(arg_nextPaymentString)
-    {
-//        console.info('arg_nextPaymentString = ',arg_nextPaymentString);
-      //'171 days and 20:47'
-      //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
-      var tmp_breakdown = arg_nextPaymentString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
-
-      var tmp_nextPaymentDifference =
-          (tmp_breakdown[1] * 24 * 60 * 60 * 1000)+ //days to milliseconds
-          (tmp_breakdown[2] * 60 * 60 * 1000) + //hours to milliseconds
-          (tmp_breakdown[3] * 60 * 1000); // minutes to milliseconds
-
-      //Convert the time/date difference to milliseconds, then sum it with the numerical version (hence -0,
-      //   though any forcing of now to be numerical will work) of the current date/time and convert back to a date
-      var tmp_nextPaymentDate = new Date (dateToday - 0 + tmp_nextPaymentDifference);
-
-      return tmp_nextPaymentDate;
-    }
-    this.nextPayment = nextPaymentToDateObject(this.nextPayment_raw).toString();
-
-    function calculateRealAverage(arg_referralSince, arg_totalClicks) {
-      var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
-      return (arg_totalClicks / tmp_timeOwned_days).toFixed(5) * 1;
-    }
-    this.realAverage = calculateRealAverage(this.referralSince, this.totalClicks);
-
-
-
-
-    function dateToDHMObject(arg_date)
-    {
-      var oneSecond = 1000;
-      var oneMinute = oneSecond * 60;
-      var oneHour = oneMinute * 60;
-      var oneDay = oneHour * 24;
-
-      var now = new Date();
-      var t_diff = new Date(arg_date) - now;
-
-      var future = (0 < t_diff);
-      var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
-
-      var diff_days = Math.floor(remaining_time / oneDay);
-      remaining_time -= diff_days * oneDay;
-
-      var diff_hours = Math.floor(remaining_time / oneHour);
-      remaining_time -= diff_hours * oneHour;
-
-      var diff_mins = Math.floor(remaining_time / oneMinute);
-      remaining_time -= diff_mins * oneMinute;
-
-      var diff_secs = Math.floor(remaining_time / oneSecond);
-      remaining_time -= diff_secs * oneSecond;
-
-  //    debugLog('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
-
-       return {
-         days: diff_days,
-         hours: diff_hours,
-         mins: diff_mins,
-         secs: diff_secs
-       };
-    }
-    function dateToDHM(arg_prefix, arg_date, arg_suffix)
-    {
-      var tmp_dhmObject = dateToDHMObject(this.referralSince);
-
-      return arg_prefix+
-          tmp_dhmObject.days+'d'+', '+
-          tmp_dhmObject.hours+'h'+', '+
-          tmp_dhmObject.mins+'m'+
-        arg_suffix;
-    }
-    function dateToDec(arg_prefix, arg_date, arg_suffix)
-    {
-      var tmp_dhmObject = dateToDHMObject(arg_date);
-      var tmp_age = tmp_dhmObject.days;
-      tmp_age += tmp_dhmObject.hours / 24;
-      tmp_age += tmp_dhmObject.mins / (24*60);
-
-      return arg_prefix +
-          tmp_age +
-        arg_suffix;
-    }
-    function dateToD(arg_date) {
-      return dateToDHMObject(this.referralSince).days;
-    }
-
-    this.age_DHMObject = dateToDHMObject(this.referralSince);
-    this.age_dec = dateToDec('',this.referralSince,'') * 1;
-
-
-    function ultimateClickValuesRaw_toStats(arg_ultimateClickValues_raw)
-    {
-      var minigraph = {
-        'rawClickData': arg_ultimateClickValues_raw,
-        'clicks': new Array()
-      };
-
-      // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
-      minigraph.rawClickData = currentUser.accountType.isUltimate ? minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-
-      // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
-      minigraph.rawClickData =  minigraph.rawClickData.reverse();
-
-      // Copy the click data to a separate array and verify/coerce each value to a number
-      for (var i = 0; i < minigraph.rawClickData.length; i++) {
-        minigraph.clicks[i] = parseInt(minigraph.rawClickData[i], 10);
-      }
-
-      /**
-       * Compute the mean and variance using a "numerically stable algorithm".
-       * Based on http://maiaco.com/articles/computingStatsInJS.php
-       * 30/12/2010 - above link no longer exists, mirror found at
-       * http://code.google.com/p/ocropodium/source/browse/static/js/stats.js?spec=svnd8375a8cd3f640b35cbbb42d9669411dde9248eb&r=d8375a8cd3f640b35cbbb42d9669411dde9248eb
-       *
-       * Also temporarily copied in below:
-       */
-
-      var sqsum = 0;
-      minigraph.mean = new Array();
-      minigraph.sum = new Array();
-      minigraph.variance = new Array();
-      minigraph.sdev = new Array();
-
-      minigraph.mean[0] = minigraph.clicks[0];
-      minigraph.sum[0] = minigraph.clicks[0];
-      minigraph.variance[0] = minigraph.clicks[0];
-      minigraph.sdev[0] = minigraph.clicks[0];
-
-      for (var i = 1; i < minigraph.clicks.length; ++i)
-      {
-        var x = minigraph.clicks[i];
-        var delta = x - minigraph.mean[i-1];
-        var sweep = i + 1.0;
-        minigraph.mean[i] = minigraph.mean[i-1] + (delta / sweep);
-        sqsum += delta * delta * (i / sweep);
-
-        minigraph.sum[i] = minigraph.mean[i] * (i + 1);
-        minigraph.variance[i] = sqsum / (i + 1);
-        minigraph.sdev[i] = Math.sqrt(minigraph.variance[i]);
-      }
-
-      return minigraph;
-    }
-
-    this.ultimateClickValues =  ultimateClickValuesRaw_toStats(this.ultimateClickValues_raw);
-
-
-    return this;
+    tmp_crToday.cameFrom =               arg_referralProperties['cameFrom']      || null;
+    tmp_crToday.isSellable =             arg_referralProperties['isSellable']    || null;
   }
 
 
+    // english | pt | es | greek | FI | SE | DE
+    var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
+    var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
+    var tl8_tomorrow = /tomorrow/i;
 
+
+  function flagIdToColour(arg_flagId)
+  {
+    var flagLookup = {
+      0: 'White',
+      1: 'Red',
+      2: 'Orange',
+      3: 'Yellow',
+      4: 'Green',
+      5: 'Blue'
+    };
+
+    if("undefined" === typeof tl8) {
+      return "Unkwown_no_tl8";
+    }
+    return tl8(flagLookup[arg_flagId] || "Unknown");
+  }
+
+  function referralSinceToDateObject(arg_referralSinceString)
+  {
+//        console.info('arg_referralSinceString = ',arg_referralSinceString);
+    //'2011/04/25 11:20'
+    var tmp_breakdown = arg_referralSinceString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
+    //new Date(year, month, day, hours, minutes, seconds, milliseconds)
+    // NB:: month is zero-indexed thus needs to be reduced by 1
+    return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
+  }
+
+  function lastClickToDateObject(arg_lastClickString)
+  {
+//        console.info('arg_lastClickString = ',arg_lastClickString);
+    //'Today' or 'Yesterday' or '2011/04/25'
+    var tmp_lastClickBreakdown_regex = /([0-9]+)\/([0-9]+)\/([0-9]+)/
+    var tmp_breakdown = arg_lastClickString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(tmp_lastClickBreakdown_regex);
+//        console.info('lastClickToDateObject - arg_lastClickString: ',arg_lastClickString);
+//        console.info('lastClickToDateObject - tmp_breakdown: ',tmp_breakdown);
+
+    //new Date(year, month, day, hours, minutes, seconds, milliseconds)
+    // NB:: month is zero-indexed thus needs to be reduced by 1
+    return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],0,0,0,0);
+  }
+
+
+  function nextPaymentToDateObject(arg_nextPaymentString)
+  {
+//        console.info('arg_nextPaymentString = ',arg_nextPaymentString);
+    //'171 days and 20:47'
+    //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
+    var tmp_breakdown = arg_nextPaymentString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
+
+    var tmp_nextPaymentDifference =
+        (tmp_breakdown[1] * 24 * 60 * 60 * 1000)+ //days to milliseconds
+        (tmp_breakdown[2] * 60 * 60 * 1000) + //hours to milliseconds
+        (tmp_breakdown[3] * 60 * 1000); // minutes to milliseconds
+
+    //Convert the time/date difference to milliseconds, then sum it with the numerical version (hence -0,
+    //   though any forcing of now to be numerical will work) of the current date/time and convert back to a date
+    var tmp_nextPaymentDate = new Date (dateToday - 0 + tmp_nextPaymentDifference);
+
+    return tmp_nextPaymentDate;
+  }
+
+  function calculateRealAverage(arg_referralSince, arg_totalClicks) {
+    var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
+    return (arg_totalClicks / tmp_timeOwned_days).toFixed(5) * 1;
+  }
+
+
+  function dateToDHMObject(arg_date)
+  {
+    var oneSecond = 1000;
+    var oneMinute = oneSecond * 60;
+    var oneHour = oneMinute * 60;
+    var oneDay = oneHour * 24;
+
+    var now = new Date();
+    var t_diff = new Date(arg_date) - now;
+
+    var future = (0 < t_diff);
+    var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
+
+    var diff_days = Math.floor(remaining_time / oneDay);
+    remaining_time -= diff_days * oneDay;
+
+    var diff_hours = Math.floor(remaining_time / oneHour);
+    remaining_time -= diff_hours * oneHour;
+
+    var diff_mins = Math.floor(remaining_time / oneMinute);
+    remaining_time -= diff_mins * oneMinute;
+
+    var diff_secs = Math.floor(remaining_time / oneSecond);
+    remaining_time -= diff_secs * oneSecond;
+
+//    debugLog('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
+
+     return {
+       days: diff_days,
+       hours: diff_hours,
+       mins: diff_mins,
+       secs: diff_secs
+     };
+  }
+  function dateToDHM(arg_prefix, arg_date, arg_suffix)
+  {
+    var tmp_dhmObject = dateToDHMObject(this.referralSince);
+
+    return arg_prefix+
+        tmp_dhmObject.days+'d'+', '+
+        tmp_dhmObject.hours+'h'+', '+
+        tmp_dhmObject.mins+'m'+
+      arg_suffix;
+  }
+  function dateToDec(arg_prefix, arg_date, arg_suffix)
+  {
+    var tmp_dhmObject = dateToDHMObject(arg_date);
+    var tmp_age = tmp_dhmObject.days;
+    tmp_age += tmp_dhmObject.hours / 24;
+    tmp_age += tmp_dhmObject.mins / (24*60);
+
+    return arg_prefix +
+        tmp_age +
+      arg_suffix;
+  }
+  function dateToD(arg_date) {
+    return dateToDHMObject(this.referralSince).days;
+  }
+
+
+  function ultimateClickValuesRaw_toStats(arg_ultimateClickValues_raw)
+  {
+    var minigraph = {
+      'rawClickData': arg_ultimateClickValues_raw,
+      'clicks': new Array()
+    };
+
+    // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
+    minigraph.rawClickData = currentUser.accountType.isUltimate ? minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+
+    // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
+    minigraph.rawClickData =  minigraph.rawClickData.reverse();
+
+    // Copy the click data to a separate array and verify/coerce each value to a number
+    for (var i = 0; i < minigraph.rawClickData.length; i++) {
+      minigraph.clicks[i] = parseInt(minigraph.rawClickData[i], 10);
+    }
+
+    /**
+     * Compute the mean and variance using a "numerically stable algorithm".
+     * Based on http://maiaco.com/articles/computingStatsInJS.php
+     * 30/12/2010 - above link no longer exists, mirror found at
+     * http://code.google.com/p/ocropodium/source/browse/static/js/stats.js?spec=svnd8375a8cd3f640b35cbbb42d9669411dde9248eb&r=d8375a8cd3f640b35cbbb42d9669411dde9248eb
+     *
+     * Also temporarily copied in below:
+     */
+
+    var sqsum = 0;
+    minigraph.mean = new Array();
+    minigraph.sum = new Array();
+    minigraph.variance = new Array();
+    minigraph.sdev = new Array();
+
+    minigraph.mean[0] = minigraph.clicks[0];
+    minigraph.sum[0] = minigraph.clicks[0];
+    minigraph.variance[0] = minigraph.clicks[0];
+    minigraph.sdev[0] = minigraph.clicks[0];
+
+    for (var i = 1; i < minigraph.clicks.length; ++i)
+    {
+      var x = minigraph.clicks[i];
+      var delta = x - minigraph.mean[i-1];
+      var sweep = i + 1.0;
+      minigraph.mean[i] = minigraph.mean[i-1] + (delta / sweep);
+      sqsum += delta * delta * (i / sweep);
+
+      minigraph.sum[i] = minigraph.mean[i] * (i + 1);
+      minigraph.variance[i] = sqsum / (i + 1);
+      minigraph.sdev[i] = Math.sqrt(minigraph.variance[i]);
+    }
+
+    return minigraph;
+  }
+
+  tmp_crToday.flagColour      = flagIdToColour(tmp_crToday.flagColour_Id);
+//  console.info('tmp_crToday.referralSince_raw = ',tmp_crToday.referralSince_raw);
+  tmp_crToday.referralSince   = referralSinceToDateObject(tmp_crToday.referralSince_raw).toString();
+  tmp_crToday.lastClick       = lastClickToDateObject(tmp_crToday.lastClick_raw).toString();
+  tmp_crToday.nextPayment     = nextPaymentToDateObject(tmp_crToday.nextPayment_raw).toString();
+  tmp_crToday.realAverage     = calculateRealAverage(tmp_crToday.referralSince, tmp_crToday.totalClicks);
+  tmp_crToday.age_DHMObject   = dateToDHMObject(tmp_crToday.referralSince);
+  tmp_crToday.age_dec         = dateToDec('',tmp_crToday.referralSince,'') * 1;
+
+
+  tmp_crToday.ultimateClickStats =  ultimateClickValuesRaw_toStats(tmp_CurrentReferral.ultimateClickValues_raw);
+
+  for(var i=0; i < tmp_crToday.ultimateClickStats.clicks.length; i++){
+    tmp_CurrentReferral.ultimateClickData = tmp_CurrentReferral.ultimateClickData || {};
+    tmp_CurrentReferral.ultimateClickData[dates_array[i]] = tmp_CurrentReferral.ultimateClickData[dates_array[i]] || {};
+    tmp_CurrentReferral.ultimateClickData[dates_array[i]].creditedClicks = tmp_crToday.ultimateClickStats.clicks[i];
+  }
+
+  Object_merge(tmp_CurrentReferral.referralListingsData[tmp_currentDateString], tmp_crToday)
+  return tmp_CurrentReferral;
+}
+
+var referralListings = new function()
+{
   function extractReferralDataFromListingsPage()
   {
     // Grab contents of mtx[] array delivered onto the referral listings page
@@ -3252,244 +3287,31 @@ var referralListings = new function()
       pr = arg_referralListingsData[i-1] || arg_referralListingsData[i];
       pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
 
-      tmp_referrals[cr_ID] = new REFERRAL(
-          cr_ID,
-          {
+      var tmp_objectToPass = {
+            referralType: (currentPage.pageCode.match(/referralListings_Rented/)) ? "R" : "D",
             flagColour_Id: cr[15],
             locked: cr[17],
             recycleable: cr[16],
-            nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].nextPayment_raw : cr[3],
+            nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].nextPayment_raw : cr[3],
             cameFrom: cr[2],
-            sellable: cr[18],
-            referralSince: ('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince_raw : cr[2],
-            lastClick: ('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick_raw : ('N' == cr[4]) ? (('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince_raw : cr[2]) : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4],
+            isSellable: cr[18],
+            referralSince: ('9' == cr[2]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].referralSince_raw : cr[2],
+            lastClick: ('9' == cr[4]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].lastClick_raw : ('N' == cr[4]) ? (('9' == cr[2]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].referralSince_raw : cr[2]) : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4],
             totalClicks: cr[5],
             clickAverage: cr[6],
             ultimateClickValues: ('0' == cr[14]) ? '0000000000' : cr[14]
-          }
+          };
+      
+//      console.info('cr = ', JSON.stringify(cr));
+//      console.info('tmp_objectToPass = ', JSON.stringify(tmp_objectToPass));
+//      console.info('tmp_referrals[pr_ID]', JSON.stringify(tmp_referrals[pr_ID]));
+//      console.info('tmp_referrals[pr_ID]', JSON.stringify(tmp_referrals[pr_ID]));
+
+      tmp_referrals[cr_ID] = new REFERRAL(
+          cr_ID,
+          tmp_objectToPass
         );
     }
-
-/*REDUNDANT CODE AS THE BELOW IS DONE ABOVE BY NEW REFERRAL() */
-//    for(var i = 0; i < arg_referralListingsData.length; i++)
-//    {
-////      console.group();
-////      debugLog('i',i);
-//
-//    /**
-//     * ## referralSince and lastClick ##
-//     * if date/time in one row is the same as the row before, mtx contains a '9'
-//     * instead of the duplicated date
-//     *
-//     * ## lastClick ##
-//     * 'Today' is coded as 'N' (unknown reason for this code);
-//     * 'Yesterday' is coded as 'O' (in Portuguese, Yesterday == Ontem)
-//     *
-//     * ## overallAverage ##
-//     * when referral is younger than 24hours old and has not yet clicked,
-//     * average is displayed as '-.---'
-//     *
-//     */
-//
-//      // Current Referral
-//      cr_raw = arg_referralListingsData[i];
-//      cr_ID = ('0' == cr_raw[1]) ? cr_raw[19] : cr_raw[1];
-//      // Previous Referral
-//      pr = arg_referralListingsData[i-1] || arg_referralListingsData[i];
-//      pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
-//
-//      var flagLookup = {
-//        0: 'White',
-//        1: 'Red',
-//        2: 'Orange',
-//        3: 'Yellow',
-//        4: 'Green',
-//        5: 'Blue'
-//      };
-//
-//      if (0 < location.href.indexOf('ss3=2'))
-//      {
-//        tmp_referrals[cr_ID] = {
-//          ID: ('0' == cr_raw[1]) ? 'R' + cr_raw[19] : cr_raw[1],
-//          referralType: 'R',
-//
-//          flag: flagLookup[cr_raw[15]],
-//          locked: (1 === cr_raw[17]) ? 'Y' : 'N',
-//          recycleable: (1 === cr_raw[16]) ? 'Y' : 'N',
-//
-//          nextPayment: ('9' == cr_raw[3]) ? tmp_referrals[pr_ID].nextPayment : cr_raw[3]
-//        };
-//      }
-//      else if (0 < location.href.indexOf('ss3=1'))
-//      {
-//        tmp_referrals[cr_ID] = {
-//          ID: ('0' == cr_raw[1]) ? 'D' + cr_raw[19] : cr_raw[1],
-//          referralType: 'D',
-//          cameFrom: cr_raw[2],
-//          sellable: (1 === cr_raw[18]) ? 'Y' : 'N'
-//        };
-//      }
-//
-//
-//      function todayYesterdayToDate(arg_todayYesterdayString) {
-//        // english | pt | es | greek | FI | SE | DE
-//        var tl8_today = /today|hoje|hoy|Σήμερα|Tänään|Idag|Heute|Aujourd'hui/i;
-//        var tl8_yesterday = /yesterday|ontem|ayer|Χθες|Eilen|Igår|Gestern|Hier/i;
-//        var tl8_tomorrow = /tomorrow/i;
-//
-//        return arg_todayYesterdayString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]);
-//      }
-//
-//      if(10 > i) {
-//        debugLog('cr: ',cr,'\n\n','pr: ',pr);
-//        debugLog('JSON.stringify(cr): ', JSON.stringify(cr),'\n\n', 'JSON.stringify(pr): ', JSON.stringify(pr));
-//      }
-//
-//      cr.lastSeen = tmp_currentDateTime.toString();
-//      cr.hash = cr[7];
-//      cr.referralSince = todayYesterdayToDate(('9' == cr[2]) ? tmp_referrals[pr_ID].referralSince : cr[2]);
-//      cr.lastClick = todayYesterdayToDate(('9' == cr[4]) ? tmp_referrals[pr_ID].lastClick : ('N' == cr[4]) ? ntl('No clicks yet') : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4]);
-//      cr.totalClicks = cr[5];
-//      cr.overallAverage = ('-.---' == cr[6] || 999 == cr[6]) ? '-.---' : cr[6];
-//
-//
-//      /**
-//       * Check how many referrals are being shown per page:  If the user is ultimate and has more than 100 referrals showing, minigraphs will not be displayed
-//       * If the user has fewer than 10 referrals, the option to select the # of referrals is not present, thus refsPerPage must be set manually
-//      */
-//      var refsPerPageSelector = document.getElementById('rlpp');
-//      var refsPerPage = (null === refsPerPageSelector) ? 10 : parseInt(refsPerPageSelector.options[refsPerPageSelector.selectedIndex].value, 10);
-//
-//      /* Ultimate only stuff, based on the ultimate minigraphs */
-//      // Current limit for minigraphs is when viewing 300 refs or fewer - 30/12/2010
-////      if(currentUser.accountType.showUltimateFeatures && 300 >= refsPerPage)
-////      {
-//        cr.minigraph = {
-//          'rawClickData': ('0' == cr[14]) ? '0000000000'.split('') : cr[14].split(''),
-//          'clicks': new Array()
-//        };
-//
-//        // NB: If the user account isn't actually ultimate, but is viewing / testing ultimate features, fill in substitute data
-//        cr.minigraph.rawClickData = currentUser.accountType.isUltimate ? cr.minigraph.rawClickData : [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
-//
-//        // Now reverse the order of the array so that the most recent days are first ([0] == today, [1] == yesterday)
-//        cr.minigraph.rawClickData =  cr.minigraph.rawClickData.reverse();
-//
-//        // Copy the click data to a separate array and verify/coerce each value to a number
-//        for (var i = 0; i < cr.minigraph.rawClickData.length; i++) {
-//          cr.minigraph.clicks[i] = parseInt(cr.minigraph.rawClickData[i], 10);
-//        }
-//
-//        /**
-//         * Compute the mean and variance using a "numerically stable algorithm".
-//         * Based on http://maiaco.com/articles/computingStatsInJS.php
-//         * 30/12/2010 - above link no longer exists, mirror found at
-//         * http://code.google.com/p/ocropodium/source/browse/static/js/stats.js?spec=svnd8375a8cd3f640b35cbbb42d9669411dde9248eb&r=d8375a8cd3f640b35cbbb42d9669411dde9248eb
-//         *
-//         * Also temporarily copied in below:
-//         */
-//
-//        var sqsum = 0;
-//        cr.minigraph.mean = new Array();
-//        cr.minigraph.sum = new Array();
-//        cr.minigraph.variance = new Array();
-//        cr.minigraph.sdev = new Array();
-//
-//        cr.minigraph.mean[0] = cr.minigraph.clicks[0];
-//        cr.minigraph.sum[0] = cr.minigraph.clicks[0];
-//        cr.minigraph.variance[0] = cr.minigraph.clicks[0];
-//        cr.minigraph.sdev[0] = cr.minigraph.clicks[0];
-//
-//        for (var i = 1; i < cr.minigraph.clicks.length; ++i)
-//        {
-//          var x = cr.minigraph.clicks[i];
-//          var delta = x - cr.minigraph.mean[i-1];
-//          var sweep = i + 1.0;
-//          cr.minigraph.mean[i] = cr.minigraph.mean[i-1] + (delta / sweep);
-//          sqsum += delta * delta * (i / sweep);
-//
-//          cr.minigraph.sum[i] = cr.minigraph.mean[i] * (i + 1);
-//          cr.minigraph.variance[i] = sqsum / (i + 1);
-//          cr.minigraph.sdev[i] = Math.sqrt(cr.minigraph.variance[i]);
-//        }
-//
-////        /** Returns an object that contains the count, sum,
-////         * minimum, median, maximum, mean, variance, and
-////         * standard deviation of the series of numbers stored
-////         * in the specified array.  This function changes the
-////         * specified array by sorting its contents. */
-////        function Stats(data) {
-////            this.count = data.length;
-////
-////            /* Sort the data so that all seemingly
-////             * insignificant values such as 0.000000003 will
-////             * be at the beginning of the array and their
-////             * contribution to the mean and variance of the
-////             * data will not be lost because of the precision
-////             * of the CPU. */
-////            data.sort(ascend);
-////
-////            /* Since the data is now sorted, the minimum value
-////             * is at the beginning of the array, the median
-////             * value is in the middle of the array, and the
-////             * maximum value is at the end of the array. */
-////            this.min = data[0];
-////            var middle = Math.floor(data.length / 2);
-////            if ((data.length % 2) != 0) {
-////                this.median = data[middle];
-////            }
-////            else {
-////                this.median = (data[middle - 1] + data[middle]) / 2;
-////            }
-////            this.max = data[data.length - 1];
-////
-////            /* Compute the mean and variance using a
-////             * numerically stable algorithm. */
-////            var sqsum = 0;
-////            this.mean = data[0];
-////            for (var i = 1;  i < data.length;  ++i) {
-////                var x = data[i];
-////                var delta = x - this.mean;
-////                var sweep = i + 1.0;
-////                this.mean += delta / sweep;
-////                sqsum += delta * delta * (i / sweep);
-////            }
-////            this.sum = this.mean * this.count;
-////            this.variance = sqsum / this.count;
-////            this.sdev = Math.sqrt(this.variance);
-////        }
-////
-////        /** Returns a string that shows all the properties and
-////         * their values for this Stats object. */
-////        Stats.prototype.toString = function() {
-////            var s = 'Stats';
-////            for (var attr in this) {
-////                if (typeof(this[attr]) != 'function') {
-////                    s += '  ' + attr + ' ' + this[attr];
-////                }
-////            }
-////            return s;
-////        }
-////
-////
-////        /** Compares two objects using
-////         * built-in JavaScript operators. */
-////        function ascend(a, b) {
-////            if (a < b)
-////                return -1;
-////            else if (a > b)
-////                return 1;
-////            return 0;
-////        }
-//
-////      } /* END calculating stats for minigraph clicks */
-//
-//      //debugLog(JSON.stringify(tmp_referrals));
-////      console.groupEnd();
-
-//    } /* End of for(var i = 0; i < arg_referralListingsData.length; i++) {} loop  */
-
-
 
     debugLog('restructureData:\n\n','tmp_referrals',tmp_referrals);
     return tmp_referrals;
@@ -5177,61 +4999,43 @@ var referralListings_columns = new function()
     var headerCol_idPrefix = 'header_';
     var newCol_idPrefix = ''; // set within the loop
 
+    function COLUMN(arg_colType, arg_colPrefix, arg_colSuffix, arg_colHeaderText, arg_inclMemberType, arg_exclMemberType)
+    {
+      this.colType = arg_colType;
+      this.colPrefix = arg_colPrefix;
+      this.colSuffix = arg_colSuffix;
+      this.colHeaderText = arg_colHeaderText;
+      this.inclMemberType = arg_inclMemberType;
+      this.exclMemberType = arg_exclMemberType;
+    }
+
     var columns = {
-      totalIncomeCol: {
-        colType: 'new',
-        colPrefix: '$',
-        colSuffix: '',
-        colHeaderText: 'Total Income'
-      },
-      totalExpensesCol: {
-        colType: 'new',
-        colPrefix: '$',
-        colSuffix: '',
-        colHeaderText: 'Total Expenses'
-      },
-      netIncome: {
-        colType: 'new',
-        colPrefix: '$',
-        colSuffix: '',
-        colHeaderText: 'Net Income'
-      },
-      clickValues: {
-        colType: 'new',
-        colPrefix: '',
-        colSuffix: '',
-        colHeaderText: 'Ultimate Click Values'
-      },
-      refSince_DHM: {
-        colType: 'new',
-        colPrefix: '',
-        colSuffix: '',
-        colHeaderText: 'D/H/M Ref Since'
-      },
-      nextPayment_DHM: {
-        colType: 'new',
-        colPrefix: '',
-        colSuffix: '',
-        colHeaderText: 'D/H/M Next Payment'
-      },
-      lastClick_D: {
-        colType: 'new',
-        colPrefix: '',
-        colSuffix: '',
-        colHeaderText: 'D Last Click'
-      },
-      textifyFlag: {
-        colType: 'new',
-        colPrefix: '',
-        colSuffix: '',
-        colHeaderText: 'Flag Colour'
-      }
+      totalIncomeCol:     new COLUMN('new', '$', '', 'Total Income', [],[]),
+      totalExpensesCol:   new COLUMN('new', '$', '', 'Total Expenses', [],[]),
+      netIncome:          new COLUMN('new', '$', '', 'Net Income', [],[]),
+      clickValues:        new COLUMN('new', '', '', 'Ultimate Click Values', ['Ultimate'],[]),
+      refSince_DHM:       new COLUMN('new', '', '', 'D/H/M Ref Since', [],[]),
+      nextPayment_DHM:    new COLUMN('new', '', '', 'D/H/M Next Payment', [],[]),
+      lastClick_D:        new COLUMN('new', '', '', 'D Last Click', [],[]),
+      textifyFlag:        new COLUMN('new', '', '', 'Flag Colour', [],[])
     };
 
     //Add header row columns
     for(var columnName in columns) {
       if(columns.hasOwnProperty(columnName))
       {
+        if(columns[columnName].inclMemberType.length > 0){
+          //If membersip type not found on the includes list, continue
+          if(columns[columnName].inclMemberType.indexOf(userAccount.membershipType) === -1){
+            continue;
+          }
+        }
+        if(columns[columnName].exclMemberType.length > 0){
+          //If membership type found on the excludes list, continue
+          if(columns[columnName].exclMemberType.indexOf(userAccount.membershipType) >= 0){
+            continue;
+          }
+        }
         switch(columns[columnName].colType)
         {
           case 'new':
@@ -5263,7 +5067,8 @@ var referralListings_columns = new function()
 
     var incomeExpenses = {};
 
-    for(var i=0; i<referralRows.length; i++) {
+    for(var i = 0; i < referralRows.length; i++)
+    {
       tmp_currentRow = referralRows[i];
 
       tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/)[0];
@@ -5271,78 +5076,89 @@ var referralListings_columns = new function()
       tmp_currentRow.setAttribute('class',tmp_currentRow.getAttribute('class') + ' referralRow');
 
       incomeExpenses[tmp_currentID] = incomeExpenses[tmp_currentID] || {};
-      if(currentPage.pageCode.match(/referralListings_Rented/)) {
-      incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.rentedReferralClickValue).toFixed(3);
-    } else if(currentPage.pageCode.match(/referralListings_Direct/)) {
-      incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].totalClicks * currentUser.directReferralClickValue).toFixed(3);
-    }
 
-    if(currentPage.pageCode.match(/referralListings_Rented/)) {
-      incomeExpenses[tmp_currentID].totalExpenses = (tmp_referralsData[tmp_currentID].age_dec * costPerReferralPerDay).toFixed(3);
-    } else if(currentPage.pageCode.match(/referralListings_Direct/)) {
-      incomeExpenses[tmp_currentID].totalExpenses = 0;
-    }
+      if(currentPage.pageCode.match(/referralListings_Rented/)) {
+        incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * currentUser.rentedReferralClickValue).toFixed(3);
+        incomeExpenses[tmp_currentID].totalExpenses = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].age_dec * costPerReferralPerDay).toFixed(3);
+      } else if(currentPage.pageCode.match(/referralListings_Direct/)) {
+        incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * currentUser.directReferralClickValue).toFixed(3);
+        incomeExpenses[tmp_currentID].totalExpenses = 0;
+      }
 
       GM_addStyle('.referralRow { letter-spacing: -0.01em; }');
 
       newCol_idPrefix = tmp_currentID + '_';
-
       for(var columnName in columns) {
-        switch(columnName) {
-          case 'totalIncomeCol':
-              tmp_value = incomeExpenses[tmp_currentID].totalIncome;
-          break;
-          case 'totalExpensesCol':
-              tmp_value = incomeExpenses[tmp_currentID].totalExpenses;
-          break;
-          case 'netIncome':
-              tmp_value = (incomeExpenses[tmp_currentID].totalIncome - incomeExpenses[tmp_currentID].totalExpenses).toFixed(3);
-          break;
-          case 'clickValues':
-//              console.info(tmp_referralsData[tmp_currentID].ultimateClickValues.clicks);
-              tmp_value = '<small><i>|';
-              for(var tmp_clicksIndex in tmp_referralsData[tmp_currentID].ultimateClickValues.clicks){
-                if(tmp_referralsData[tmp_currentID].ultimateClickValues.clicks.hasOwnProperty(tmp_clicksIndex))
-                {
-                  tmp_value += tmp_referralsData[tmp_currentID].ultimateClickValues.clicks[tmp_clicksIndex].toString() + '|';
-                }
-              }
-              tmp_value += '</i></small>';
-//              tmp_value = tmp_referralsData[tmp_currentID].ultimateClickValues.clicks.join(', ') || "Error";
-          break;
-          case 'refSince_DHM':
-            tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].referralSince));
-          break;
-          case 'nextPayment_DHM':
-            tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].nextPayment));
-          break;
-          case 'lastClick_D':
-            tmp_value = dateToD(new Date(tmp_referralsData[tmp_currentID].lastClick));
-          break;
-          case 'textifyFlag':
-            tmp_value = tmp_referralsData[tmp_currentID].flagColour.split('')[0] || "Unknown".split('')[0];
-          break;
-        }
-        switch(columns[columnName].colType)
+        if(columns.hasOwnProperty(columnName))
         {
-          case 'new':
-            try {
-              addColumn(tmp_currentRow,
-                  columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix,
-                  newCol_idPrefix+columnName,
-                  ''
-                  );
+          if(columns[columnName].inclMemberType.length > 0){
+            //If membersip type not found on the includes list, continue
+            if(columns[columnName].inclMemberType.indexOf(userAccount.membershipType) === -1){
+              continue;
             }
-            catch(e) {
-              errorLog('error with new column - '+columnName+' ::\n',e);
+          }
+          if(columns[columnName].exclMemberType.length > 0){
+            //If membership type found on the excludes list, continue
+            if(columns[columnName].exclMemberType.indexOf(userAccount.membershipType) >= 0){
+              continue;
             }
-          break;
-          case 'append':
-          break;
-          case 'prepend':
-          break;
-          case 'replace':
-          break;
+          }
+          switch(columnName) {
+            case 'totalIncomeCol':
+                tmp_value = incomeExpenses[tmp_currentID].totalIncome;
+            break;
+            case 'totalExpensesCol':
+                tmp_value = incomeExpenses[tmp_currentID].totalExpenses;
+            break;
+            case 'netIncome':
+                tmp_value = (incomeExpenses[tmp_currentID].totalIncome - incomeExpenses[tmp_currentID].totalExpenses).toFixed(3);
+            break;
+            case 'clickValues':
+  //              console.info(tmp_referralsData[tmp_currentID].ultimateClickValues.clicks);
+                tmp_value = '<small><i>|';
+//                console.info('tmp_referralsData[tmp_currentID] = ', tmp_referralsData[tmp_currentID], JSON.stringify(tmp_referralsData[tmp_currentID]));
+                for(var j = 0; j < 10; j++){
+                  tmp_value += tmp_referralsData[tmp_currentID].ultimateClickData[dates_array[j]].creditedClicks.toString() + '|';
+                }
+                tmp_value += '</i></small>';
+  //              tmp_value = tmp_referralsData[tmp_currentID].ultimateClickValues.clicks.join(', ') || "Error";
+            break;
+            case 'refSince_DHM':
+              tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].referralSince));
+            break;
+            case 'nextPayment_DHM':
+              tmp_value = dateToDHM(new Date(tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].nextPayment));
+            break;
+            case 'lastClick_D':
+              tmp_value = dateToD(new Date(tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].lastClick));
+            break;
+            case 'textifyFlag':
+              tmp_value = tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].flagColour.split('')[0] || "Unknown".split('')[0];
+            break;
+          }
+
+
+          switch(columns[columnName].colType)
+          {
+            case 'new':
+              try {
+                addColumn(tmp_currentRow,
+                    columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix,
+                    newCol_idPrefix+columnName,
+                    ''
+                    );
+              }
+              catch(e) {
+                errorLog('error with new column - '+columnName+' ::\n',e);
+              }
+            break;
+            case 'append':
+            break;
+            case 'prepend':
+            break;
+            case 'replace':
+            break;
+          }
         }
       }
     }
@@ -5558,88 +5374,89 @@ function insertSidebar()
 
     if(startDay == endDay) {
       if(0 == endDay) { header = tl8("Today Only"); showProjected = true; }
-    else if(1 == endDay) { header = tl8("Yesterday Only"); }
-    else { header = startDay + tl8("Days Ago"); }
-  }
-  var numberOfDays = (endDay - startDay) + 1;
+      else if(1 == endDay) { header = tl8("Yesterday Only"); }
+      else { header = startDay + tl8("Days Ago"); }
+    }
+    var numberOfDays = (endDay - startDay) + 1;
 
-  var tmp_income = (sidebarData['referralClicks_rented'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue) + (sidebarData['referralClicks_direct'][dates_array[endDay]].sum * currentUser.directReferralClickValue);
-  var tmp_income_inclOwnClicks = tmp_income + (sidebarData['ownClicks_localTime'][dates_array[endDay]].sum * currentUser.ownClickValue);
-  var tmp_expenses = sidebarData['recycleFees'][dates_array[endDay]].sum +
-      sidebarData['extensions'][dates_array[endDay]].sum +
-      sidebarData['autopay'][dates_array[endDay]].sum +
-      (numberOfDays * Neobux.accountDefaults['goldenPackCost'][currentUser.accountType.verbose] / 365);
+    var valueType = (1 === numberOfDays) ? 'value' : 'sum';
+    var tmp_income = (sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] * currentUser.rentedReferralClickValue) + (sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] * currentUser.directReferralClickValue);
+    var tmp_income_inclOwnClicks = tmp_income + (sidebarData['ownClicks_localTime'][dates_array[endDay]][valueType] * currentUser.ownClickValue);
+    var tmp_expenses = sidebarData['recycleFees'][dates_array[endDay]][valueType] +
+        sidebarData['extensions'][dates_array[endDay]][valueType] +
+        sidebarData['autopay'][dates_array[endDay]][valueType] +
+        (numberOfDays * Neobux.accountDefaults['goldenPackCost'][currentUser.accountType.verbose] / 365);
 
 
-  tmp += "<h5 class='bold grey'>[ "+header+" ]</h5>";
-  if(!dataIsComplete) {
-    tmp += "<span style='font-colour:pink;'>" + tl8('Incomplete') + "</span><br>";
-  }
-  tmp += "<span class='bold h5_subHead'>&nbsp; - "+tl8('Net')+" : $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) +"</span>";
-  tmp += "<hr width= '155px' height='1px' color='#cccccc'/>";
+    tmp += "<h5 class='bold grey'>[ "+header+" ]</h5>";
+    if(!dataIsComplete) {
+      tmp += "<span style='font-colour:pink;'>" + tl8('Incomplete') + "</span><br>";
+    }
+    tmp += "<span class='bold h5_subHead'>&nbsp; - "+tl8('Net')+" : $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) +"</span>";
+    tmp += "<hr width= '155px' height='1px' color='#cccccc'/>";
 
-  tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+"'> + Income</h6>";
-  tmp += "<div class='sidebarDetails'>";
-  tmp += "- "+tl8('Personal Clicks')+": " + sidebarData['ownClicks_localTime'][dates_array[endDay]].sum + " / $"+(sidebarData['ownClicks_localTime'][dates_array[endDay]].sum * currentUser.ownClickValue).toFixed(3)+"<br>";
-  tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['referralClicks_rented'][dates_array[endDay]].sum + " / $"+(sidebarData['referralClicks_rented'][dates_array[endDay]].sum * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
-  tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['referralClicks_direct'][dates_array[endDay]].sum + " / $"+(sidebarData['referralClicks_direct'][dates_array[endDay]].sum * currentUser.directReferralClickValue).toFixed(3) + "<br>");
-  tmp += "</div>";
-
-  if(showProjected)
-  {
-    tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+tl8(', based on the projected values')+"'> + "+tl8('Projected Income')+"</h6>";
+    tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+"'> + Income</h6>";
     tmp += "<div class='sidebarDetails'>";
-    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['projectedClicks'].Rented.toFixed(2) + " / $"+(sidebarData['projectedIncome'].Rented).toFixed(3) + "<br>");
-    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['projectedClicks'].Direct.toFixed(2) + " / $"+(sidebarData['projectedClicks'].Direct).toFixed(3) + "<br>");
+    tmp += "- "+tl8('Personal Clicks')+": " + sidebarData['ownClicks_localTime'][dates_array[endDay]][valueType] + " / $"+(sidebarData['ownClicks_localTime'][dates_array[endDay]][valueType] * currentUser.ownClickValue).toFixed(3)+"<br>";
+    tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] + " / $"+(sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] + " / $"+(sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] * currentUser.directReferralClickValue).toFixed(3) + "<br>");
+    tmp += "</div>";
+
+    if(showProjected)
+    {
+      tmp += "<h6 title='"+tl8('Details about your income sources for ')+header.toLowerCase()+tl8(', based on the projected values')+"'> + "+tl8('Projected Income')+"</h6>";
+      tmp += "<div class='sidebarDetails'>";
+      tmp += SIRR("- "+tl8('Rented Clicks')+": " + sidebarData['projectedClicks'].Rented.toFixed(2) + " / $"+(sidebarData['projectedIncome'].Rented).toFixed(3) + "<br>");
+      tmp += SIDR("- "+tl8('Direct Clicks')+": " + sidebarData['projectedClicks'].Direct.toFixed(2) + " / $"+(sidebarData['projectedClicks'].Direct).toFixed(3) + "<br>");
+      tmp += "</div>";
+    }
+
+    tmp += "<h6 title='"+tl8('Details about your expenses for ')+header.toLowerCase()+"'> + "+tl8('Expenses')+"</h6>";
+    tmp += "<div class='sidebarDetails'>";
+    tmp += "- "+tl8('Recycles')+": $" + sidebarData['recycleFees'][dates_array[endDay]][valueType].toFixed(2) + " / " + (sidebarData['recycleFees'][dates_array[endDay]][valueType] / currentUser.recycleFee).toFixed(0) + "<br>";
+    tmp += "- "+tl8('Extensions')+": $" + sidebarData['extensions'][dates_array[endDay]][valueType].toFixed(2) + "<br>";
+    tmp += "- "+tl8('Autopay')+": $" + sidebarData['autopay'][dates_array[endDay]][valueType].toFixed(3) + " / " + (sidebarData['autopay'][dates_array[endDay]][valueType] / currentUser.autopayFee) + "<br>";
+    tmp += "- "+tl8('Golden Pack')+": $" + (numberOfDays * currentUser.accountType['cost'] / 365).toFixed(3) + "<br>";
+    tmp += "</div>";
+
+    tmp += "<h6 title='Some statistics for clicks made "+header.toLowerCase()+"'> + Stats</h6>";
+    tmp += "<div class='sidebarDetails'>";
+    tmp += SIRR("- "+tl8('Rented Average')+": " + (sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] / (currentUser.numberOfRefs['Rented'] * numberOfDays)).toFixed(3) + "<br>");
+    tmp += SIRR("- "+tl8("Rented 'Real' Average")+": " + "---" + "<br>");
+    tmp += SIDR("- "+tl8('Direct Average')+": " + (sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] / (currentUser.numberOfRefs['Direct'] * numberOfDays)).toFixed(3) + "<br>");
+    tmp += SIDR("- "+tl8("Direct 'Real' Average")+": " + "---" + "<br>");
+    tmp += SIRR(SIDR("- "+tl8('Total Average')+": " + ((sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] + sidebarData['referralClicks_direct'][dates_array[endDay]][valueType])/((currentUser.numberOfRefs['Rented'] + currentUser.numberOfRefs['Direct']) * numberOfDays)).toFixed(3) + "<br>"));
+    tmp += SIRR(SIDR("- "+tl8("Total 'Real' Average")+": " + "---" + "<br>"));
+    tmp += "</div>";
+
+    tmp += "<h6 title='"+tl8('Summary of Income / Projected Income / Expenses / Profit for ')+header.toLowerCase()+tl8(' [nb: the second value includes an estimate of your personal clicks]')+"'> + "+tl8('Summary Totals')+"</h6>";
+    tmp += "<div class='sidebarDetails'>";
+    tmp += "- "+tl8('Gross Income')+": $" + tmp_income.toFixed(3) + " / $" + tmp_income_inclOwnClicks.toFixed(3) + "<br>";
+    if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + (sidebarData['projectedIncome'].Total.toFixed(3)) + "<br>"; }
+    tmp += "- "+tl8('Expenses')+": $" + (tmp_expenses).toFixed(3) + "<br>";
+    tmp += "- "+tl8('Net Income')+": $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
     tmp += "</div>";
   }
 
-  tmp += "<h6 title='"+tl8('Details about your expenses for ')+header.toLowerCase()+"'> + "+tl8('Expenses')+"</h6>";
-  tmp += "<div class='sidebarDetails'>";
-  tmp += "- "+tl8('Recycles')+": $" + sidebarData['recycleFees'][dates_array[endDay]].sum.toFixed(2) + " / " + (sidebarData['recycleFees'][dates_array[endDay]].sum / currentUser.recycleFee).toFixed(0) + "<br>";
-  tmp += "- "+tl8('Extensions')+": $" + sidebarData['extensions'][dates_array[endDay]].sum.toFixed(2) + "<br>";
-  tmp += "- "+tl8('Autopay')+": $" + sidebarData['autopay'][dates_array[endDay]].sum.toFixed(3) + " / " + (sidebarData['autopay'][dates_array[endDay]].sum / currentUser.autopayFee) + "<br>";
-  tmp += "- "+tl8('Golden Pack')+": $" + (numberOfDays * currentUser.accountType['cost'] / 365).toFixed(3) + "<br>";
-  tmp += "</div>";
+  tmp += "</span>";
 
-  tmp += "<h6 title='Some statistics for clicks made "+header.toLowerCase()+"'> + Stats</h6>";
-  tmp += "<div class='sidebarDetails'>";
-  tmp += SIRR("- "+tl8('Rented Average')+": " + (sidebarData['referralClicks_rented'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Rented'] * numberOfDays)).toFixed(3) + "<br>");
-  tmp += SIRR("- "+tl8("Rented 'Real' Average")+": " + "---" + "<br>");
-  tmp += SIDR("- "+tl8('Direct Average')+": " + (sidebarData['referralClicks_direct'][dates_array[endDay]].sum / (currentUser.numberOfRefs['Direct'] * numberOfDays)).toFixed(3) + "<br>");
-  tmp += SIDR("- "+tl8("Direct 'Real' Average")+": " + "---" + "<br>");
-  tmp += SIRR(SIDR("- "+tl8('Total Average')+": " + ((sidebarData['referralClicks_rented'][dates_array[endDay]].sum + sidebarData['referralClicks_direct'][dates_array[endDay]].sum)/((currentUser.numberOfRefs['Rented'] + currentUser.numberOfRefs['Direct']) * numberOfDays)).toFixed(3) + "<br>"));
-  tmp += SIRR(SIDR("- "+tl8("Total 'Real' Average")+": " + "---" + "<br>"));
-  tmp += "</div>";
-
-  tmp += "<h6 title='"+tl8('Summary of Income / Projected Income / Expenses / Profit for ')+header.toLowerCase()+tl8(' [nb: the second value includes an estimate of your personal clicks]')+"'> + "+tl8('Summary Totals')+"</h6>";
-  tmp += "<div class='sidebarDetails'>";
-  tmp += "- "+tl8('Gross Income')+": $" + tmp_income.toFixed(3) + " / $" + tmp_income_inclOwnClicks.toFixed(3) + "<br>";
-  if(showProjected) { tmp += "- "+tl8('Projected Gross Income')+": $" + (sidebarData['projectedIncome'].Total.toFixed(3)) + "<br>"; }
-  tmp += "- "+tl8('Expenses')+": $" + (tmp_expenses).toFixed(3) + "<br>";
-  tmp += "- "+tl8('Net Income')+": $" + (tmp_income-tmp_expenses).toFixed(3) + " / $"+ (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
-  tmp += "</div>";
-}
-
-tmp += "</span>";
-
-sidebarContainer.innerHTML = tmp;
+  sidebarContainer.innerHTML = tmp;
 
 // // *** INSERT STATISTICS SUMMARY INTO PAGE *** ////
-var wrapperTD = document.createElement('td');
-wrapperTD.setAttribute('valign','top');
-wrapperTD.appendChild(sidebarContainer);
+  var wrapperTD = document.createElement('td');
+  wrapperTD.setAttribute('valign','top');
+  wrapperTD.appendChild(sidebarContainer);
 
-var statsSidebarPosition = getPref('statsSidebarPosition','right',{ prefType: 'text' });
-debugLog('statsSidebarPosition = ',statsSidebarPosition,'\n','locationToInsertSidebar[statsSidebarPosition] = ',locationToInsertSidebar[statsSidebarPosition]);
+  var statsSidebarPosition = getPref('statsSidebarPosition','right',{ prefType: 'text' });
+  debugLog('statsSidebarPosition = ',statsSidebarPosition,'\n','locationToInsertSidebar[statsSidebarPosition] = ',locationToInsertSidebar[statsSidebarPosition]);
 
-if('right' === statsSidebarPosition) {
+  if('right' === statsSidebarPosition) {
 //    sidebarContainer.setAttribute('onmouseover','document.getElementById("sidebarContainer").style.opacity = "1";');
 //    sidebarContainer.setAttribute('onmouseout','document.getElementById("sidebarContainer").style.opacity = "0.5";');
-}
+  }
 
-sidebarContainer.setAttribute('class',statsSidebarPosition+'Side');
-locationToInsertSidebar[statsSidebarPosition].appendChild(wrapperTD);
+  sidebarContainer.setAttribute('class',statsSidebarPosition+'Side');
+  locationToInsertSidebar[statsSidebarPosition].appendChild(wrapperTD);
 
 
 }
