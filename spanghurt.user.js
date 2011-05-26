@@ -2918,7 +2918,6 @@ function REFERRAL(arg_refId, arg_referralProperties)
   {
     var tmp_blankReferral = {
       referralType: "R",
-      referralSince: "2001/01/01 00:01",
       lastSeen: 0,
       goldenGraphClickData: { },
       ultimateClickData: { },
@@ -2944,6 +2943,8 @@ function REFERRAL(arg_refId, arg_referralProperties)
   var tmp_CurrentReferral = new createBlankReferral();
   tmp_CurrentReferral.referralListingsData = tmp_CurrentReferral.referralListingsData || {};
   tmp_CurrentReferral.referralListingsData[tmp_currentDateString] = tmp_CurrentReferral.referralListingsData[tmp_currentDateString] || {};
+
+  tmp_CurrentReferral.lastSeen = dateToday;
 
   var tmp_crToday = tmp_CurrentReferral.referralListingsData[tmp_currentDateString];
 
@@ -5483,7 +5484,7 @@ if(currentPage.pageCode.match(/referralListings/i))
   }
   catch(e) {
     console.info("ERROR!\n\n referralListings.init() failed\n\n"+e);
-    alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
+//    alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
     throw e;
   }
 
@@ -5539,7 +5540,7 @@ if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
   catch(e)
   {
     console.info("ERROR!\n\n insertAdCounterBox(0, adCountData, {}); failed\n\n"+e);
-    alert("ERROR!\n\n insertAdCounterBox(0, adCountData, {}); failed\n\n"+e);
+//    alert("ERROR!\n\n insertAdCounterBox(0, adCountData, {}); failed\n\n"+e);
   }
 }
 
@@ -5552,7 +5553,7 @@ if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/refe
   }
   catch(e) {
     console.info("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
-    alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
+//    alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
     throw e;
   }
   try {
@@ -5560,7 +5561,7 @@ if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/refe
   }
   catch(e) {
     console.info("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
-    alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
+//    alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
     throw e;
   }
 
@@ -5574,7 +5575,7 @@ if(currentPage.pageCode.match(/referralStatistics/))
   }
   catch(e) {
     console.info("ERROR!\n\n  insertSidebar(); failed\n\n"+e);
-    alert("ERROR!\n\n  insertSidebar(); failed\n\n"+e);
+//    alert("ERROR!\n\n  insertSidebar(); failed\n\n"+e);
   }
 }
 
@@ -5586,21 +5587,21 @@ if (!currentPage.pageCode.match(tmp_iframePages) && (top === self))
   }
   catch(e) {
     console.info("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
-    alert("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
+//    alert("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
   }
   try {
     logo.init();
   }
   catch(e) {
     console.info("ERROR!\n\n logo.init(); failed\n\n"+e);
-    alert("ERROR!\n\n logo.init(); failed\n\n"+e);
+//    alert("ERROR!\n\n logo.init(); failed\n\n"+e);
   }
   try {
     widenPages.generic();
   }
   catch(e) {
     console.info("ERROR!\n\n widenPages.generic(); failed\n\n"+e);
-    alert("ERROR!\n\n widenPages.generic(); failed\n\n"+e);
+//    alert("ERROR!\n\n widenPages.generic(); failed\n\n"+e);
   }
 }
 
