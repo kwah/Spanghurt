@@ -8,6 +8,18 @@
 
 //var tl8strings = {};
 
+var alert_counter = 0;
+
+function modalCheckpoint(arg_context)
+{
+  if(document.location.href === "http://www.neobux.com/c/rl/?ss3=1")
+  {
+    arg_context = (arg_context) ? arg_context : "unknown context";
+    alert(alert_counter + ": \n" + arg_context);
+    alert_counter++;
+  }
+}
+
 
 /**
  * Compatibility functions
@@ -117,7 +129,7 @@ function getPref(arg_prefName, arg_defaultValue, arg_options)
     tmp = setPref(arg_prefName, arg_defaultValue, arg_options);
   }
 
-  switch (returnType)
+  switch (returnType.toLowerCase())
   {
     case 'float':
       return parseFloat(tmp);
@@ -129,7 +141,7 @@ function getPref(arg_prefName, arg_defaultValue, arg_options)
         if('true' === tmp.toString()) { return true; }
         if('false' === tmp.toString()) { return false; }
       return !!tmp;
-    case 'JSON':
+    case 'json':
       try {
         return JSON.parse(tmp);
       }
@@ -163,7 +175,7 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
 //  console.info('arg_options.prefType = ',arg_options.prefType);
 
   var tmp_value;
-  switch (arg_options.prefType)
+  switch (arg_options.prefType.toLowerCase())
   {
     case 'float':
       tmp_value = (setValue === GM_setValue) ? arg_defaultValue.toString() : parseFloat(arg_defaultValue);
@@ -174,7 +186,7 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
     case 'string':
       tmp_value = arg_defaultValue.toString();
       break;
-    case 'JSON':
+    case 'json':
       tmp_value = JSON.stringify(arg_defaultValue);
       break;
     default:
@@ -1466,6 +1478,7 @@ function extractNumberOfRefs()
     // Only expecting one result if the user has referrals
     if(1 == noOfRefsString.snapshotLength)
     {
+  modalCheckpoint('extractNumberOfRefs() if(1 == noOfRefsString.snapshotLength)');
       noOfRefsString = noOfRefsString.snapshotItem(0);
 
       if (noOfRefsString.textContent.match(/\d+/)) {
@@ -1476,6 +1489,7 @@ function extractNumberOfRefs()
     }
     else
     {
+  modalCheckpoint('extractNumberOfRefs() else');
       /**
        * Most likely reason for incorrect snapshotLength is an error in page load or zero refs.
        * Will now check for zero refs.
@@ -1490,11 +1504,15 @@ function extractNumberOfRefs()
       tmp_numberOfRefs = (1 == zeroRefsString.snapshotLength) ? 0 : false;
     }
 
+  modalCheckpoint('extractNumberOfRefs() before if(0 <= tmp_numberOfRefs) {');
     // Now store the number of detected referrals if numberOfRefs is not false
 //    debugLog('tmp_numberOfRefs = ',tmp_numberOfRefs);
     if(0 <= tmp_numberOfRefs) {
-      setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'text' });
+      alert('numberOf' + _pageRefType + 'Referrals');
+      alert('tmp_numberOfRefs = ' + tmp_numberOfRefs);
+      setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'string' });
     }
+  modalCheckpoint('extractNumberOfRefs() after if(0 <= tmp_numberOfRefs) {');
     return tmp_numberOfRefs;
   }
   else if(currentPage.pageCode.match(/accSummary/))
@@ -1578,7 +1596,6 @@ function getMembershipType()
 
   return tmp_membershipType_name;
 }
-;
 
 function getClickValues(arg_memberType)
 {
@@ -5448,7 +5465,7 @@ function insertSidebar()
   wrapperTD.setAttribute('valign','top');
   wrapperTD.appendChild(sidebarContainer);
 
-  var statsSidebarPosition = getPref('statsSidebarPosition','right',{ prefType: 'text' });
+  var statsSidebarPosition = getPref('statsSidebarPosition','right',{ prefType: 'string' });
   debugLog('statsSidebarPosition = ',statsSidebarPosition,'\n','locationToInsertSidebar[statsSidebarPosition] = ',locationToInsertSidebar[statsSidebarPosition]);
 
   if('right' === statsSidebarPosition) {
