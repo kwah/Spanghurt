@@ -121,8 +121,8 @@ userPreference.prototype.getValue = function(arg_overridingDefaultValue, arg_ove
 
   var returnType;
   if('undefined' !== typeof arg_overridingOptions) {
-    if('undefined' !== typeof arg_overridingOptions['prefype']) {
-      returnType = arg_overridingOptions['prefype'];
+    if('undefined' !== typeof arg_overridingOptions['prefType']) {
+      returnType = arg_overridingOptions['prefType'];
     }
   } else if('undefined' !== typeof this.options) {
     if('undefined' !== typeof this.options.prefType) {
