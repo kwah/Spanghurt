@@ -109,24 +109,34 @@ function userPreference(arg_preferenceName, arg_defaultValue, arg_options)
   this.preferenceName = arg_preferenceName.toString();
   this.defaultValue = arg_defaultValue || '';
   this.options = arg_options || {};
-  
+
   return this;
 }
 
 userPreference.prototype.getValue = function(arg_overridingDefaultValue, arg_overridingOptions)
 {
-  // Where the defaultValue / options have been defined specifically within this getValue, default to using
+   // Where the defaultValue / options have been defined specifically within this getValue, default to using
   //    those values rather than the general defaults for the preference
-  var defaultValue = (null !== typeof arg_overridingDefaultValue) ? arg_overridingDefaultValue : this.defaultValue;
-  var returnType = ('undefined' !== typeof arg_overridingOptions) ? arg_overridingOptions : this.options['prefType'];
+  var defaultValue = ("undefined" !== typeof arg_overridingDefaultValue) ? arg_overridingDefaultValue : this.defaultValue;
 
-  // If the returnType is not set anywhere, set it to be the type of the defaultValue
-  returnType = returnType || typeof defaultValue;
+  var returnType;
+  if('undefined' !== typeof arg_overridingOptions) {
+    if('undefined' !== typeof arg_overridingOptions['prefype']) {
+      returnType = arg_overridingOptions['prefype']
+    }
+  } else if('undefined' !== typeof this.options) {
+    if('undefined' !== typeof this.options) {
+      returnType = this.options['prefType'];
+    }
+  } else {
+    // If the returnType is not set anywhere, set it to be the type of the defaultValue
+    returnType = typeof defaultValue;
+  }
 
-  // If the defaultValue is undefined, default to returning a string
+  // If the defaultValue is still undefined, default to returning a string
   returnType = returnType || 'string';
-  var tmp_rawValueFromStorage = getValue (this.preferenceName, this.options);
 
+  var tmp_rawValueFromStorage = getValue(this.preferenceName, defaultValue);
   switch (returnType.toLowerCase())
   {
     case 'float':
@@ -165,14 +175,14 @@ userPreference.prototype.getValue = function(arg_overridingDefaultValue, arg_ove
     default:
       return tmp_rawValueFromStorage;
   }
-
 }
-userPreference.prototype.setValue = function(arg_newValue, arg_overridingOptions) {
 
+userPreference.prototype.setValue = function(arg_newValue, arg_overridingOptions)
+{
   if(arguments.length < 1) {
     throw "Error in userPreference.prototype.setValue!! \n No arguments supplied to set the value";
   }
-  
+
   var newValue = (null !== typeof arg_newValue) ? arg_newValue : this.defaultValue;
   var returnType = ('undefined' !== typeof arg_overridingOptions) ? arg_overridingOptions : this.options['prefType'];
 
@@ -226,13 +236,13 @@ userPreference.prototype.setValue = function(arg_newValue, arg_overridingOptions
   if("undefined" !== typeof GM_setValue) {
     try
     {
-      GM_setValue(arg_prefName, tmp_value);
+      GM_setValue(this.preferenceName, tmp_value);
     }
     catch(e) {
-      GM_setValue(arg_prefName, tmp_value.toString());
+      GM_setValue(this.preferenceName, tmp_value.toString());
     }
   }
-//  return getPref(arg_prefName, tmp_value, arg_options);
+//  return getPref(this.preferenceName, tmp_value, arg_options);
   return this;
 }
 //userPreference('prefName').getValue('integer', defaultValue);
@@ -240,131 +250,37 @@ userPreference.prototype.setValue = function(arg_newValue, arg_overridingOptions
 
 var pr = {};
 
+pr['accountCache'] = new userPreference('accountCache', {}, { prefType: 'JSON' });
+pr['accountType'] = new userPreference('accountType', {numerical:0, verbose:'unknown'}, { prefType: 'JSON' });
+pr['accountTypeCost'] = new userPreference('accountTypeCost', 0, { prefType: 'float' });
+pr['adResetTime'] = new userPreference('adResetTime', '', { prefType: 'string' });
+pr['AdResetTime_hours'] = new userPreference('AdResetTime_hours', 0, { prefType: 'float' });
+pr['AutoDetectTimeOffset'] = new userPreference('AutoDetectTimeOffset', true, { prefType: 'boolean' });
+pr['autopayOn'] = new userPreference('autopayOn', false, { prefType: 'boolean' });
+pr['columnPrefixes'] = new userPreference('columnPrefixes', {}, { prefType: 'JSON' });
+pr['flag_textify'] = new userPreference('flag_textify', true, { prefType: 'boolean' });
+pr['graphData'] = new userPreference('graphData', {}, { prefType: 'JSON' });
+pr['localMidnight'] = new userPreference('localMidnight', '', { prefType: 'string' });
+pr['membershipType'] = new userPreference('membershipType', 'unableToFetchNameFromStorage', { prefType: 'string' });
 pr['neobuxLanguageCode'] = new userPreference('neobuxLanguageCode', 'EN', { prefType: 'string' });
+pr['neoMidnight'] = new userPreference('neoMidnight', '', { prefType: 'string' });
+pr['numberOfDirectReferrals'] = new userPreference('numberOfDirectReferrals', 0, { prefType: 'integer' });
+pr['numberOfRentedReferrals'] = new userPreference('numberOfRentedReferrals', 0, { prefType: 'integer' });
+pr['numeriseDates'] = new userPreference('numeriseDates', {}, { prefType: 'JSON' });
+pr['ownAdCountTally'] = new userPreference('ownAdCountTally', {}, { prefType: 'JSON' });
+pr['recycleFee'] = new userPreference('recycleFee', 0, { prefType: 'float' });
+pr['referrals'] = new userPreference('referrals', {}, { prefType: 'JSON' });
+pr['renewalsLength'] = new userPreference('renewalsLength', 90, { prefType: 'integer' });
+pr['serverTimeOffset'] = new userPreference('serverTimeOffset', 0, { prefType: 'float' });
+pr['setupComplete'] = new userPreference('setupComplete', false, { prefType: 'boolean' });
+pr['shortFormatTimer'] = new userPreference('shortFormatTimer', {}, { prefType: 'JSON' });
+pr['showColumn'] = new userPreference('showColumn', {}, { prefType: 'JSON' });
+pr['shrinkColumnContents'] = new userPreference('shrinkColumnContents', {}, { prefType: 'JSON' });
+pr['statsSidebarPosition'] = new userPreference('statsSidebarPosition', 'right', { prefType: 'string' });
+pr['timePeriods'] = new userPreference('timePeriods', {}, { prefType: 'JSON' });
+pr['translationStringsNeeded'] = new userPreference('translationStringsNeeded', '', { prefType: 'JSON' });
+pr['username'] = new userPreference('username', 'unknownUsername', { prefType: 'string' });
 
-
-function getPref(arg_prefName, arg_defaultValue, arg_options)
-{
-  if(!setValue) {
-    errorLog('ERROR: function: getPref()', 'No preferred storage method for setValue available, cannot store value!');
-  }
-  if(!getValue) {
-    errorLog('ERROR: function: getPref()', 'No preferred storage method for getValue available, cannot store value!\n', 'Returning default value: ', arg_defaultValue);
-    return arg_defaultValue;
-  }
-
-  if ("object" === typeof arg_options) {
-    //arg_options = arg_options;
-  }
-  else {
-    errorLog('ERROR: function: getPref()', 'arg_options is not an object!!', 'arguments:', arguments);
-    arg_options = {};
-  }
-
-  var returnType = arg_options.prefType || typeof arg_defaultValue;
-
-  var tmp = getValue(arg_prefName);
-  if(!tmp) {
-    errorLog('Error retrieving value from storage, adding default value to storage and returning the supplied default value.',
-        ' ; JSON.stringify(arg_prefName) = ', JSON.stringify(arg_prefName),
-        ' ; JSON.stringify(arg_defaultValue) = ', JSON.stringify(arg_defaultValue),
-        ' ; JSON.stringify(arg_options) = ', JSON.stringify(arg_options),
-        ' ; JSON.stringify(arguments) = ', JSON.stringify(arguments)
-    );
-    tmp = setPref(arg_prefName, arg_defaultValue, arg_options);
-  }
-
-  switch (returnType.toLowerCase())
-  {
-    case 'float':
-      return parseFloat(tmp);
-    case 'integer':
-      return parseInt(tmp);
-    case 'string':
-      return tmp.toString();
-    case 'boolean':
-        if('true' === tmp.toString()) { return true; }
-        if('false' === tmp.toString()) { return false; }
-      return !!tmp;
-    case 'json':
-      try {
-        return JSON.parse(tmp);
-      }
-      catch(e) {
-        errorLog('ERROR! Could not convert the stored value to object, returning supplied default value.');
-        return {};
-      }
-    default:
-      return tmp;
-  }
-}
-
-function setPref(arg_prefName, arg_defaultValue, arg_options)
-{
-  console.info(arguments);
-  if(!setValue) {
-    errorLog('ERROR: function: getPref()', 'No preferred storage method for setValue available, cannot store value!\n', 'Returning default value: ', arg_defaultValue);
-    return arg_defaultValue;
-  }
-
-  if ("object" === typeof arg_options) {
-    //arg_options = arg_options;
-  }
-  else {
-    errorLog('ERROR: function: setPref()', 'arg_options is not an object!!', 'arguments:', arguments);
-    arg_options = {};
-  }
-
-  arg_options.prefType = arg_options.prefType || typeof arg_defaultValue;
-//
-//  console.info('typeof arg_defaultValue = ', typeof arg_defaultValue);
-//  console.info('arg_options.prefType = ', arg_options.prefType);
-
-  var tmp_value;
-  switch (arg_options.prefType.toLowerCase())
-  {
-    case 'float':
-      tmp_value = (setValue === GM_setValue) ? arg_defaultValue.toString() : parseFloat(arg_defaultValue);
-      break;
-    case 'integer':
-      tmp_value = parseInt(arg_defaultValue);
-      break;
-    case 'string':
-      tmp_value = arg_defaultValue.toString();
-      break;
-    case 'json':
-      tmp_value = JSON.stringify(arg_defaultValue);
-      break;
-    default:
-      tmp_value = arg_defaultValue;
-      break;
-  }
-
-  try {
-  setValue(arg_prefName, tmp_value);
-  }
-  catch(e) {
-    console.info('error setting using setValue');
-    console.info('typeof arg_defaultValue = ', typeof arg_defaultValue);
-    console.info('arg_options.prefType = ', arg_options.prefType);
-
-    setValue(arg_prefName, tmp_value.toString());
-  }
-
-
-  /*Having issues with the localStorage being wiped occasionally [nb: caused by a privacy addon] so storing to GM_log too as a backup*/
-  // Also having issues with floats not being able to be stored :S
-  if("undefined" !== typeof GM_setValue) {
-    try
-    {
-      GM_setValue(arg_prefName, tmp_value);
-    }
-    catch(e) {
-      GM_setValue(arg_prefName, tmp_value.toString());
-    }
-  }
-  return getPref(arg_prefName, tmp_value, arg_options);
-}
 
 
 var tl8strings = {
@@ -497,15 +413,15 @@ var tl8_counter = 0;
 function tl8(arg_originalString)
 {
 //  console.info('start translation of ', arg_originalString);
-  if('undefined' === typeof tl8strings[getPref('neobuxLanguageCode', 'EN', { prefType: 'string' })]) {
-    tl8strings[getPref('neobuxLanguageCode', 'EN', { prefType: 'string' })] = {};
+  if('undefined' === typeof tl8strings[pr['neobuxLanguageCode'].getValue()]) {
+    tl8strings[pr['neobuxLanguageCode'].getValue()] = {};
   }
-  if('undefined' === typeof tl8strings[getValue('neobuxLanguageCode')][arg_originalString])
+  if('undefined' === typeof tl8strings[pr['neobuxLanguageCode'].getValue()][arg_originalString])
   {
     console.group();
 //    console.info('Error!\n\nTranslation string for "', arg_originalString, '" not found');
     tmp_translationStringsNeeded[arg_originalString] = arg_originalString;
-    setPref('translationStringsNeeded', JSON.stringify(tmp_translationStringsNeeded), { prefType: 'string' });
+    pr['translationStringsNeeded'].setValue(tmp_translationStringsNeeded);
 
     console.info('Record of the translation strings yet to be translated has been updated\n\n missing string = '+arg_originalString);
 
@@ -871,13 +787,13 @@ if(("true" !== getValue('setupComplete') && true !== getValue('setupComplete')))
           )
       {
 
-        setPref('numberOfDirectReferrals', tmp_directRefs[1], { prefType: 'integer' });
-        setPref('numberOfRentedReferrals', tmp_rentedRefs[1], { prefType: 'integer' });
-        setPref('autopayOn', tmp_autopay, { prefType: 'boolean' });
-        setPref('renewalsLength', tmp_renewalLength, { prefType: 'integer' });
-        setPref('serverTimeOffset', tmp_timeDifference[1], { prefType: 'float' });
+        pr['numberOfDirectReferrals'].setValue(tmp_directRefs[1]);
+        pr['numberOfRentedReferrals'].setValue(tmp_rentedRefs[1]);
+        pr['autopayOn'].setValue(tmp_autopay);
+        pr['renewalsLength'].setValue(tmp_renewalLength);
+        pr['serverTimeOffset'].setValue(tmp_timeDifference[1]);
 
-        setPref('setupComplete', true, { prefType: 'boolean' });
+        pr['setupComplete'].setValue(true);
 
 
         alert(tl8('Settings saved! The script will run on the next Neobux page that you load.'));
@@ -1672,7 +1588,7 @@ function extractNumberOfRefs()
     if(0 <= tmp_numberOfRefs) {
 //      alert('numberOf' + _pageRefType + 'Referrals');
 //      alert('tmp_numberOfRefs = ' + tmp_numberOfRefs);
-      setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'string' });
+      pr['numberOf' + _pageRefType + 'Referrals'].setValue(tmp_numberOfRefs);
     }
   modalCheckpoint('extractNumberOfRefs() after if(0 <= tmp_numberOfRefs) {');
     return tmp_numberOfRefs;
@@ -1728,9 +1644,9 @@ extractNumberOfRefs();
 
 function getUsername() {
   if(document.getElementById('t_conta')) {
-    setPref('username', document.getElementById('t_conta').textContent, { prefType: 'string' });
+    pr['username'].setValue(document.getElementById('t_conta').textContent);
   }
-  var tmp_username = getPref('username', 'unknownUsername', { prefType: 'string' }) || 'failedToGetUsername';
+  var tmp_username = pr['username'].getValue() || 'failedToGetUsername';
 
   return tmp_username;
 }
@@ -1752,9 +1668,9 @@ function getMembershipType()
     var tmp_membershipType_name = elmt_accountBadge.snapshotItem(
         0).textContent.match(
         /\w+/);
-    setPref('membershipType', tmp_membershipType_name, { prefType: 'string' });
+    pr['membershipType'].setValue(tmp_membershipType_name);
   }
-  tmp_membershipType_name = getPref('membershipType', 'unableToFetchNameFromStorage', { prefType: 'string' });
+  tmp_membershipType_name = pr['membershipType'].getValue();
 
   return tmp_membershipType_name;
 }
@@ -1944,8 +1860,8 @@ var userAccount = new function ()
   this.override_showUltimateFeatures = false;
   this.clickValues = getClickValues(this.membershipType);
   this.numberOfReferrals = {
-    Rented: getPref('numberOfRentedReferrals', 0, { prefType: 'integer' }),
-    Direct: getPref('numberOfDirectReferrals', 0, { prefType: 'integer' })
+    Rented: pr['numberOfRentedReferrals'].getValue(),
+    Direct: pr['numberOfDirectReferrals'].getValue()
   };
   this.feesCosts = {
     autopay: 0,
@@ -1968,7 +1884,7 @@ var userAccount = new function ()
 
 var preferences = new function()
 {
-  this.preferredExtensionLength = getPref('renewalsLength', 90, { prefType: 'string' });
+  this.preferredExtensionLength = pr['renewalsLength'].getValue();
 }
 
 var currentUser = new function()
@@ -1995,9 +1911,9 @@ var currentUser = new function()
 
 
   if(document.getElementById('t_conta')) {
-    this.username = setPref('username', document.getElementById('t_conta').textContent, { prefType: 'string' });
+    this.username = pr['username'].setValue(document.getElementById('t_conta').textContent);
   } else {
-    this.username = getPref('username', 'unknownUsername', { prefType: 'string' });
+    this.username = pr['username'].getValue();
   }
 
   this.accountType = new function ()
@@ -2017,14 +1933,14 @@ var currentUser = new function()
             "numerical": i,
             'verbose': Neobux.possibleAccTypes[i]
           };
-          setPref('accountType', tmp_accountType, { prefType: 'JSON' });
+          pr['accountType'].setValue(tmp_accountType);
         }
       }
     }
 
     // If the accountType info was on the page, the stored copy will have been updated
     // (else we'll just be grabbing the cached version)
-    tmp_accountType = getPref('accountType', {numerical:0, verbose:'unknown'}, { prefType: 'JSON' });
+    tmp_accountType = pr['accountType'].getValue();
 
     this.numerical = tmp_accountType.numerical;
     this.verbose = tmp_accountType.verbose;
@@ -2033,7 +1949,7 @@ var currentUser = new function()
     this.isUltimate = 6 === tmp_accountType.numerical;
     this.isStandard = 0 === tmp_accountType.numerical;
 
-    this.cost = getPref('accountTypeCost', Neobux.accountDefaults.goldenPackCost[this.verbose], { prefType: 'float' });
+    this.cost = pr['accountTypeCost'].getValue(Neobux.accountDefaults.goldenPackCost[this.verbose]);
 
     return this;
   };
@@ -2043,16 +1959,16 @@ var currentUser = new function()
   this.directReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.direct;
 
   this.numberOfRefs = {
-    Rented: getPref('numberOfRentedReferrals', defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
-    Direct: getPref('numberOfDirectReferrals', defaultSettings.numberOfRefs['Direct'], { prefType: 'integer' })
+    Rented: pr['numberOfRentedReferrals'].getValue(),
+    Direct: pr['numberOfDirectReferrals'].getValue()
   };
 
-  this.recycleFee = getPref('recycleFee', Neobux.accountDefaults['recycleCost'][this.accountType.verbose], { prefType: 'float' });
+  this.recycleFee = pr['recycleFee'].getValue(Neobux.accountDefaults['recycleCost'][this.accountType.verbose]);
 
   this.autopayFee = getPerAutoPayFee(this.accountType, this.numberOfRefs.Rented);
 
 
-  this.renewalsLength = getPref('renewalsLength', 90, { prefType: 'string' });
+  this.renewalsLength = pr['renewalsLength'].getValue();
   this.renewalFees = getRenewalFees(this.accountType.verbose, this.numberOfRefs.Rented, this.renewalsLength);
 
   this.preferences = new function ()
@@ -2067,10 +1983,10 @@ var currentUser = new function()
     //JSON vars
     var tmp_prefs = ['columnPrefixes', 'numeriseDates', 'shortFormatTimer', 'showColumn', 'shrinkColumnContents', 'timePeriods'];
     for(var i=0; i<tmp_prefs.length; i++) {
-      this[tmp_prefs[i]] = getPref(tmp_prefs[i], defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
+      this[tmp_prefs[i]] = pr[tmp_prefs[i]].getValue(defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
     }
     //Boolean vars
-    this['flag_textify'] = getPref('flag_textify', true, { prefType: 'boolean' });
+    this['flag_textify'] = pr['flag_textify'].getValue();
   };
 };
 
@@ -2248,7 +2164,7 @@ function createAccountCache()
     }
   }
 
-  var storedAccountCache = getPref('accountCache', tmp_blankAccountCache, { prefType: 'JSON' });
+  var storedAccountCache = pr['accountCache'].getValue(tmp_blankAccountCache);
   var tmp_accountCache = {};
 
   Object_merge(tmp_accountCache, tmp_blankAccountCache);
@@ -2544,7 +2460,7 @@ var chartData = new function ()
 
   this.getAccountCache = function()
   {
-    var tmp_storedAccountCache = getPref('accountCache', {}, { prefType: 'JSON' });
+    var tmp_storedAccountCache = pr['accountCache'].getValue({}, null);
     if(!tmp_storedAccountCache) {
       throw new Error();
     }
@@ -2591,8 +2507,8 @@ var chartData = new function ()
       }
     }
 
-    setPref('graphData', Object_merge(this.getAccountCache(), tmp_graphDataObject), { prefType: 'JSON' });
-    return getPref('graphData', Object_merge(this.getAccountCache(), tmp_graphDataObject), { prefType: 'JSON' });
+    pr['graphData'].setValue(Object_merge(this.getAccountCache(), tmp_graphDataObject));
+    return pr['graphData'].getValue(Object_merge(this.getAccountCache(), tmp_graphDataObject), { prefType: 'JSON' });
   };
 
 
@@ -2648,20 +2564,20 @@ function insertLocalServerTime()
 
 
     localMidnight = setTime(new Date(dateToday), [0, 0, 0]);
-    setPref('localMidnight', localMidnight.toString(), { prefType: 'string' });
+    pr['localMidnight'].setValue(localMidnight.toString());
 
     /* If server time is five hours behind (-5), Neobux's midnight will be five hours AFTER local midnight
       && vice versa, thus need to minus the offset
       NB, the offset might move the day to tomorrow/yesterday so will need to reset the date to 'today' */
     neoMidnight = new Date(new Date(localMidnight).getTime() - offsetMS);
     neoMidnight = new Date(neoMidnight.setDate(localMidnight.getDate()));
-    setPref('neoMidnight', neoMidnight.toString(), { prefType: 'string' });
+    pr['neoMidnight'].setValue(neoMidnight.toString());
 
 
-    AdResetTime_hours = getPref('AdResetTime_hours', 0, { prefType: 'string' }) * 1000 * 60 * 60;
+    AdResetTime_hours = pr['AdResetTime_hours'].getValue() * 1000 * 60 * 60;
     adResetTime = new Date(new Date(localMidnight).getTime() + AdResetTime_hours);
     adResetTime = new Date(adResetTime.setDate(localMidnight.getDate()));
-    setPref('adResetTime', adResetTime.toString(), { prefType: 'string' });
+    pr['adResetTime'].setValue(adResetTime.toString());
 
 
     var timeOffset_text = '';
@@ -2716,7 +2632,7 @@ function insertLocalServerTime()
         var serverTimeDifference = (ServerTime - LocalTime) / (one_hour);
         serverTimeDifference = Math.floor(serverTimeDifference * 1000) / 1000;
 
-        setPref('serverTimeOffset', serverTimeDifference, { prefType: 'string' });
+        pr['serverTimeOffset'].setValue(serverTimeDifference);
 
 
         var adResetTimeString = locationOfTimeString.snapshotItem(0).textContent;
@@ -2729,7 +2645,7 @@ function insertLocalServerTime()
         };
 
         var AdResetTimeDifference = (tmp_ART.hour + (tmp_ART.minute / 60));
-        setPref('AdResetTime_hours', AdResetTimeDifference, { prefType: 'string' });
+        pr['AdResetTime_hours'].setValue(AdResetTimeDifference);
 
         break;
       }
@@ -2751,11 +2667,11 @@ function insertLocalServerTime()
     var IsMatch = RegExp_AdPage.test(CurrentUrl);
 
     // If it is the ads page AND the script should automatically detect the offset,
-    if (IsMatch && getPref("AutoDetectTimeOffset", true, { prefType: 'string' })) {
+    if (IsMatch && pr['AutoDetectTimeOffset'].getValue()) {
       this.FetchAndSetTimeOffset();
     }
 
-    return getPref('serverTimeOffset', 0, { prefType: 'float' });
+    return pr['serverTimeOffset'].getValue();
   };
 
   this.insertClock = function(arg_timeOffset, arg_adResetOffset)
@@ -3011,7 +2927,7 @@ function insertLocalServerTime()
     return;
   }
 
-  this.insertClock(this.GetServerTimeOffset(), getPref('AdResetTime_hours', 0, { prefType: 'string' }));
+  this.insertClock(this.GetServerTimeOffset(), pr['AdResetTime_hours'].getValue());
   this.insertClickGuide();
 }
 
@@ -3529,7 +3445,7 @@ var referralListings = new function()
 
   this.init = function ()
   {
-    var storedReferralData = getPref('referrals', {}, { prefType: 'JSON' });
+    var storedReferralData = pr['referrals'].getValue();
     var referralData;
 
     var tmp_referralDataFromListingsPage = { mtx:'' };
@@ -3543,7 +3459,7 @@ var referralListings = new function()
       // Merge the newly fetched data with the stored data
       referralData = Object_merge(storedReferralData, tmp_referralsOnCurrentPage);
 
-      setPref('referrals', referralData, { prefType: 'JSON' });
+      pr['referrals'].setValue(referralData);
     }
   }
 };
@@ -3891,12 +3807,12 @@ var chartDataBars = new function()
     var tmp_graphLength;
 
     function dataToOutputToDataBar(
-        arg_dataSet, 
-        arg_dataBarIntervals, 
-        arg_dataBarTitle, 
-        arg_fieldToShow, 
-        arg_daysPrefix, 
-        arg_daysSuffix, 
+        arg_dataSet,
+        arg_dataBarIntervals,
+        arg_dataBarTitle,
+        arg_fieldToShow,
+        arg_daysPrefix,
+        arg_daysSuffix,
         arg_numberOfFixedDecimalPoints
       )
     {
@@ -4320,7 +4236,7 @@ var exportTabs = new function()
   this.init = function()
   {
     this.insertStyles();
-    var tmp_currentDataset = getPref('accountCache', {}, { prefType: 'JSON' });
+    var tmp_currentDataset = pr['accountCache'].getValue();
 
     for(var tmpNameOfCurrentGraph in graphsOnCurrentPage)
     {
@@ -4947,7 +4863,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
       setTimeout(function() {
-        setPref('ownAdCountTally', tmp_adCounts, { prefType: 'JSON' });
+        pr['ownAdCountTally'].setValue(tmp_adCounts);
       }, 0);
     }, false);
   }
@@ -4978,7 +4894,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
       setTimeout(function() {
-        setPref('ownAdCountTally', tmp_adCounts, { prefType: 'JSON' });
+        pr['ownAdCountTally'].setValue(tmp_adCounts);
       }, 0);
     }, false);
   }
@@ -5030,7 +4946,7 @@ function addClickStatsToGoldenGraph() {
     var sum = [];
     var avg = [];
 
-    var tmp_referralsData = getPref('referrals', {}, { prefType: 'JSON' });
+    var tmp_referralsData = pr['referrals'].getValue();
     var tmp_refId = arg_refName.match(/\d+/);
     tmp_referralsData[tmp_refId] = tmp_referralsData[tmp_refId] || {};
     tmp_referralsData[tmp_refId].goldenGraphClickData = tmp_referralsData[tmp_refId].goldenGraphClickData || {};
@@ -5429,7 +5345,7 @@ var referralListings_columns = new function()
       refID: 3,
       refSince: 5
     };
-    var tmp_referralsData = getPref('referrals', {}, { prefType: 'JSON' });
+    var tmp_referralsData = pr['referrals'].getValue();
     debugLog(tmp_referralsData);
   }
 };
@@ -5455,7 +5371,7 @@ function insertSidebar()
   //    [etc..]
   // ]
   var sidebarTimePeriods = [[0,0], [1,1], [0,6], [1,6], [0,9], [1,9]];
-  var tmp_dataSet = getPref('accountCache', {}, { prefType: 'JSON' });
+  var tmp_dataSet = pr['accountCache'].getValue({});
 
   var sidebarData = {};
   var currentSidebarTimePeriod;
@@ -5699,7 +5615,7 @@ function insertSidebar()
   wrapperTD.setAttribute('valign', 'top');
   wrapperTD.appendChild(sidebarContainer);
 
-  var statsSidebarPosition = getPref('statsSidebarPosition', 'right', { prefType: 'string' });
+  var statsSidebarPosition = pr['statsSidebarPosition'].getValue();
   debugLog('statsSidebarPosition = ', statsSidebarPosition, '\n', 'locationToInsertSidebar[statsSidebarPosition] = ', locationToInsertSidebar[statsSidebarPosition]);
 
   if('right' === statsSidebarPosition) {
@@ -5709,8 +5625,6 @@ function insertSidebar()
 
   sidebarContainer.setAttribute('class', statsSidebarPosition+'Side');
   locationToInsertSidebar[statsSidebarPosition].appendChild(wrapperTD);
-
-
 }
 
 
@@ -5778,7 +5692,7 @@ if(currentPage.pageCode.match(/referralListings/i))
       refSince: 4
     };
   }
-  var tmp_referralsData = getPref('referrals', {}, { prefType: 'JSON' });
+  var tmp_referralsData = pr['referrals'].getValue();
   debugLog(tmp_referralsData);
 
 
@@ -5794,7 +5708,7 @@ if(currentPage.pageCode.match(/referralListings/i))
 if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 {
   try {
-    var adCountData = getPref('ownAdCountTally', {}, { prefType: 'JSON' });
+    var adCountData = pr['ownAdCountTally'].getValue();
     insertAdCounterBox(0, adCountData, {});
   }
   catch(e)
@@ -5808,7 +5722,7 @@ if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
 if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/referralStatistics/i)) {
   try {
     accountCache = convertRawGraphDataToCacheFormat(getGraphData(), accountCache);
-    setPref('accountCache', accountCache, { prefType: 'JSON' });
+    pr['accountCache'].setValue(accountCache);
     chartDataBars.init();
   }
   catch(e) {
@@ -5869,9 +5783,9 @@ if (!currentPage.pageCode.match(tmp_iframePages) && (top === self))
 
 if(0 < tl8_counter) {
   debugLog("NOTE!!\n\n Untranslated strings on this page!!");
-  debugLog(getPref('translationStringsNeeded', '', { prefType: 'string' }));
+  debugLog(pr['translationStringsNeeded'].getValue());
 }
 
 
-debugLog(getPref('neobuxLanguageCode', 'EN', { prefType: 'string' }));
+debugLog(pr['neobuxLanguageCode'].getValue());
 
