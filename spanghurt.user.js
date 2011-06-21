@@ -6,7 +6,20 @@
 // @icon           http://kwah.org/images/SpanghurtScriptIcon.png
 // ==/UserScript==
 
+
 //var tl8strings = {};
+
+var alert_counter = 0;
+
+function modalCheckpoint(arg_context)
+{
+  if(document.location.href === "http://www.neobux.com/c/rl/?ss3=1")
+  {
+    arg_context = (arg_context) ? arg_context : "unknown context";
+//    alert(alert_counter + ": \n" + arg_context);
+    alert_counter++;
+  }
+}
 
 
 /**
@@ -25,7 +38,7 @@ if('undefined' === typeof console) {
       if(arguments.length>1){ location.href = "javascript:void(console.group());"; }
       for(var i=0; i<arguments.length; i++) {
         try {
-          tmp_msg = arguments[i].toString();
+          tmp_msg = ('object' === typeof arguments[i]) ? JSON.stringify(arguments[i]) : arguments[i].toString();
           location.href = "javascript:void(console.info('"+tmp_msg+"'));";
         } catch(e) {
           location.href = "javascript:void(console.info('cannot convert argument to string'));";
@@ -61,8 +74,8 @@ var preferredStorageOrder_setValue = [
   ('undefined' === typeof localStorage.setItem) ? null : localStorage.setItem
 ];
 //
-//console.info('preferredStorageOrder_getValue = ',preferredStorageOrder_getValue);
-//console.info('preferredStorageOrder_setValue = ',preferredStorageOrder_setValue);
+//console.info('preferredStorageOrder_getValue = ', preferredStorageOrder_getValue);
+//console.info('preferredStorageOrder_setValue = ', preferredStorageOrder_setValue);
 
 var getValue;
 for(var i=0; i < preferredStorageOrder_getValue.length; i++) {
@@ -79,25 +92,164 @@ for(var i=0; i < preferredStorageOrder_setValue.length; i++) {
   }
 }
 
-//console.info('getValue.toString = ',getValue.toString);
-//console.info('getValue = ',getValue);
-//console.info('setValue = ',setValue);
+//console.info('getValue.toString = ', getValue.toString);
+//console.info('getValue = ', getValue);
+//console.info('setValue = ', setValue);
 
 
 /**
  * :Handles stored preferences (eg, referral listings column preferences) and locally cached values (eg, username / number of referrals)
- * @param arg_prefName The name of the stored value that is stored to / fetched from.
+ * @param arg_preferenceName The name of the stored value that is stored to / fetched from.
  * @param arg_defaultValue The value to return if the value isn't found in storage.
  * @param arg_options Indicates the data type that the value will be stored as (where possible) / the data type that the stored value will be returned as. Useful for indicating JSON data. Defaults to string.
  **/
 
+function userPreference(arg_preferenceName, arg_defaultValue, arg_options)
+{
+  this.preferenceName = arg_preferenceName.toString();
+  this.defaultValue = arg_defaultValue || '';
+  this.options = arg_options || {};
+  
+  return this;
+}
+
+userPreference.prototype.getValue = function(arg_overridingDefaultValue, arg_overridingOptions)
+{
+  // Where the defaultValue / options have been defined specifically within this getValue, default to using
+  //    those values rather than the general defaults for the preference
+  var defaultValue = (null !== typeof arg_overridingDefaultValue) ? arg_overridingDefaultValue : this.defaultValue;
+  var returnType = ('undefined' !== typeof arg_overridingOptions) ? arg_overridingOptions : this.options['prefType'];
+
+  // If the returnType is not set anywhere, set it to be the type of the defaultValue
+  returnType = returnType || typeof defaultValue;
+
+  // If the defaultValue is undefined, default to returning a string
+  returnType = returnType || 'string';
+  var tmp_rawValueFromStorage = getValue (this.preferenceName, this.options);
+
+  switch (returnType.toLowerCase())
+  {
+    case 'float':
+      return parseFloat(tmp_rawValueFromStorage);
+
+    case 'integer':
+      return parseInt(tmp_rawValueFromStorage);
+
+    case 'string':
+      //Object.toString() outputs the meaningless [object Object] text
+      // NB: It is very highly unlikely that tmp_rawValueFromStorage will ever be an object as it is the raw value obtained from storage
+      if(typeof tmp_rawValueFromStorage === 'object') {
+        return JSON.stringify(tmp_rawValueFromStorage);
+      } else {
+        return tmp_rawValueFromStorage.toString();
+      }
+
+    case 'boolean':
+      //In cases where boolean values are stored as strings:
+      if('true' === tmp_rawValueFromStorage.toString()) { return true; }
+      if('false' === tmp_rawValueFromStorage.toString()) { return false; }
+      return !!tmp_rawValueFromStorage;
+
+    case 'json':
+    //fall-through
+    case 'object':
+      try {
+        return JSON.parse(tmp_rawValueFromStorage);
+      }
+      catch(e) {
+        errorLog('ERROR! Could not convert the stored value to object, returning supplied default value or an ' +
+            'empty object if the default value cannot be found.');
+        return arg_overridingDefaultValue || {};
+      }
+
+    default:
+      return tmp_rawValueFromStorage;
+  }
+
+}
+userPreference.prototype.setValue = function(arg_newValue, arg_overridingOptions) {
+
+  if(arguments.length < 1) {
+    throw "Error in userPreference.prototype.setValue!! \n No arguments supplied to set the value";
+  }
+  
+  var newValue = (null !== typeof arg_newValue) ? arg_newValue : this.defaultValue;
+  var returnType = ('undefined' !== typeof arg_overridingOptions) ? arg_overridingOptions : this.options['prefType'];
+
+  // If the returnType is not set anywhere, set it to be the type of the newValue
+  returnType = returnType || typeof newValue;
+
+  // If the newValue is undefined, default to returning a string
+  returnType = returnType || 'string';
+
+  if(!setValue) {
+    errorLog('ERROR: function: getPref()', 'No preferred storage method for setValue available, cannot store value!\n', 'Returning arg_newValue: ', arg_newValue);
+    return arg_newValue;
+  }
+
+  var newValue;
+  var tmp_value;
+  switch (returnType.toLowerCase())
+  {
+    case 'float':
+        //GM_setValue cannot store floats - must convert to a string first
+      tmp_value = (setValue === GM_setValue) ? newValue.toString() : parseFloat(newValue);
+      break;
+    case 'integer':
+      tmp_value = parseInt(newValue);
+      break;
+    case 'string':
+      tmp_value = newValue.toString();
+      break;
+    case 'json':
+      tmp_value = JSON.stringify(newValue);
+      break;
+    default:
+      tmp_value = newValue;
+      break;
+  }
+
+  try {
+    setValue(this.preferenceName, tmp_value);
+  }
+  catch(e) {
+    console.info('error setting using setValue');
+    console.info('typeof newValue = ', typeof newValue);
+    console.info('returnType = ', returnType);
+
+    setValue(this.preferenceName, tmp_value.toString());
+  }
+
+
+  /*Having issues with the localStorage being wiped occasionally [nb: caused by a privacy addon] so storing to GM_log too as a backup*/
+  // Also having issues with floats not being able to be stored :S
+  if("undefined" !== typeof GM_setValue) {
+    try
+    {
+      GM_setValue(arg_prefName, tmp_value);
+    }
+    catch(e) {
+      GM_setValue(arg_prefName, tmp_value.toString());
+    }
+  }
+//  return getPref(arg_prefName, tmp_value, arg_options);
+  return this;
+}
+//userPreference('prefName').getValue('integer', defaultValue);
+//userPreference('prefName').setValue('string', value);
+
+var pr = {};
+
+pr['neobuxLanguageCode'] = new userPreference('neobuxLanguageCode', 'EN', { prefType: 'string' });
+
+
 function getPref(arg_prefName, arg_defaultValue, arg_options)
 {
   if(!setValue) {
-    errorLog('ERROR: function: getPref()','No preferred storage method for setValue available, cannot store value!');
+    errorLog('ERROR: function: getPref()', 'No preferred storage method for setValue available, cannot store value!');
   }
   if(!getValue) {
-    errorLog('ERROR: function: getPref()','No preferred storage method for getValue available, cannot store value!\n', 'Returning default value: ', arg_defaultValue);
+    errorLog('ERROR: function: getPref()', 'No preferred storage method for getValue available, cannot store value!\n', 'Returning default value: ', arg_defaultValue);
     return arg_defaultValue;
   }
 
@@ -105,7 +257,7 @@ function getPref(arg_prefName, arg_defaultValue, arg_options)
     //arg_options = arg_options;
   }
   else {
-    errorLog('ERROR: function: getPref()','arg_options is not an object!!','arguments:',arguments);
+    errorLog('ERROR: function: getPref()', 'arg_options is not an object!!', 'arguments:', arguments);
     arg_options = {};
   }
 
@@ -113,11 +265,16 @@ function getPref(arg_prefName, arg_defaultValue, arg_options)
 
   var tmp = getValue(arg_prefName);
   if(!tmp) {
-    errorLog('Error retrieving value from localStorage, adding default value to storage and returning the supplied default value.',arguments);
+    errorLog('Error retrieving value from storage, adding default value to storage and returning the supplied default value.',
+        ' ; JSON.stringify(arg_prefName) = ', JSON.stringify(arg_prefName),
+        ' ; JSON.stringify(arg_defaultValue) = ', JSON.stringify(arg_defaultValue),
+        ' ; JSON.stringify(arg_options) = ', JSON.stringify(arg_options),
+        ' ; JSON.stringify(arguments) = ', JSON.stringify(arguments)
+    );
     tmp = setPref(arg_prefName, arg_defaultValue, arg_options);
   }
 
-  switch (returnType)
+  switch (returnType.toLowerCase())
   {
     case 'float':
       return parseFloat(tmp);
@@ -129,7 +286,7 @@ function getPref(arg_prefName, arg_defaultValue, arg_options)
         if('true' === tmp.toString()) { return true; }
         if('false' === tmp.toString()) { return false; }
       return !!tmp;
-    case 'JSON':
+    case 'json':
       try {
         return JSON.parse(tmp);
       }
@@ -144,8 +301,9 @@ function getPref(arg_prefName, arg_defaultValue, arg_options)
 
 function setPref(arg_prefName, arg_defaultValue, arg_options)
 {
+  console.info(arguments);
   if(!setValue) {
-    errorLog('ERROR: function: getPref()','No preferred storage method for setValue available, cannot store value!\n', 'Returning default value: ', arg_defaultValue);
+    errorLog('ERROR: function: getPref()', 'No preferred storage method for setValue available, cannot store value!\n', 'Returning default value: ', arg_defaultValue);
     return arg_defaultValue;
   }
 
@@ -153,17 +311,17 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
     //arg_options = arg_options;
   }
   else {
-    errorLog('ERROR: function: setPref()','arg_options is not an object!!','arguments:',arguments);
+    errorLog('ERROR: function: setPref()', 'arg_options is not an object!!', 'arguments:', arguments);
     arg_options = {};
   }
 
   arg_options.prefType = arg_options.prefType || typeof arg_defaultValue;
 //
-//  console.info('typeof arg_defaultValue = ',typeof arg_defaultValue);
-//  console.info('arg_options.prefType = ',arg_options.prefType);
+//  console.info('typeof arg_defaultValue = ', typeof arg_defaultValue);
+//  console.info('arg_options.prefType = ', arg_options.prefType);
 
   var tmp_value;
-  switch (arg_options.prefType)
+  switch (arg_options.prefType.toLowerCase())
   {
     case 'float':
       tmp_value = (setValue === GM_setValue) ? arg_defaultValue.toString() : parseFloat(arg_defaultValue);
@@ -174,7 +332,7 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
     case 'string':
       tmp_value = arg_defaultValue.toString();
       break;
-    case 'JSON':
+    case 'json':
       tmp_value = JSON.stringify(arg_defaultValue);
       break;
     default:
@@ -187,8 +345,8 @@ function setPref(arg_prefName, arg_defaultValue, arg_options)
   }
   catch(e) {
     console.info('error setting using setValue');
-    console.info('typeof arg_defaultValue = ',typeof arg_defaultValue);
-    console.info('arg_options.prefType = ',arg_options.prefType);
+    console.info('typeof arg_defaultValue = ', typeof arg_defaultValue);
+    console.info('arg_options.prefType = ', arg_options.prefType);
 
     setValue(arg_prefName, tmp_value.toString());
   }
@@ -224,6 +382,12 @@ var tl8strings = {
     "60 days (10% discount)" : "60 days (10% discount)",
     "90 days (18% discount)" : "90 days (18% discount)",
     "Amanhã" : "Amanhã",
+    "Amount spent on recycles:" : "Amount spent on recycles:",
+    "Amount spent on renewing:" : "Amount spent on renewing:",
+    "Amount spent on Autopay:" : "Amount spent on Autopay:",
+    "Amount spent on renewing / extending referrals:" : "Amount spent on renewing / extending referrals:",
+    "Amount transferred to your Rental Balance:" : "Amount transferred to your Rental Balance:",
+    "Amount transferred to your Golden Pack Balance:" : "Amount transferred to your Golden Pack Balance:",
     "Aujourd'hui" : "Aujourd'hui",
     "AutoPay value" : "AutoPay value",
     "Autopay" : "Autopay",
@@ -232,11 +396,17 @@ var tl8strings = {
     "Avg. Clicks: " : "Avg. Clicks: ",
     "Avg. Expense: " : "Avg. Expense: ",
     "Avg. Income: " : "Avg. Income: ",
+    "Ideal Avg. Renewals (#): " : "Ideal Avg. Renewals (#): ",
+    "Ideal Avg. Expense ($): " : "Ideal Avg. Expense ($): ",
+    "Ideal Sum ($): " : "Ideal Sum ($): ",
+    "Avg. Renewals (#): " : "Avg. Renewals (#): ",
     "Avg. Transfer: " : "Avg. Transfer: ",
     "Ayer" : "Ayer",
     "Blue" : "Blue",
     "Close" : "Close",
     "Credited clicks" : "Credited clicks",
+    "Credited Rented Referral Clicks:" : "Credited Rented Referral Clicks:",
+    "Credited Direct Referral Clicks:" : "Credited Direct Referral Clicks:",
     "Demain" : "Demain",
     "Details about your expenses for " : "Details about your expenses for ",
     "Details about your income sources for " : "Details about your income sources for ",
@@ -272,8 +442,10 @@ var tl8strings = {
     "Morgen" : "Morgen",
     "Net Income" : "Net Income",
     "Net" : "Net",
+    "Number of referrals automatically recycled for free:" : "Number of referrals automatically recycled for free:",
     "Ontem" : "Ontem",
     "Orange" : "Orange",
+    "Own clicks, Local Time:" : "Own clicks, Local Time:",
     "Personal Clicks" : "Personal Clicks",
     "Projected Gross Income" : "Projected Gross Income",
     "Projected Income" : "Projected Income",
@@ -301,6 +473,7 @@ var tl8strings = {
     "Total 'Real' Average" : "Total 'Real' Average",
     "Total Average" : "Total Average",
     "Total number of referrals" : "Total number of referrals",
+    "Total number of referrals due to expire on each date:" : "Total number of referrals due to expire on each date:",
     "Total" : "Total",
     "Totals between " : "Totals between ",
     "Transfer value" : "Transfer value",
@@ -323,14 +496,14 @@ var tl8_counter = 0;
 
 function tl8(arg_originalString)
 {
-//  console.info('start translation of ',arg_originalString);
-  if('undefined' === typeof tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })]) {
-    tl8strings[getPref('neobuxLanguageCode','EN', { prefType: 'string' })] = {};
+//  console.info('start translation of ', arg_originalString);
+  if('undefined' === typeof tl8strings[getPref('neobuxLanguageCode', 'EN', { prefType: 'string' })]) {
+    tl8strings[getPref('neobuxLanguageCode', 'EN', { prefType: 'string' })] = {};
   }
   if('undefined' === typeof tl8strings[getValue('neobuxLanguageCode')][arg_originalString])
   {
     console.group();
-//    console.info('Error!\n\nTranslation string for "',arg_originalString, '" not found');
+//    console.info('Error!\n\nTranslation string for "', arg_originalString, '" not found');
     tmp_translationStringsNeeded[arg_originalString] = arg_originalString;
     setPref('translationStringsNeeded', JSON.stringify(tmp_translationStringsNeeded), { prefType: 'string' });
 
@@ -339,8 +512,8 @@ function tl8(arg_originalString)
     tl8_counter++;
     if(0 > tl8_counter) {
       console.info('arg_originalString = ', arg_originalString);
-      console.info('tmp_translationStringsNeeded[arg_originalString] = ',tmp_translationStringsNeeded[arg_originalString]);
-      console.info('JSON.stringify(tmp_translationStringsNeeded) = ',JSON.stringify(tmp_translationStringsNeeded));
+      console.info('tmp_translationStringsNeeded[arg_originalString] = ', tmp_translationStringsNeeded[arg_originalString]);
+      console.info('JSON.stringify(tmp_translationStringsNeeded) = ', JSON.stringify(tmp_translationStringsNeeded));
       console.info(JSON.parse(getValue('translationStringsNeeded')));
     }
     console.groupEnd();
@@ -382,7 +555,7 @@ function debugLog()
     console.groupEnd();
   }
 }
-
+//debugger;
 function errorLog()
 {
   addToLoggerBox("ERROR!\n");
@@ -420,7 +593,7 @@ function docEvaluate(arg_xpath)
 }
 
 // Append zeros to the _input until the _desiredStringLength is reached
-function padZeros(arg_input,arg_desiredStringLength)
+function padZeros(arg_input, arg_desiredStringLength)
 {
   var currentLength = arg_input.toString().length;
   var output = arg_input;
@@ -512,7 +685,7 @@ function ModalDialog(arg_dialogId) {
 
     shadowBackdrop = document.createElement('div');
     shadowBackdrop.id = 'shadowBackdrop_'+arg_dialogId;
-    shadowBackdrop.setAttribute('class',"overlay");
+    shadowBackdrop.setAttribute('class', "overlay");
 
     shadowBackdrop.innerHTML = '';
 
@@ -588,16 +761,16 @@ loggerBox.create(
 
 //loggerBox.show();
 
-document.getElementById('loggerBox_Clear').addEventListener('click',function() {
+document.getElementById('loggerBox_Clear').addEventListener('click', function() {
   var tmpLoggerOutput = document.getElementById('loggerBox_Output');
   for(var i=0, tmp_loggerOutputLength = tmpLoggerOutput.children.length; i<tmp_loggerOutputLength; i++) {
     tmpLoggerOutput.removeChild(tmpLoggerOutput.children[0]);
   }
-},false);
+}, false);
 
-document.getElementById('loggerBox_Close').addEventListener('click',function() {
+document.getElementById('loggerBox_Close').addEventListener('click', function() {
   loggerBox.hide();
-},false);
+}, false);
 
 
 
@@ -675,12 +848,12 @@ if(("true" !== getValue('setupComplete') && true !== getValue('setupComplete')))
   initialSetupDialog.show();
 
 
-  document.getElementById('initialSetup_save').addEventListener('click',function() {
-    var tmp_directRefs = document.getElementById('initialSetup_directReferrals').value.match(/([0-9]+)/) || [,0];
-    var tmp_rentedRefs = document.getElementById('initialSetup_rentedReferrals').value.match(/([0-9]+)/) || [,0];
+  document.getElementById('initialSetup_save').addEventListener('click', function() {
+    var tmp_directRefs = document.getElementById('initialSetup_directReferrals').value.match(/([0-9]+)/) || [, 0];
+    var tmp_rentedRefs = document.getElementById('initialSetup_rentedReferrals').value.match(/([0-9]+)/) || [, 0];
     var tmp_autopay = document.getElementById('initialSetup_autopay').checked;
     var tmp_renewalLength = document.getElementById('initialSetup_normalRenewalLength').value;
-    var tmp_timeDifference = document.getElementById('initialSetup_timeDifference').value.match(/([+-]?[0-9]+)/) || [,0];
+    var tmp_timeDifference = document.getElementById('initialSetup_timeDifference').value.match(/([+-]?[0-9]+)/) || [, 0];
 
     if(0 <= tmp_directRefs[1] &&
             0 <= tmp_directRefs[1] &&
@@ -722,18 +895,17 @@ if(("true" !== getValue('setupComplete') && true !== getValue('setupComplete')))
           tl8('Time Difference: ')    + tmp_timeDifference[1]);
     }
 
-  },false);
+  }, false);
 
-  document.getElementById('initialSetup_close').addEventListener('click',function() {
+  document.getElementById('initialSetup_close').addEventListener('click', function() {
     initialSetupDialog.hide();
-  },false);
+  }, false);
 
-
-  //stop the remainder of the script
-  //return;
 }
 
-
+if(("true" !== getValue('setupComplete') && true !== getValue('setupComplete'))) {
+  throw "Oops, cannot go this far in the script's execution until the initial setup is complete";
+}
 
 var dateToday = new Date();
 var dateYesterday = new Date();
@@ -1024,15 +1196,15 @@ var defaultSettings =
     profit: true
   },
 
-  numberOfRefs: {"Rented":-1,"Direct":-1},
+  numberOfRefs: {"Rented":-1, "Direct":-1},
 
   timePeriods: {
-    smallGraph: [5,7,10],// Time Periods for 'smaller' 10day graphs
-    largeGraph: [5,10,15],// Time Periods for larger 15day graphs
-    recent: 7,// Time Period for 'recent' section of the Referral statistics sidebar
-    minigraphs: 5,// Time Period for footer row clicks average
-    averageCols: [10,7],// Time Period for the 'average1' & 'average2' column (previously defined as the A10&A7 column)
-    extensionsGraph: [7,15,30,60,90]
+    smallGraph: [5, 7, 10], // Time Periods for 'smaller' 10day graphs
+    largeGraph: [5, 10, 15], // Time Periods for larger 15day graphs
+    recent: 7, // Time Period for 'recent' section of the Referral statistics sidebar
+    minigraphs: 5, // Time Period for footer row clicks average
+    averageCols: [10, 7], // Time Period for the 'average1' & 'average2' column (previously defined as the A10&A7 column)
+    extensionsGraph: [7, 15, 30, 60, 90]
   }
 };
 
@@ -1227,11 +1399,11 @@ clickValues['Ultimate'] = {};
 
 // The golden-pack prices are all based on the golden values so merge those into these and
 //   tweak just the parts that are different
-Object_merge(clickValues['Emerald'],clickValues['Golden']);
-Object_merge(clickValues['Sapphire'],clickValues['Golden']);
-Object_merge(clickValues['Platinum'],clickValues['Golden']);
-Object_merge(clickValues['Diamond'],clickValues['Golden']);
-Object_merge(clickValues['Ultimate'],clickValues['Golden']);
+Object_merge(clickValues['Emerald'], clickValues['Golden']);
+Object_merge(clickValues['Sapphire'], clickValues['Golden']);
+Object_merge(clickValues['Platinum'], clickValues['Golden']);
+Object_merge(clickValues['Diamond'], clickValues['Golden']);
+Object_merge(clickValues['Ultimate'], clickValues['Golden']);
 
 
 
@@ -1273,7 +1445,7 @@ var currentPage = new function()
       }
     }
 
-    // debugLog('Found the following within the URL:',arg_urlVarTests);
+    // debugLog('Found the following within the URL:', arg_urlVarTests);
     return true;
   }
   function testAgainstUrlPath(arg_urlTests)
@@ -1286,7 +1458,7 @@ var currentPage = new function()
       }
     }
 
-  //  debugLog('Found the following within the URL:',arg_urlTests);
+  //  debugLog('Found the following within the URL:', arg_urlTests);
     return true;
   }
   function detectLanguageCode()
@@ -1308,13 +1480,15 @@ var currentPage = new function()
         {
 //          debugLog("document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class') = " + document.querySelectorAll('.band2')[0].children[0].children[0].getAttribute('class'));
 //          debugLog('tmp_langCode = '+tmp_langCode);
-          setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], { prefType: 'string' });
+//          setPref('neobuxLanguageCode', tmp_langCodes[tmp_langCode], { prefType: 'string' });
+            pr['neobuxLanguageCode'].setValue(tmp_langCodes[tmp_langCode]);
         }
       }
     }
 
     //Return the stored language code, defaulting to EN;
-    return getPref('neobuxLanguageCode', 'EN', { prefType: 'string' });
+//    return getPref('neobuxLanguageCode', 'EN', { prefType: 'string' });
+    return pr['neobuxLanguageCode'].getValue();
   };
 
   this.languageCode = detectLanguageCode();
@@ -1387,12 +1561,12 @@ var currentPage = new function()
              * &ss2 = asc / desc
              * &ss3 = direct / rented refs
              *
-             *  vars[1] = [2,2,1,'Sort by Referral ID#'];
-                vars[2] = [1,1,2,'Sort by the total time that the referral has been Owned']; // Does not match existing arrow directions
-                vars[3] = [5,2,1,'Sort by time until Next Payment is Due'];
-                vars[4] = [4,1,2,"Sort by time since the referral's Last Click"];
-                vars[5] = [3,2,1,'Sort by Total Number of Clicks'];
-                vars[6] = [7,2,1,'Sort by Average number of clicks'];
+             *  vars[1] = [2, 2, 1, 'Sort by Referral ID#'];
+                vars[2] = [1, 1, 2, 'Sort by the total time that the referral has been Owned']; // Does not match existing arrow directions
+                vars[3] = [5, 2, 1, 'Sort by time until Next Payment is Due'];
+                vars[4] = [4, 1, 2, "Sort by time since the referral's Last Click"];
+                vars[5] = [3, 2, 1, 'Sort by Total Number of Clicks'];
+                vars[6] = [7, 2, 1, 'Sort by Average number of clicks'];
              */
 
           if(testAgainstUrlParameters(['ss2=1']))
@@ -1430,7 +1604,7 @@ var currentPage = new function()
     }
 
 
-    if(testAgainstUrlPath(['m','v'])) { return 'viewAdvertisementsPage'; }
+    if(testAgainstUrlPath(['m', 'v'])) { return 'viewAdvertisementsPage'; }
     if(testAgainstUrlPath(['v']) && testAgainstUrlParameters(['a=l'])) { return 'viewingAdvertisement'; }
     if(testAgainstUrlParameters(['u=p'])) { return 'neobuxFrontPage'; }
 
@@ -1444,8 +1618,8 @@ var currentPage = new function()
 
 };
 
-debugLog('currentPage.pageCode = ',currentPage.pageCode);
-debugLog('JSON.stringify(currentPage.pageCode) = ',JSON.stringify(currentPage.pageCode));
+debugLog('currentPage.pageCode = ', currentPage.pageCode);
+debugLog('JSON.stringify(currentPage.pageCode) = ', JSON.stringify(currentPage.pageCode));
 
 function extractNumberOfRefs()
 {
@@ -1459,13 +1633,14 @@ function extractNumberOfRefs()
     } else {
       _pageRefType = 'Direct';
     }
-// debugLog('_pageRefType = ',_pageRefType);
+// debugLog('_pageRefType = ', _pageRefType);
     var tmp_numberOfRefs = null;
     var noOfRefsString = docEvaluate('//td[@class="f_r"]/descendant::span[@class="f_b"]');
 
     // Only expecting one result if the user has referrals
     if(1 == noOfRefsString.snapshotLength)
     {
+  modalCheckpoint('extractNumberOfRefs() if(1 == noOfRefsString.snapshotLength)');
       noOfRefsString = noOfRefsString.snapshotItem(0);
 
       if (noOfRefsString.textContent.match(/\d+/)) {
@@ -1476,13 +1651,14 @@ function extractNumberOfRefs()
     }
     else
     {
+  modalCheckpoint('extractNumberOfRefs() else');
       /**
        * Most likely reason for incorrect snapshotLength is an error in page load or zero refs.
        * Will now check for zero refs.
        */
       var zeroRefsXpath = {
-        'EN': '//span[contains(text(),"You don\'t have")]',
-        'PT': '//span[contains(text(),"Não tem referidos")]'
+        'EN': '//span[contains(text(), "You don\'t have")]',
+        'PT': '//span[contains(text(), "Não tem referidos")]'
       };
       var zeroRefsString = docEvaluate(zeroRefsXpath[currentPage.languageCode]);
 
@@ -1490,11 +1666,15 @@ function extractNumberOfRefs()
       tmp_numberOfRefs = (1 == zeroRefsString.snapshotLength) ? 0 : false;
     }
 
+  modalCheckpoint('extractNumberOfRefs() before if(0 <= tmp_numberOfRefs) {');
     // Now store the number of detected referrals if numberOfRefs is not false
-//    debugLog('tmp_numberOfRefs = ',tmp_numberOfRefs);
+//    debugLog('tmp_numberOfRefs = ', tmp_numberOfRefs);
     if(0 <= tmp_numberOfRefs) {
-      setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'text' });
+//      alert('numberOf' + _pageRefType + 'Referrals');
+//      alert('tmp_numberOfRefs = ' + tmp_numberOfRefs);
+      setPref('numberOf' + _pageRefType + 'Referrals', tmp_numberOfRefs, { prefType: 'string' });
     }
+  modalCheckpoint('extractNumberOfRefs() after if(0 <= tmp_numberOfRefs) {');
     return tmp_numberOfRefs;
   }
   else if(currentPage.pageCode.match(/accSummary/))
@@ -1503,7 +1683,7 @@ function extractNumberOfRefs()
     var tmp_elmAccountInfo = docEvaluate('//td[@class="t_preto_r"]/parent::tr/parent::tbody/descendant::td');
 
     function displayTextContent(arg_element) {
-      return arg_element.textContent.replace(/mk_tt\(.*\)/,'').replace(/[><+=;\s]+/g,'');
+      return arg_element.textContent.replace(/mk_tt\(.*\)/, '').replace(/[><+=;\s]+/g, '');
     }
 
     var tmp_currentTd;
@@ -1574,11 +1754,10 @@ function getMembershipType()
         /\w+/);
     setPref('membershipType', tmp_membershipType_name, { prefType: 'string' });
   }
-  tmp_membershipType_name = getPref('membershipType','unableToFetchNameFromStorage',{ prefType: 'string' });
+  tmp_membershipType_name = getPref('membershipType', 'unableToFetchNameFromStorage', { prefType: 'string' });
 
   return tmp_membershipType_name;
 }
-;
 
 function getClickValues(arg_memberType)
 {
@@ -1789,7 +1968,7 @@ var userAccount = new function ()
 
 var preferences = new function()
 {
-  this.preferredExtensionLength = getPref('renewalsLength',90, { prefType: 'string' });
+  this.preferredExtensionLength = getPref('renewalsLength', 90, { prefType: 'string' });
 }
 
 var currentUser = new function()
@@ -1845,7 +2024,7 @@ var currentUser = new function()
 
     // If the accountType info was on the page, the stored copy will have been updated
     // (else we'll just be grabbing the cached version)
-    tmp_accountType = getPref('accountType',{numerical:0, verbose:'unknown'},{ prefType: 'JSON' });
+    tmp_accountType = getPref('accountType', {numerical:0, verbose:'unknown'}, { prefType: 'JSON' });
 
     this.numerical = tmp_accountType.numerical;
     this.verbose = tmp_accountType.verbose;
@@ -1854,7 +2033,7 @@ var currentUser = new function()
     this.isUltimate = 6 === tmp_accountType.numerical;
     this.isStandard = 0 === tmp_accountType.numerical;
 
-    this.cost = getPref('accountTypeCost',Neobux.accountDefaults.goldenPackCost[this.verbose], { prefType: 'float' });
+    this.cost = getPref('accountTypeCost', Neobux.accountDefaults.goldenPackCost[this.verbose], { prefType: 'float' });
 
     return this;
   };
@@ -1864,34 +2043,34 @@ var currentUser = new function()
   this.directReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.direct;
 
   this.numberOfRefs = {
-    Rented: getPref('numberOfRentedReferrals',defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
-    Direct: getPref('numberOfDirectReferrals',defaultSettings.numberOfRefs['Direct'], { prefType: 'integer' })
+    Rented: getPref('numberOfRentedReferrals', defaultSettings.numberOfRefs['Rented'], { prefType: 'integer' }),
+    Direct: getPref('numberOfDirectReferrals', defaultSettings.numberOfRefs['Direct'], { prefType: 'integer' })
   };
 
-  this.recycleFee = getPref('recycleFee',Neobux.accountDefaults['recycleCost'][this.accountType.verbose], { prefType: 'float' });
+  this.recycleFee = getPref('recycleFee', Neobux.accountDefaults['recycleCost'][this.accountType.verbose], { prefType: 'float' });
 
-  this.autopayFee = getPerAutoPayFee(this.accountType,this.numberOfRefs.Rented);
+  this.autopayFee = getPerAutoPayFee(this.accountType, this.numberOfRefs.Rented);
 
 
-  this.renewalsLength = getPref('renewalsLength',90, { prefType: 'string' });
+  this.renewalsLength = getPref('renewalsLength', 90, { prefType: 'string' });
   this.renewalFees = getRenewalFees(this.accountType.verbose, this.numberOfRefs.Rented, this.renewalsLength);
 
   this.preferences = new function ()
   {
-//    this.columnPrefixes = getPref(tmp_prefs[i],defaultSettings['columnPrefixes'], { prefType: 'JSON' });
-//    this.numeriseDate = getPref(tmp_prefs[i],defaultSettings['numeriseDate'], { prefType: 'JSON' });
-//    this.shortFormatTimer = getPref(tmp_prefs[i],defaultSettings['shortFormatTimer'], { prefType: 'JSON' });
-//    this.showColumn = getPref(tmp_prefs[i],defaultSettings['showColumn'], { prefType: 'JSON' });
-//    this.shrinkColumnContents = getPref(tmp_prefs[i],defaultSettings['shrinkColumnContents'], { prefType: 'JSON' });
-//    this.timePeriods = getPref(tmp_prefs[i],defaultSettings['timePeriods'], { prefType: 'JSON' });
+//    this.columnPrefixes = getPref(tmp_prefs[i], defaultSettings['columnPrefixes'], { prefType: 'JSON' });
+//    this.numeriseDate = getPref(tmp_prefs[i], defaultSettings['numeriseDate'], { prefType: 'JSON' });
+//    this.shortFormatTimer = getPref(tmp_prefs[i], defaultSettings['shortFormatTimer'], { prefType: 'JSON' });
+//    this.showColumn = getPref(tmp_prefs[i], defaultSettings['showColumn'], { prefType: 'JSON' });
+//    this.shrinkColumnContents = getPref(tmp_prefs[i], defaultSettings['shrinkColumnContents'], { prefType: 'JSON' });
+//    this.timePeriods = getPref(tmp_prefs[i], defaultSettings['timePeriods'], { prefType: 'JSON' });
 
     //JSON vars
-    var tmp_prefs = ['columnPrefixes','numeriseDates','shortFormatTimer','showColumn','shrinkColumnContents','timePeriods'];
+    var tmp_prefs = ['columnPrefixes', 'numeriseDates', 'shortFormatTimer', 'showColumn', 'shrinkColumnContents', 'timePeriods'];
     for(var i=0; i<tmp_prefs.length; i++) {
-      this[tmp_prefs[i]] = getPref(tmp_prefs[i],defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
+      this[tmp_prefs[i]] = getPref(tmp_prefs[i], defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
     }
     //Boolean vars
-    this['flag_textify'] = getPref('flag_textify',true, { prefType: 'boolean' });
+    this['flag_textify'] = getPref('flag_textify', true, { prefType: 'boolean' });
   };
 };
 
@@ -1939,7 +2118,7 @@ function getGraphData()
   }
 
 
-  var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
+  var xpathResults_graphData = docEvaluate('//script[contains(text(), "eval")]');
   //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snapshotLength
 
   for(var i=0; i<xpathResults_graphData.snapshotLength; i++)
@@ -2111,7 +2290,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
               //   server time and local time values are identical
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2126,7 +2305,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
               // Second one is server time
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2141,7 +2320,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2155,7 +2334,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2169,7 +2348,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2183,7 +2362,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2197,7 +2376,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2211,7 +2390,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2225,7 +2404,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2239,7 +2418,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2267,7 +2446,7 @@ function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)
             if(1 === tmp_currentGraph[DATA].length) {
               for(var i=0; i<tmp_currentGraph[DATES].length; i++)
               {
-                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+                tmp_currentDate = tmp_currentGraph[DATES][i].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
 
                 if(!arg_accountCache.graphs[tmp_currentDate]) {
                   arg_accountCache.graphs[tmp_currentDate] = {};
@@ -2327,7 +2506,7 @@ var chartData = new function ()
       return o;
     }
 
-    var xpathResults_graphData = docEvaluate('//script[contains(text(),"eval")]');
+    var xpathResults_graphData = docEvaluate('//script[contains(text(), "eval")]');
     //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snapshotLength
 
     for(var i=0; i<xpathResults_graphData.snapshotLength; i++) {
@@ -2406,14 +2585,14 @@ var chartData = new function ()
         {
           //If the current date isn't represented as a date, assume that it is a localised version of today/yesterday/tomorrow etc and potentially needs translating
           if(!currentDataset[2][j].match(/[0-9]{4}\/[0-9]{2}\/[0-9]{2}/)) { tl8(currentDataset[2][j]); }
-          tmp_currentDate = currentDataset[2][j].replace(tl8_today,TODAY_STRING).replace(tl8_yesterday,YESTERDAY_STRING).replace(tl8_tomorrow,TOMORROW_STRING);
+          tmp_currentDate = currentDataset[2][j].replace(tl8_today, TODAY_STRING).replace(tl8_yesterday, YESTERDAY_STRING).replace(tl8_tomorrow, TOMORROW_STRING);
           tmp_graphDataObject[tmp_currentGraphFriendlyName][tmp_currentDatasetName][tmp_currentDate] = currentDataset[5][i].data[j];
         }
       }
     }
 
-    setPref('graphData',Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
-    return getPref('graphData', Object_merge(this.getAccountCache(), tmp_graphDataObject),{ prefType: 'JSON' });
+    setPref('graphData', Object_merge(this.getAccountCache(), tmp_graphDataObject), { prefType: 'JSON' });
+    return getPref('graphData', Object_merge(this.getAccountCache(), tmp_graphDataObject), { prefType: 'JSON' });
   };
 
 
@@ -2438,7 +2617,7 @@ function insertLocalServerTime()
     var tmp_Minutes = arg_time.getMinutes();
     var tmp_Seconds = arg_time.getSeconds();
 
-    return padZeros(tmp_Hours,2) + ':' + padZeros(tmp_Minutes,2); //+ ":" + padZeros(tmp_Seconds,2);
+    return padZeros(tmp_Hours, 2) + ':' + padZeros(tmp_Minutes, 2); //+ ":" + padZeros(tmp_Seconds, 2);
   }
 
   var localMidnight;
@@ -2450,7 +2629,7 @@ function insertLocalServerTime()
 
   var locationToInsertTimeString;
 
-  function setTime(arg_dateTime,arg_time)
+  function setTime(arg_dateTime, arg_time)
   {
     arg_dateTime.setHours(arg_time[0]);
     arg_dateTime.setMinutes(arg_time[1]);
@@ -2468,7 +2647,7 @@ function insertLocalServerTime()
     currentServerTime = new Date(currentLocalTime.getTime() + offsetMS);
 
 
-    localMidnight = setTime(new Date(dateToday),[0,0,0]);
+    localMidnight = setTime(new Date(dateToday), [0, 0, 0]);
     setPref('localMidnight', localMidnight.toString(), { prefType: 'string' });
 
     /* If server time is five hours behind (-5), Neobux's midnight will be five hours AFTER local midnight
@@ -2479,7 +2658,7 @@ function insertLocalServerTime()
     setPref('neoMidnight', neoMidnight.toString(), { prefType: 'string' });
 
 
-    AdResetTime_hours = getPref('AdResetTime_hours',0, { prefType: 'string' }) * 1000 * 60 * 60;
+    AdResetTime_hours = getPref('AdResetTime_hours', 0, { prefType: 'string' }) * 1000 * 60 * 60;
     adResetTime = new Date(new Date(localMidnight).getTime() + AdResetTime_hours);
     adResetTime = new Date(adResetTime.setDate(localMidnight.getDate()));
     setPref('adResetTime', adResetTime.toString(), { prefType: 'string' });
@@ -2579,7 +2758,7 @@ function insertLocalServerTime()
     return getPref('serverTimeOffset', 0, { prefType: 'float' });
   };
 
-  this.insertClock = function(arg_timeOffset,arg_adResetOffset)
+  this.insertClock = function(arg_timeOffset, arg_adResetOffset)
   {
     locationToInsertTimeString = document.querySelectorAll('img#logo')[0].parentNode.parentNode;
     if(locationToInsertTimeString)
@@ -2590,7 +2769,7 @@ function insertLocalServerTime()
       if(document.getElementById('containerDiv_timer')) {
         //document.getElementById('containerDiv_timer').innerHTML = containerDiv_timer.innerHTML;
       } else {
-        locationToInsertTimeString.innerHTML = '<div id="localServerTimeText" style="font-family:mono,monospace; font-size:x-small; margin-bottom:-15px; padding-top:0.7em;">&nbsp; Local time: ' + localTime + '  --  Server time: ' + serverTime + '</div>' + locationToInsertTimeString.innerHTML;
+        locationToInsertTimeString.innerHTML = '<div id="localServerTimeText" style="font-family:mono, monospace; font-size:x-small; margin-bottom:-15px; padding-top:0.7em;">&nbsp; Local time: ' + localTime + '  --  Server time: ' + serverTime + '</div>' + locationToInsertTimeString.innerHTML;
         locationToInsertTimeString.setAttribute('valign', '');
       }
 
@@ -2736,7 +2915,7 @@ function insertLocalServerTime()
     location.href = "javascript:(" + function () {
 
       // Append zeros to the _input until the _desiredStringLength is reached
-      function padZeros(arg_input,arg_desiredStringLength)
+      function padZeros(arg_input, arg_desiredStringLength)
       {
         var currentLength = arg_input.toString().length;
         var output = arg_input;
@@ -2761,7 +2940,7 @@ function insertLocalServerTime()
         var chart = new Highcharts.Chart({
           chart: {
             renderTo: 'containerDiv_timer',
-            margin: [20,20,80,20],
+            margin: [20, 20, 80, 20],
             backgroundColor: '#eeeeee'
           },
           title: {
@@ -2820,9 +2999,9 @@ function insertLocalServerTime()
       //todo: look into passing parameters into the ()
     } + ")()";
 
-    document.getElementById('localServerTimeText').addEventListener('click',function localServerTime_onClick() {
+    document.getElementById('localServerTimeText').addEventListener('click', function localServerTime_onClick() {
       document.getElementById('containerDiv_timer').style.display = ('none' == document.getElementById('containerDiv_timer').style.display) ? '' : 'none' ;
-    },false);
+    }, false);
 
   };
 
@@ -2911,14 +3090,13 @@ function ntl(arg_langString) {
 //
 function REFERRAL(arg_refId, arg_referralProperties)
 {
-//      console.info('arg_refId = ',arg_refId);
+//      console.info('arg_refId = ', arg_refId);
   var tmp_currentDateString = dates_array[0];
-  
+
   function createBlankReferral()
   {
     var tmp_blankReferral = {
       referralType: "R",
-      referralSince: "2001/01/01 00:01",
       lastSeen: 0,
       goldenGraphClickData: { },
       ultimateClickData: { },
@@ -2940,14 +3118,16 @@ function REFERRAL(arg_refId, arg_referralProperties)
     };
     return tmp_blankReferral;
   }
-  
+
   var tmp_CurrentReferral = new createBlankReferral();
   tmp_CurrentReferral.referralListingsData = tmp_CurrentReferral.referralListingsData || {};
   tmp_CurrentReferral.referralListingsData[tmp_currentDateString] = tmp_CurrentReferral.referralListingsData[tmp_currentDateString] || {};
 
+  tmp_CurrentReferral.lastSeen = dateToday;
+
   var tmp_crToday = tmp_CurrentReferral.referralListingsData[tmp_currentDateString];
 
-  //arg_referralSince, arg_nextPayment, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
+  //arg_referralSince, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
   tmp_CurrentReferral.refId = arg_refId;
   tmp_crToday.referralSince_raw =       arg_referralProperties['referralSince'] || null;
   tmp_crToday.lastClick_raw =           arg_referralProperties['lastClick']     || null;
@@ -2956,6 +3136,9 @@ function REFERRAL(arg_refId, arg_referralProperties)
 
   //Ultimate mini click graph values
   tmp_crToday.ultimateClickValues_raw = ('undefined' !== typeof arg_referralProperties['ultimateClickValues'])  ? arg_referralProperties['ultimateClickValues'] : null;
+
+//  console.info("arg_referralProperties = ", arg_referralProperties);
+//  console.info("arg_referralProperties['referralType'] = ", arg_referralProperties['referralType']);
 
   if('R' === arg_referralProperties['referralType']) {
     //Rented referral properties
@@ -2979,6 +3162,8 @@ function REFERRAL(arg_refId, arg_referralProperties)
 
   function flagIdToColour(arg_flagId)
   {
+//    console.info('arg_flagId = ', arg_flagId);
+    if(arg_flagId === null) { return null; }
     var flagLookup = {
       0: 'White',
       1: 'Red',
@@ -2988,40 +3173,45 @@ function REFERRAL(arg_refId, arg_referralProperties)
       5: 'Blue'
     };
 
+//    console.info('flagLookup[arg_flagId] = ', flagLookup[arg_flagId]);
+
     if("undefined" === typeof tl8) {
-      return "Unkwown_no_tl8";
+      return "Unknown_no_tl8";
     }
     return tl8(flagLookup[arg_flagId] || "Unknown");
   }
 
   function referralSinceToDateObject(arg_referralSinceString)
   {
-//        console.info('arg_referralSinceString = ',arg_referralSinceString);
+    if(arg_referralSinceString === null) { return null; }
+//        console.info('arg_referralSinceString = ', arg_referralSinceString);
     //'2011/04/25 11:20'
-    var tmp_breakdown = arg_referralSinceString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
+    var tmp_breakdown = arg_referralSinceString.replace(tl8_today, dates_array[0]).replace(tl8_yesterday, dates_array[1]).match(/([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+):([0-9]+)/);
     //new Date(year, month, day, hours, minutes, seconds, milliseconds)
     // NB:: month is zero-indexed thus needs to be reduced by 1
-    return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],tmp_breakdown[4],tmp_breakdown[5],0,0);
+    return new Date(tmp_breakdown[1], tmp_breakdown[2]-1, tmp_breakdown[3], tmp_breakdown[4], tmp_breakdown[5], 0, 0);
   }
 
   function lastClickToDateObject(arg_lastClickString)
   {
-//        console.info('arg_lastClickString = ',arg_lastClickString);
+    if(arg_lastClickString === null) { return null; }
+//        console.info('arg_lastClickString = ', arg_lastClickString);
     //'Today' or 'Yesterday' or '2011/04/25'
     var tmp_lastClickBreakdown_regex = /([0-9]+)\/([0-9]+)\/([0-9]+)/
-    var tmp_breakdown = arg_lastClickString.replace(tl8_today,dates_array[0]).replace(tl8_yesterday,dates_array[1]).match(tmp_lastClickBreakdown_regex);
-//        console.info('lastClickToDateObject - arg_lastClickString: ',arg_lastClickString);
-//        console.info('lastClickToDateObject - tmp_breakdown: ',tmp_breakdown);
+    var tmp_breakdown = arg_lastClickString.replace(tl8_today, dates_array[0]).replace(tl8_yesterday, dates_array[1]).match(tmp_lastClickBreakdown_regex);
+//        console.info('lastClickToDateObject - arg_lastClickString: ', arg_lastClickString);
+//        console.info('lastClickToDateObject - tmp_breakdown: ', tmp_breakdown);
 
     //new Date(year, month, day, hours, minutes, seconds, milliseconds)
     // NB:: month is zero-indexed thus needs to be reduced by 1
-    return new Date(tmp_breakdown[1],tmp_breakdown[2]-1,tmp_breakdown[3],0,0,0,0);
+    return new Date(tmp_breakdown[1], tmp_breakdown[2]-1, tmp_breakdown[3], 0, 0, 0, 0);
   }
 
 
   function nextPaymentToDateObject(arg_nextPaymentString)
   {
-//        console.info('arg_nextPaymentString = ',arg_nextPaymentString);
+    if(arg_nextPaymentString === null) { return null; }
+//        console.info('arg_nextPaymentString = ', arg_nextPaymentString);
     //'171 days and 20:47'
     //  NB: .+ is greedy and tries to include any digits in the hours difference, hence whitespace either side
     var tmp_breakdown = arg_nextPaymentString.match(/([0-9]+) .+ ([+-]?[0-9]+):([0-9]+)/);
@@ -3039,6 +3229,7 @@ function REFERRAL(arg_refId, arg_referralProperties)
   }
 
   function calculateRealAverage(arg_referralSince, arg_totalClicks) {
+    if(arg_referralSince === null) { return null; }
     var tmp_timeOwned_days = (dateToday - arg_referralSince) / (1000*60*60*24); //Number of days owned
     return (arg_totalClicks / tmp_timeOwned_days).toFixed(5) * 1;
   }
@@ -3046,6 +3237,7 @@ function REFERRAL(arg_refId, arg_referralProperties)
 
   function dateToDHMObject(arg_date)
   {
+    if(arg_date === null) { return null; }
     var oneSecond = 1000;
     var oneMinute = oneSecond * 60;
     var oneHour = oneMinute * 60;
@@ -3069,7 +3261,7 @@ function REFERRAL(arg_refId, arg_referralProperties)
     var diff_secs = Math.floor(remaining_time / oneSecond);
     remaining_time -= diff_secs * oneSecond;
 
-//    debugLog('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_secs: ', diff_secs, '\nremaining_time: ', remaining_time);
 
      return {
        days: diff_days,
@@ -3080,6 +3272,7 @@ function REFERRAL(arg_refId, arg_referralProperties)
   }
   function dateToDHM(arg_prefix, arg_date, arg_suffix)
   {
+    if(arg_date === null) { return null; }
     var tmp_dhmObject = dateToDHMObject(this.referralSince);
 
     return arg_prefix+
@@ -3090,6 +3283,7 @@ function REFERRAL(arg_refId, arg_referralProperties)
   }
   function dateToDec(arg_prefix, arg_date, arg_suffix)
   {
+    if(arg_date === null) { return null; }
     var tmp_dhmObject = dateToDHMObject(arg_date);
     var tmp_age = tmp_dhmObject.days;
     tmp_age += tmp_dhmObject.hours / 24;
@@ -3100,12 +3294,14 @@ function REFERRAL(arg_refId, arg_referralProperties)
       arg_suffix;
   }
   function dateToD(arg_date) {
+    if(arg_date === null) { return null; }
     return dateToDHMObject(this.referralSince).days;
   }
 
 
   function ultimateClickValuesRaw_toStats(arg_ultimateClickValues_raw)
   {
+    if(arg_ultimateClickValues_raw === null) { return null; }
     var minigraph = {
       'rawClickData': arg_ultimateClickValues_raw,
       'clicks': new Array()
@@ -3157,23 +3353,24 @@ function REFERRAL(arg_refId, arg_referralProperties)
 
     return minigraph;
   }
-
-  tmp_crToday.flagColour      = flagIdToColour(tmp_crToday.flagColour_Id);
-//  console.info('tmp_crToday.referralSince_raw = ',tmp_crToday.referralSince_raw);
+  if('R' === arg_referralProperties['referralType']) {
+    tmp_crToday.nextPayment     = nextPaymentToDateObject(tmp_crToday.nextPayment_raw).toString();
+    tmp_crToday.flagColour      = flagIdToColour(tmp_crToday.flagColour_Id);
+  }
   tmp_crToday.referralSince   = referralSinceToDateObject(tmp_crToday.referralSince_raw).toString();
   tmp_crToday.lastClick       = lastClickToDateObject(tmp_crToday.lastClick_raw).toString();
-  tmp_crToday.nextPayment     = nextPaymentToDateObject(tmp_crToday.nextPayment_raw).toString();
   tmp_crToday.realAverage     = calculateRealAverage(tmp_crToday.referralSince, tmp_crToday.totalClicks);
   tmp_crToday.age_DHMObject   = dateToDHMObject(tmp_crToday.referralSince);
-  tmp_crToday.age_dec         = dateToDec('',tmp_crToday.referralSince,'') * 1;
+  tmp_crToday.age_dec         = dateToDec('', tmp_crToday.referralSince, '') * 1;
 
+  if('ultimate' === currentUser.accountType.verbose.toLowerCase()) {
+    tmp_crToday.ultimateClickStats =  ultimateClickValuesRaw_toStats(tmp_CurrentReferral.ultimateClickValues_raw);
 
-  tmp_crToday.ultimateClickStats =  ultimateClickValuesRaw_toStats(tmp_CurrentReferral.ultimateClickValues_raw);
-
-  for(var i=0; i < tmp_crToday.ultimateClickStats.clicks.length; i++){
-    tmp_CurrentReferral.ultimateClickData = tmp_CurrentReferral.ultimateClickData || {};
-    tmp_CurrentReferral.ultimateClickData[dates_array[i]] = tmp_CurrentReferral.ultimateClickData[dates_array[i]] || {};
-    tmp_CurrentReferral.ultimateClickData[dates_array[i]].creditedClicks = tmp_crToday.ultimateClickStats.clicks[i];
+    for(var i=0; i < tmp_crToday.ultimateClickStats.clicks.length; i++){
+      tmp_CurrentReferral.ultimateClickData = tmp_CurrentReferral.ultimateClickData || {};
+      tmp_CurrentReferral.ultimateClickData[dates_array[i]] = tmp_CurrentReferral.ultimateClickData[dates_array[i]] || {};
+      tmp_CurrentReferral.ultimateClickData[dates_array[i]].creditedClicks = tmp_crToday.ultimateClickStats.clicks[i];
+    }
   }
 
   Object_merge(tmp_CurrentReferral.referralListingsData[tmp_currentDateString], tmp_crToday)
@@ -3271,7 +3468,7 @@ var referralListings = new function()
     // NB: How often a new dateTime is created vs. an existing one is updated will need a setting
     // Meanwhile, will create a new one on every page load / running of the script
 
-//    debugLog('restructureData:\n\n','arg_referralListingsData',arg_referralListingsData);
+//    debugLog('restructureData:\n\n', 'arg_referralListingsData', arg_referralListingsData);
 
     var tmp_referrals = {};
     var tmp_currentDateTime = new Date();
@@ -3288,20 +3485,32 @@ var referralListings = new function()
       pr_ID = ('0' == pr[1]) ? pr[19] : pr[1];
 
       var tmp_objectToPass = {
-            referralType: (currentPage.pageCode.match(/referralListings_Rented/)) ? "R" : "D",
-            flagColour_Id: cr[15],
-            locked: cr[17],
-            recycleable: cr[16],
-            nextPayment: ('9' == cr[3]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].nextPayment_raw : cr[3],
-            cameFrom: cr[2],
-            isSellable: cr[18],
-            referralSince: ('9' == cr[2]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].referralSince_raw : cr[2],
-            lastClick: ('9' == cr[4]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].lastClick_raw : ('N' == cr[4]) ? (('9' == cr[2]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].referralSince_raw : cr[2]) : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4],
-            totalClicks: cr[5],
-            clickAverage: cr[6],
-            ultimateClickValues: ('0' == cr[14]) ? '0000000000' : cr[14]
-          };
-      
+        lastClick: ('9' == cr[4]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].lastClick_raw : ('N' == cr[4]) ? (('9' == cr[2]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].referralSince_raw : cr[2]) : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4],
+        totalClicks: cr[5],
+        clickAverage: cr[6]
+      };
+      if('ultimate' === currentUser.accountType.verbose.toLowerCase()){
+        tmp_objectToPass.ultimateClickValues = ('0' == cr[14]) ? '0000000000' : cr[14];
+      }
+
+      if(currentPage.pageCode.match(/referralListings_Rented/))
+      {
+        tmp_objectToPass.referralType = "R";
+        tmp_objectToPass.recycleable = cr[16];
+        tmp_objectToPass.referralSince = ('9' == cr[2]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].referralSince_raw : cr[2];
+        tmp_objectToPass.nextPayment = ('9' == cr[3]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].nextPayment_raw : cr[3];
+        tmp_objectToPass.flagColour_Id = cr[15];
+      } else if(currentPage.pageCode.match(/referralListings_Direct/)) {
+        tmp_objectToPass.referralType = "D";
+        tmp_objectToPass.referralSince = ('9' == cr[3]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].referralSince_raw : cr[3];
+        tmp_objectToPass.cameFrom = cr[2];
+        tmp_objectToPass.isSellable = cr[18];
+        tmp_objectToPass.locked = cr[17];
+      } else {
+        //Unknown referral type so stop else risk corrupting stored stuff..
+        break;
+      }
+
 //      console.info('cr = ', JSON.stringify(cr));
 //      console.info('tmp_objectToPass = ', JSON.stringify(tmp_objectToPass));
 //      console.info('tmp_referrals[pr_ID]', JSON.stringify(tmp_referrals[pr_ID]));
@@ -3313,14 +3522,14 @@ var referralListings = new function()
         );
     }
 
-    debugLog('restructureData:\n\n','tmp_referrals',tmp_referrals);
+    debugLog('restructureData:\n\n', 'tmp_referrals', tmp_referrals);
     return tmp_referrals;
   }
 
 
   this.init = function ()
   {
-    var storedReferralData = getPref('referrals',{},{ prefType: 'JSON' });
+    var storedReferralData = getPref('referrals', {}, { prefType: 'JSON' });
     var referralData;
 
     var tmp_referralDataFromListingsPage = { mtx:'' };
@@ -3334,7 +3543,7 @@ var referralListings = new function()
       // Merge the newly fetched data with the stored data
       referralData = Object_merge(storedReferralData, tmp_referralsOnCurrentPage);
 
-      setPref('referrals',referralData,{ prefType: 'JSON' });
+      setPref('referrals', referralData, { prefType: 'JSON' });
     }
   }
 };
@@ -3487,7 +3696,7 @@ var logo =
   addClickEvent: function(arg_clickFunction)
   {
     if(document.getElementById('spanghurtLogo')) {
-      document.getElementById('spanghurtLogo').addEventListener('click',function() { arg_clickFunction(); },false);
+      document.getElementById('spanghurtLogo').addEventListener('click', function() { arg_clickFunction(); }, false);
     }
   },
 
@@ -3681,7 +3890,15 @@ var chartDataBars = new function()
     var tmp_dataBarDataToOutput;
     var tmp_graphLength;
 
-    function dataToOutputToDataBar(arg_dataSet,arg_dataBarIntervals,arg_dataBarTitle,arg_fieldToShow,arg_daysPrefix,arg_daysSuffix,arg_numberOfFixedDecimalPoints)
+    function dataToOutputToDataBar(
+        arg_dataSet, 
+        arg_dataBarIntervals, 
+        arg_dataBarTitle, 
+        arg_fieldToShow, 
+        arg_daysPrefix, 
+        arg_daysSuffix, 
+        arg_numberOfFixedDecimalPoints
+      )
     {
       tmp_dataBarDataToOutput = [];
 
@@ -3698,12 +3915,12 @@ var chartDataBars = new function()
         return arg_dataBarTitle+ tmp_dataBarDataToOutput.join(' ');
       }
       catch(e) {
-        errorLog('ERROR! \n',e);
+        errorLog('ERROR! \n', e);
         return 'error in calculations';
       }
     }
 
-    function createDataBarRow(arg_graphId,argBarCode,arg_dataBarColumns,arg_customDataBarCss)
+    function createDataBarRow(arg_graphId, argBarCode, arg_dataBarColumns, arg_customDataBarCss)
     {
 
       var elmt_bar = document.createElement("tr");
@@ -3729,7 +3946,7 @@ var chartDataBars = new function()
 
       tmp_graphLength = graphLengthLookup[this.graphsOnCurrentPage[i]];
       tmp_dataSet = this.getDataBarData(this.graphsOnCurrentPage[i]);
-      var tmp_dateAdjuster = friendlyNameLookup[this.graphsOnCurrentPage[i]].match(/extensions_([0-9]+)To([0-9]+)/) || [-1,0];
+      var tmp_dateAdjuster = friendlyNameLookup[this.graphsOnCurrentPage[i]].match(/extensions_([0-9]+)To([0-9]+)/) || [-1, 0];
 
       var tmp_counter = 0;
       var graphBarsContainerId = this.graphsOnCurrentPage[i]+'_containers';
@@ -3756,21 +3973,21 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') ',0)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'sum', '(', ') ', 0)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                [tl8('Avg. Clicks: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') ',3)],
+                [tl8('Avg. Clicks: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avg', '(', ') ', 3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                [tl8('Avg. Income: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avgIncome','(',') $',3)],
+                [tl8('Avg. Income: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avgIncome', '(', ') $', 3)],
                 ''
               )
           );
@@ -3779,42 +3996,42 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'sum', '(', ') $', 3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avg', '(', ') $', 3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                [tl8('Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','numberOfRenewals_actualAvg','(',') ',2)],
+                [tl8('Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'numberOfRenewals_actualAvg', '(', ') ', 2)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                [tl8('Ideal Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealNumberOfRenewals_avg','(',') ',2)],
+                [tl8('Ideal Avg. Renewals (#): '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'idealNumberOfRenewals_avg', '(', ') ', 2)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                [tl8('Ideal Avg. Expense ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost_avg','(',') $',3)],
+                [tl8('Ideal Avg. Expense ($): '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'idealRenewalsCost_avg', '(', ') $', 3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avgIncome',
-                [tl8('Ideal Sum ($): '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','idealRenewalsCost_sum','(',') $',3)],
+                [tl8('Ideal Sum ($): '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'idealRenewalsCost_sum', '(', ') $', 3)],
                 ''
               )
           );
@@ -3831,14 +4048,14 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'sum', '(', ') $', 3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avg', '(', ') $', 3)],
                 ''
               )
           );
@@ -3851,7 +4068,7 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                [tl8('Avg. #Recycles: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avgRecycles','(',') ',3)],
+                [tl8('Avg. #Recycles: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avgRecycles', '(', ') ', 3)],
                 ''
               )
           );
@@ -3860,14 +4077,14 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') $',3)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'sum', '(', ') $', 3)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                [tl8('Avg. Transfer: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') $',3)],
+                [tl8('Avg. Transfer: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avg', '(', ') $', 3)],
                 ''
               )
           );
@@ -3876,14 +4093,14 @@ var chartDataBars = new function()
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'sum',
-                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','sum','(',') ',1)],
+                [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'sum', '(', ') ', 1)],
                 ''
               )
           );
           graphBarTable.appendChild(
               createDataBarRow(this.graphsOnCurrentPage[i],
                 'avg',
-                [tl8('Average Free Recycles: '), dataToOutputToDataBar(tmp_dataSet,dataBarIntervals[tmp_graphLength],'','avg','(',') ',1)],
+                [tl8('Average Free Recycles: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avg', '(', ') ', 1)],
                 ''
               )
           );
@@ -3936,7 +4153,7 @@ var exportTabs = new function()
 
         "#alertBox h1 {"+
         "margin: 0;"+
-        "font: bold 0.9em verdana,arial;"+
+        "font: bold 0.9em verdana, arial;"+
         "background-color: #78919B;"+
         "color: #FFF;"+
         "border-bottom: 1px solid #000;"+
@@ -3944,14 +4161,14 @@ var exportTabs = new function()
         " }"+
 
         "#alertBox p {"+
-        "font-family: verdana,arial;"+
+        "font-family: verdana, arial;"+
         "padding: 10px;"+
         "margin: 10px;"+
         "height: auto;"+
         " }"+
 
         "#alertBox textarea {"+
-        "font-family: monospace,courier new,verdana,arial;"+
+        "font-family: monospace, courier new, verdana, arial;"+
         "font-size: x-small;"+
         "margin: 15px;"+
         "margin-top: 0px;"+
@@ -3966,7 +4183,7 @@ var exportTabs = new function()
         "padding: 3px;"+
         "border: 2px solid #000;"+
         "width: 70px;"+
-        "font: 0.7em verdana,arial;"+
+        "font: 0.7em verdana, arial;"+
         "text-transform: uppercase;"+
         "text-align: center;"+
         "color: #FFF;"+
@@ -4027,7 +4244,7 @@ var exportTabs = new function()
 
           exportTab.show();
 
-          //      createExportDialog(messageHeader,textareaContents,'Exporting to '+arg_exportTabText+'..','Close',textareaContentsReverse,event);
+          //      createExportDialog(messageHeader, textareaContents, $1'Exporting to '+arg_exportTabText+'..', 'Close', textareaContentsReverse, event);
         },
         false);
 
@@ -4094,8 +4311,8 @@ var exportTabs = new function()
     }
     catch(e) {
       errorLog("ERROR!\n#" +
-          'tmp_currentGraphId = ',tmp_currentGraphId,"\n" +
-          "Error details: \n",e);
+          'tmp_currentGraphId = ', tmp_currentGraphId, "\n" +
+          "Error details: \n", e);
       return 'Error retrieving data';
     }
   }
@@ -4116,13 +4333,13 @@ var exportTabs = new function()
           //// Add Export Links
           // Create and insert wrapper for export 'tabs'
           var exportTabsWrapper = document.createElement('div');
-            exportTabsWrapper.setAttribute('style','bottom:-1px; margin-left:17px; margin-top:4px; position:relative; text-align:left;');
+            exportTabsWrapper.setAttribute('style', 'bottom:-1px; margin-left:17px; margin-top:4px; position:relative; text-align:left;');
             exportTabsWrapper.id = 'exportTabsWrapper_'+tmp_currentGraphId;
             exportTabsWrapper.innerHTML = '&nbsp;';
 
-          referenceNode.parentNode.insertBefore(exportTabsWrapper,referenceNode);
+          referenceNode.parentNode.insertBefore(exportTabsWrapper, referenceNode);
 
-          var exportTabTypes = ['CSV','TSV','Text'];
+          var exportTabTypes = ['CSV', 'TSV', 'Text'];
           for(var exportTabTypes_index = 0; exportTabTypes_index < exportTabTypes.length; exportTabTypes_index++)
           {
             var exportTabElement = EXPORT_TAB(
@@ -4144,7 +4361,7 @@ var exportTabs = new function()
           }
         }
         catch(e) {
-          errorLog("ERROR!\nCannot add export tabs.\n\nFull error message:\n\n",e)
+          errorLog("ERROR!\nCannot add export tabs.\n\nFull error message:\n\n", e)
         }
       }
     }
@@ -4218,22 +4435,22 @@ function mk_ch(x, y, o, w0, w, O, L, m, mn, p)
       plotBands: [{
         from: 0,
         to: pn[0],
-        color: 'rgba(170,170,170,.3)'
+        color: 'rgba(170,170,170, 0.3)'
       },
         {
           from: pn[0],
           to: pn[1],
-          color: 'rgba(255,101,79,.3)'
+          color: 'rgba(255,101,79, 0.3)'
         },
         {
           from: pn[1],
           to: pn[2],
-          color: 'rgba(246,189,15,.3)'
+          color: 'rgba(246,189,15, 0.3)'
         },
         {
           from: pn[2],
           to: pn[3],
-          color: 'rgba(139,186,0,.3)'
+          color: 'rgba(139,186,0, 0.3)'
         }]
     },
     yAxis: {
@@ -4254,17 +4471,17 @@ function mk_ch(x, y, o, w0, w, O, L, m, mn, p)
       plotBands: [{
         from: 0,
         to: n[0],
-        color: 'rgba(255,101,79,.3)'
+        color: 'rgba(255,101,79, 0.3)'
       },
         {
           from: n[0],
           to: n[1],
-          color: 'rgba(246,189,15,.3)'
+          color: 'rgba(246,189,15, 0.3)'
         },
         {
           from: n[1],
           to: n[2],
-          color: 'rgba(139,186,0,.3)'
+          color: 'rgba(139,186,0, 0.3)'
         }]
     },
     tooltip: {
@@ -4355,7 +4572,7 @@ function mk_ch2(_containerID, _graphTitle, _x_axisCategories, _tooltipPrefix, _t
       style: {
         margin: "10px 0 0 10px",
         textAlign: "center",
-        font: "normal 12px Verdana,sans-serif"
+        font: "normal 12px Verdana, sans-serif"
       }
     },
     xAxis: {
@@ -4371,22 +4588,22 @@ function mk_ch2(_containerID, _graphTitle, _x_axisCategories, _tooltipPrefix, _t
       plotBands: [{
         from: 0,
         to: pn[0],
-        color: "rgba(170,170,170,.25)"
+        color: "rgba(170,170,170, 0.25)"
       },
         {
           from: pn[0],
           to: pn[1],
-          color: "rgba(255,101,79,.25)"
+          color: "rgba(255,101,79, 0.25)"
         },
         {
           from: pn[1],
           to: pn[2],
-          color: "rgba(246,189,15,.25)"
+          color: "rgba(246,189,15, 0.25)"
         },
         {
           from: pn[2],
           to: pn[3],
-          color: "rgba(139,186,0,.25)"
+          color: "rgba(139,186,0, 0.25)"
         }]
     },
     yAxis: {
@@ -4407,17 +4624,17 @@ function mk_ch2(_containerID, _graphTitle, _x_axisCategories, _tooltipPrefix, _t
       plotBands: [{
         from: 0,
         to: n[0],
-        color: "rgba(255,101,79,.25)"
+        color: "rgba(255,101,79, 0.25)"
       },
         {
           from: n[0],
           to: n[1],
-          color: "rgba(246,189,15,.25)"
+          color: "rgba(246,189,15, 0.25)"
         },
         {
           from: n[1],
           to: n[2],
-          color: "rgba(139,186,0,.25)"
+          color: "rgba(139,186,0, 0.25)"
         }]
     },
     tooltip: {
@@ -4434,7 +4651,7 @@ function mk_ch2(_containerID, _graphTitle, _x_axisCategories, _tooltipPrefix, _t
         bottom: "5px",
         right: "5px",
         top: "auto",
-        font: "normal 12px Verdana,sans-serif"
+        font: "normal 12px Verdana, sans-serif"
       }
     },
     plotOptions: {
@@ -4577,8 +4794,8 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   elmnt_totalsContainer.id = 'clickTotalsContainer';
   elmnt_totalsContainer.setAttribute('style', 'position: fixed; bottom: 2em; right: 2em; width: 150px; min-height: 10em; background-color: white; border: 1px solid black; font-size:x-small !important; padding: 1em 1em; opacity: 0.5;');
 
-  elmnt_totalsContainer.setAttribute('onmouseover','document.getElementById("clickTotalsContainer").style.opacity = "1"; ');
-  elmnt_totalsContainer.setAttribute('onmouseout','document.getElementById("clickTotalsContainer").style.opacity = "0.5";');
+  elmnt_totalsContainer.setAttribute('onmouseover', 'document.getElementById("clickTotalsContainer").style.opacity = "1"; ');
+  elmnt_totalsContainer.setAttribute('onmouseout', 'document.getElementById("clickTotalsContainer").style.opacity = "0.5";');
 
   GM_addStyle(".adCountIncrementButton { width: 2.5em; text-align:center; font-size: xx-small; }"+
       ".adCountDecrementButton { width: 2.5em; text-align:center; font-size: xx-small; }"+
@@ -4693,13 +4910,13 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   /* Add handlers for changing the currently selected date */
 
   // NB: The date index is in reverse order (ie, n days into the past) thus incrementing this index equates to going an increased number of days into the past
-  document.getElementById('date_decrementButton').addEventListener('click',function () {
+  document.getElementById('date_decrementButton').addEventListener('click', function () {
     insertAdCounterBox(arg_dateIndex + 1, arg_adCounts, arg_adCountChange_currentPageview);
-  },false);
+  }, false);
 
-  document.getElementById('date_incrementButton').addEventListener('click',function () {
+  document.getElementById('date_incrementButton').addEventListener('click', function () {
     insertAdCounterBox(arg_dateIndex - 1, arg_adCounts, arg_adCountChange_currentPageview);
-  },false);
+  }, false);
 
 
   /* Add handlers for changing the ad counts */
@@ -4722,17 +4939,17 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) - 1;
     }
 
-    document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click',function ()
+    document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click', function ()
     {
-      debugLog('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
-      debugLog('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
+      debugLog('tmp_adCounts (on increment click) = ', JSON.stringify(tmp_adCounts));
+      debugLog('tmp_adCountChange (on increment click) = ', JSON.stringify(tmp_adCountChange));
       insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
       setTimeout(function() {
-        setPref('ownAdCountTally',tmp_adCounts, { prefType: 'JSON' });
+        setPref('ownAdCountTally', tmp_adCounts, { prefType: 'JSON' });
       }, 0);
-    },false);
+    }, false);
   }
 
   function addDecrementListener(arg_adType, arg_oldAdCounts, arg_tmp_adCountChange_currentPageview)
@@ -4753,17 +4970,17 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType] = parseInt(tmp_adCountChange[dates_array[arg_dateIndex]][arg_adType]) + 1;
     }
 
-    document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click',function ()
+    document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click', function ()
     {
-      debugLog('tmp_adCounts (on increment click) = ',JSON.stringify(tmp_adCounts));
-      debugLog('tmp_adCountChange (on increment click) = ',JSON.stringify(tmp_adCountChange));
+      debugLog('tmp_adCounts (on increment click) = ', JSON.stringify(tmp_adCounts));
+      debugLog('tmp_adCountChange (on increment click) = ', JSON.stringify(tmp_adCountChange));
       insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
       setTimeout(function() {
-        setPref('ownAdCountTally',tmp_adCounts, { prefType: 'JSON' });
+        setPref('ownAdCountTally', tmp_adCounts, { prefType: 'JSON' });
       }, 0);
-    },false);
+    }, false);
   }
 
   // Loop through the different ad types and call the function that adds the click events for the increment and decrement buttons
@@ -4778,7 +4995,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
 
 
 function addClickStatsToGoldenGraph() {
-  function mk_ch_ref(x, o, w0, w, O, L, m)
+  function mk_ch_ref(x, o, w0, w, O, L, m, arg_refName)
   {
     console.info(arguments);
     if (0 == m)
@@ -4813,19 +5030,22 @@ function addClickStatsToGoldenGraph() {
     var sum = [];
     var avg = [];
 
+    var tmp_referralsData = getPref('referrals', {}, { prefType: 'JSON' });
+    var tmp_refId = arg_refName.match(/\d+/);
+    tmp_referralsData[tmp_refId] = tmp_referralsData[tmp_refId] || {};
+    tmp_referralsData[tmp_refId].goldenGraphClickData = tmp_referralsData[tmp_refId].goldenGraphClickData || {};
 
     for (var i = 0; i < O[0].data.length; i++) {
       disp_clicks += ' ' + O[0].data[i];
       clicks[i] = O[0].data[i];
+      tmp_referralsData[tmp_refId].goldenGraphClickData[dates_array[i]] = clicks[i];
     }
 
-    for (var i = O[0].data.length - 1; 0 <= i; i--)
-    {
+    console.info(JSON.stringify(tmp_referralsData[tmp_refId]));
+
+    for (var i = O[0].data.length - 1; 0 <= i; i--) {
       sum[i] = ('undefined' !== typeof sum[i+1]) ? clicks[i] + sum[i+1] : clicks[i];
       avg[i] = (sum[i] / (O[0].data.length - i)).toFixed(1);
-
-//        console.info('i = '+i, '(O[0].data.length - i) = '+((O[0].data.length - i)+1), 'clicks[i] = '+clicks[i], 'sum[i+1] = '+sum[i+1], 'sum[i] = '+sum[i]);
-//        console.info('clicks: ',clicks,'\n','sum: ',sum,'\n','avg: ',avg);
     }
 
     newElmnt.innerHTML = '<table class="refGraphDatabar">' +
@@ -4848,12 +5068,36 @@ function addClickStatsToGoldenGraph() {
   }
 
 
+  function ved_cht(o, p) {
+    out = eval(p);
+    var lg = out.length == 3 ? 1 : 0;
+    if (out.length == 3) {
+        tmp = [{name: "Clicks", data: out[1]}, {name: "Credited clicks", data: out[2]}];
+    } else {
+        tmp = [{name: "Credited clicks", data: out[1]}];
+    }
+    d("chtdiv_t").innerHTML = "Click statistics for:&nbsp;<span class=\"f_b\" style=\"font-size:12px;\">" + out[0] + "</span>";
+    mk_ch_ref("chtdiv",
+        [dates_array[9], dates_array[8], dates_array[7], dates_array[6], dates_array[5], dates_array[4], dates_array[3], dates_array[2], dates_array[1], dates_array[0]],
+        "",
+        "",
+        tmp,
+        lg,
+        0,
+        out[0]);
+  }
+
   GM_addStyle(".refGraphDatabar { border-collapse: collapse; }" +
       ".refGraphDatabar tbody tr td { font-size: x-small; padding:0 1px; border: 1px solid black; }");
 
-//  console.info('mk_ch_ref.toString() : ',mk_ch_ref.toString());
+//  console.info('mk_ch_ref.toString() : ', mk_ch_ref.toString());
+//  var script = document.createElement("script");
+//  script.setAttribute('type', 'text/javascript');
+//  script.text = ved_cht.toString();
+//  document.body.appendChild(script);
+
   var script = document.createElement("script");
-  script.setAttribute('type','text/javascript');
+  script.setAttribute('type', 'text/javascript');
   script.text = mk_ch_ref.toString();
   document.body.appendChild(script);
 
@@ -4861,7 +5105,7 @@ function addClickStatsToGoldenGraph() {
 
 var referralListings_columns = new function()
 {
-  function addColumn(arg_row,arg_columnText,arg_colId,arg_customCSS)
+  function addColumn(arg_row, arg_columnText, arg_colId, arg_customCSS)
   {
     var tmp_newColumn;
 
@@ -4897,7 +5141,7 @@ var referralListings_columns = new function()
 
     var now = new Date();
 
-//    debugLog('now: ',now,'\nother date: ',arg_date);
+//    debugLog('now: ', now, '\nother date: ', arg_date);
 
     var t_diff = new Date(arg_date) - now;
 //    debugLog('t_diff = '+t_diff);
@@ -4906,27 +5150,27 @@ var referralListings_columns = new function()
     var future = (0 < t_diff);
     var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
 
-//    debugLog('remaining_time: ',remaining_time);
+//    debugLog('remaining_time: ', remaining_time);
 
     var diff_days = Math.floor(remaining_time / oneDay);
     remaining_time -= diff_days * oneDay;
 
-//    debugLog('diff_days: ',diff_days,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_days: ', diff_days, '\nremaining_time: ', remaining_time);
 
     var diff_hrs = Math.floor(remaining_time / oneHour);
     remaining_time -= diff_hrs * oneHour;
 
-//    debugLog('diff_hrs: ',diff_hrs,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_hrs: ', diff_hrs, '\nremaining_time: ', remaining_time);
 
     var diff_mins = Math.floor(remaining_time / oneMinute);
     remaining_time -= diff_mins * oneMinute;
 
-//    debugLog('diff_mins: ',diff_mins,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_mins: ', diff_mins, '\nremaining_time: ', remaining_time);
 
     var diff_secs = Math.floor(remaining_time / oneSecond);
     remaining_time -= diff_secs * oneSecond;
 
-//    debugLog('diff_secs: ',diff_secs,'\nremaining_time: ',remaining_time);
+//    debugLog('diff_secs: ', diff_secs, '\nremaining_time: ', remaining_time);
 
    return '['+
        diff_days+'d'+
@@ -4963,7 +5207,7 @@ var referralListings_columns = new function()
   function nextPaymentStringToDate(arg_nextPaymentString)
   {
     arg_nextPaymentString = arg_nextPaymentString.toString();
-//    debugLog('nextPaymentStringToDate: \n','arg_nextPaymentString : ',arg_nextPaymentString);
+//    debugLog('nextPaymentStringToDate: \n', 'arg_nextPaymentString : ', arg_nextPaymentString);
     var onesec = 1000;
     var onemin = onesec * 60;
     var onehr = onemin * 60;
@@ -5010,15 +5254,18 @@ var referralListings_columns = new function()
     }
 
     var columns = {
-      totalIncomeCol:     new COLUMN('new', '$', '', 'Total Income', [],[]),
-      totalExpensesCol:   new COLUMN('new', '$', '', 'Total Expenses', [],[]),
-      netIncome:          new COLUMN('new', '$', '', 'Net Income', [],[]),
-      clickValues:        new COLUMN('new', '', '', 'Ultimate Click Values', ['Ultimate'],[]),
-      refSince_DHM:       new COLUMN('new', '', '', 'D/H/M Ref Since', [],[]),
-      nextPayment_DHM:    new COLUMN('new', '', '', 'D/H/M Next Payment', [],[]),
-      lastClick_D:        new COLUMN('new', '', '', 'D Last Click', [],[]),
-      textifyFlag:        new COLUMN('new', '', '', 'Flag Colour', [],[])
+      totalIncomeCol:     new COLUMN('new', '$', '', 'Total Income', [], []),
+      totalExpensesCol:   new COLUMN('new', '$', '', 'Total Expenses', [], []),
+      netIncome:          new COLUMN('new', '$', '', 'Net Income', [], []),
+      clickValues:        new COLUMN('new', '', '', 'Ultimate Click Values', ['Ultimate'], []),
+      refSince_DHM:       new COLUMN('new', '', '', 'D/H/M Ref Since', [], []),
+      nextPayment_DHM:    new COLUMN('new', '', '', 'D/H/M Next Payment', [], []),
+      lastClick_D:        new COLUMN('new', '', '', 'D Last Click', [], [])
     };
+
+    if(currentPage.pageCode.match(/referralListings_Rented/i)){
+      columns.textifyFlag = new COLUMN('new', '', '', 'Flag Colour', [], []);
+    }
 
     //Add header row columns
     for(var columnName in columns) {
@@ -5056,7 +5303,7 @@ var referralListings_columns = new function()
 
     var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
     for(var i=1; i<tmp_colspans.length - 1;i++) {
-      tmp_colspans[i],tmp_colspans[i].setAttribute('colspan', colCount);
+      tmp_colspans[i], tmp_colspans[i].setAttribute('colspan', colCount);
     }
 
     var extensionCostPerDay = userAccount.feesCosts.extensions[preferences.preferredExtensionLength] / preferences.preferredExtensionLength;
@@ -5071,9 +5318,14 @@ var referralListings_columns = new function()
     {
       tmp_currentRow = referralRows[i];
 
-      tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/)[0];
+      tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/) || tmp_currentRow.children[colIndexes.refID].textContent.match(/[a-z]+/);
+      tmp_currentID = tmp_currentID[0];
+      tmp_currentID = (tmp_currentID.length > 0) ? tmp_currentID : tmp_currentRow.children[colIndexes.refID].textContent;
+
+      console.info('tmp_currentID = ', tmp_currentID);
+
       tmp_currentRow.id = tmp_currentID;
-      tmp_currentRow.setAttribute('class',tmp_currentRow.getAttribute('class') + ' referralRow');
+      tmp_currentRow.setAttribute('class', tmp_currentRow.getAttribute('class') + ' referralRow');
 
       incomeExpenses[tmp_currentID] = incomeExpenses[tmp_currentID] || {};
 
@@ -5133,7 +5385,7 @@ var referralListings_columns = new function()
               tmp_value = dateToD(new Date(tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].lastClick));
             break;
             case 'textifyFlag':
-              tmp_value = tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].flagColour.split('')[0] || "Unknown".split('')[0];
+              tmp_value = tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].flagColour.split('')[0] || "Unknown".split('')[0] || 'E';
             break;
           }
 
@@ -5149,7 +5401,7 @@ var referralListings_columns = new function()
                     );
               }
               catch(e) {
-                errorLog('error with new column - '+columnName+' ::\n',e);
+                errorLog('error with new column - '+columnName+' ::\n', e);
               }
             break;
             case 'append':
@@ -5202,7 +5454,7 @@ function insertSidebar()
   //    [another time period....],
   //    [etc..]
   // ]
-  var sidebarTimePeriods = [[0,0],[1,1],[0,6],[1,6],[0,9],[1,9]];
+  var sidebarTimePeriods = [[0,0], [1,1], [0,6], [1,6], [0,9], [1,9]];
   var tmp_dataSet = getPref('accountCache', {}, { prefType: 'JSON' });
 
   var sidebarData = {};
@@ -5260,7 +5512,7 @@ function insertSidebar()
   /*Show if user has referrals*/
   function SIR(arg_toDisplay) { return (0 < currentUser.numberOfRefs.Direct || 0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : ''; }
 
-  function outputIfExists(arg_varToOutput,arg_textToDisplayOtherwise)
+  function outputIfExists(arg_varToOutput, arg_textToDisplayOtherwise)
   {
     try { return arg_varToOutput; }
     catch(e) { return arg_textToDisplayOtherwise; }
@@ -5361,7 +5613,7 @@ function insertSidebar()
       }
     }
 
-    debugLog('sidebarData = ',sidebarData);
+    debugLog('sidebarData = ', sidebarData);
 
     var header = tl8("Totals between ") + startDay + tl8(" Days Ago and ") + (endDay+1) + tl8(" Days Ago");
 
@@ -5444,18 +5696,18 @@ function insertSidebar()
 
 // // *** INSERT STATISTICS SUMMARY INTO PAGE *** ////
   var wrapperTD = document.createElement('td');
-  wrapperTD.setAttribute('valign','top');
+  wrapperTD.setAttribute('valign', 'top');
   wrapperTD.appendChild(sidebarContainer);
 
-  var statsSidebarPosition = getPref('statsSidebarPosition','right',{ prefType: 'text' });
-  debugLog('statsSidebarPosition = ',statsSidebarPosition,'\n','locationToInsertSidebar[statsSidebarPosition] = ',locationToInsertSidebar[statsSidebarPosition]);
+  var statsSidebarPosition = getPref('statsSidebarPosition', 'right', { prefType: 'string' });
+  debugLog('statsSidebarPosition = ', statsSidebarPosition, '\n', 'locationToInsertSidebar[statsSidebarPosition] = ', locationToInsertSidebar[statsSidebarPosition]);
 
   if('right' === statsSidebarPosition) {
-//    sidebarContainer.setAttribute('onmouseover','document.getElementById("sidebarContainer").style.opacity = "1";');
-//    sidebarContainer.setAttribute('onmouseout','document.getElementById("sidebarContainer").style.opacity = "0.5";');
+//    sidebarContainer.setAttribute('onmouseover', 'document.getElementById("sidebarContainer").style.opacity = "1";');
+//    sidebarContainer.setAttribute('onmouseout', 'document.getElementById("sidebarContainer").style.opacity = "0.5";');
   }
 
-  sidebarContainer.setAttribute('class',statsSidebarPosition+'Side');
+  sidebarContainer.setAttribute('class', statsSidebarPosition+'Side');
   locationToInsertSidebar[statsSidebarPosition].appendChild(wrapperTD);
 
 
@@ -5483,7 +5735,7 @@ if(currentPage.pageCode.match(/referralListings/i))
   }
   catch(e) {
     console.info("ERROR!\n\n referralListings.init() failed\n\n"+e);
-    alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
+//    alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
     throw e;
   }
 
@@ -5513,10 +5765,19 @@ if(currentPage.pageCode.match(/referralListings/i))
 
   var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
 
-  var colIndexes = {
-    refID: 3,
-    refSince: 5
-  };
+  var colIndexes = {}
+
+  if(currentPage.pageCode.match(/referralListings_Rented/i)){
+    colIndexes = {
+      refID: 3,
+      refSince: 5
+    };
+  }else{
+    colIndexes = {
+      refID: 1,
+      refSince: 4
+    };
+  }
   var tmp_referralsData = getPref('referrals', {}, { prefType: 'JSON' });
   debugLog(tmp_referralsData);
 
@@ -5539,7 +5800,7 @@ if(currentPage.pageCode.match(/viewAdvertisementsPage/i))
   catch(e)
   {
     console.info("ERROR!\n\n insertAdCounterBox(0, adCountData, {}); failed\n\n"+e);
-    alert("ERROR!\n\n insertAdCounterBox(0, adCountData, {}); failed\n\n"+e);
+//    alert("ERROR!\n\n insertAdCounterBox(0, adCountData, {}); failed\n\n"+e);
   }
 }
 
@@ -5552,7 +5813,7 @@ if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/refe
   }
   catch(e) {
     console.info("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
-    alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
+//    alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
     throw e;
   }
   try {
@@ -5560,7 +5821,7 @@ if(currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/refe
   }
   catch(e) {
     console.info("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
-    alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
+//    alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
     throw e;
   }
 
@@ -5574,7 +5835,7 @@ if(currentPage.pageCode.match(/referralStatistics/))
   }
   catch(e) {
     console.info("ERROR!\n\n  insertSidebar(); failed\n\n"+e);
-    alert("ERROR!\n\n  insertSidebar(); failed\n\n"+e);
+//    alert("ERROR!\n\n  insertSidebar(); failed\n\n"+e);
   }
 }
 
@@ -5586,21 +5847,21 @@ if (!currentPage.pageCode.match(tmp_iframePages) && (top === self))
   }
   catch(e) {
     console.info("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
-    alert("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
+//    alert("ERROR!\n\n insertLocalServerTime(); failed\n\n"+e);
   }
   try {
     logo.init();
   }
   catch(e) {
     console.info("ERROR!\n\n logo.init(); failed\n\n"+e);
-    alert("ERROR!\n\n logo.init(); failed\n\n"+e);
+//    alert("ERROR!\n\n logo.init(); failed\n\n"+e);
   }
   try {
     widenPages.generic();
   }
   catch(e) {
     console.info("ERROR!\n\n widenPages.generic(); failed\n\n"+e);
-    alert("ERROR!\n\n widenPages.generic(); failed\n\n"+e);
+//    alert("ERROR!\n\n widenPages.generic(); failed\n\n"+e);
   }
 }
 
@@ -5613,3 +5874,4 @@ if(0 < tl8_counter) {
 
 
 debugLog(getPref('neobuxLanguageCode', 'EN', { prefType: 'string' }));
+
