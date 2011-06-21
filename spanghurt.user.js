@@ -122,10 +122,10 @@ userPreference.prototype.getValue = function(arg_overridingDefaultValue, arg_ove
   var returnType;
   if('undefined' !== typeof arg_overridingOptions) {
     if('undefined' !== typeof arg_overridingOptions['prefype']) {
-      returnType = arg_overridingOptions['prefype']
+      returnType = arg_overridingOptions['prefype'];
     }
   } else if('undefined' !== typeof this.options) {
-    if('undefined' !== typeof this.options) {
+    if('undefined' !== typeof this.options.prefType) {
       returnType = this.options['prefType'];
     }
   } else {
@@ -134,9 +134,16 @@ userPreference.prototype.getValue = function(arg_overridingDefaultValue, arg_ove
   }
 
   // If the defaultValue is still undefined, default to returning a string
-  returnType = returnType || 'string';
+  returnType = (!returnType) ? 'string' : returnType;
+
+
+  if(null === getValue(this.preferenceName) || undefined === getValue(this.preferenceName)){
+    //Assume that the value cannot be retrieved
+    this.setValue(defaultValue, { 'prefType': returnType });
+  }
 
   var tmp_rawValueFromStorage = getValue(this.preferenceName, defaultValue);
+  
   switch (returnType.toLowerCase())
   {
     case 'float':
@@ -184,13 +191,20 @@ userPreference.prototype.setValue = function(arg_newValue, arg_overridingOptions
   }
 
   var newValue = (null !== typeof arg_newValue) ? arg_newValue : this.defaultValue;
-  var returnType = ('undefined' !== typeof arg_overridingOptions) ? arg_overridingOptions : this.options['prefType'];
 
-  // If the returnType is not set anywhere, set it to be the type of the newValue
-  returnType = returnType || typeof newValue;
-
-  // If the newValue is undefined, default to returning a string
-  returnType = returnType || 'string';
+  var returnType;
+  if('undefined' !== typeof arg_overridingOptions) {
+    if('undefined' !== typeof arg_overridingOptions['prefType']) {
+      returnType = arg_overridingOptions['prefType'];
+    }
+  } else if('undefined' !== typeof this.options) {
+    if('undefined' !== typeof this.options['prefType']) {
+      returnType = this.options['prefType'];
+    }
+  } else {
+    // If the returnType is not set anywhere, set it to be the type of the defaultValue
+    returnType = typeof newValue;
+  }
 
   if(!setValue) {
     errorLog('ERROR: function: getPref()', 'No preferred storage method for setValue available, cannot store value!\n', 'Returning arg_newValue: ', arg_newValue);
@@ -219,6 +233,7 @@ userPreference.prototype.setValue = function(arg_newValue, arg_overridingOptions
       break;
   }
 
+//  console.info('tmp_value = ',tmp_value,'typeof tmp_value = ', typeof tmp_value);
   try {
     setValue(this.preferenceName, tmp_value);
   }
@@ -236,14 +251,21 @@ userPreference.prototype.setValue = function(arg_newValue, arg_overridingOptions
   if("undefined" !== typeof GM_setValue) {
     try
     {
+//      console.info(
+//          'this.preferenceName = ',this.preferenceName,
+//          'typeof this.preferenceName = ',typeof this.preferenceName,
+//          'tmp_value = ',tmp_value,
+//          'typeof tmp_value = ',typeof tmp_value
+//      );
       GM_setValue(this.preferenceName, tmp_value);
     }
     catch(e) {
+      console.info('catch(e) {');
       GM_setValue(this.preferenceName, tmp_value.toString());
     }
   }
-//  return getPref(this.preferenceName, tmp_value, arg_options);
-  return this;
+  return this.getValue();
+//  return this;
 }
 //userPreference('prefName').getValue('integer', defaultValue);
 //userPreference('prefName').setValue('string', value);
@@ -285,11 +307,11 @@ pr['username'] = new userPreference('username', 'unknownUsername', { prefType: '
 
 var tl8strings = {
   'EN': {
+    " [nb: the second value includes an estimate of your personal clicks]" : " [nb: the second value includes an estimate of your personal clicks]",
     " Days <small>(excl. Today)</small>" : " Days <small>(excl. Today)</small>",
     " Days <small>(incl. Today)</small>" : " Days <small>(incl. Today)</small>",
     " Days Ago and " : " Days Ago and ",
     " Days Ago" : " Days Ago",
-    " [nb: the second value includes an estimate of your personal clicks]" : " [nb: the second value includes an estimate of your personal clicks]",
     ", based on the projected values" : ", based on the projected values",
     "15 days (The \"Base Rate\")" : "15 days (The \"Base Rate\")",
     "150 days (25% discount)" : "150 days (25% discount)",
@@ -298,13 +320,14 @@ var tl8strings = {
     "60 days (10% discount)" : "60 days (10% discount)",
     "90 days (18% discount)" : "90 days (18% discount)",
     "Amanhã" : "Amanhã",
-    "Amount spent on recycles:" : "Amount spent on recycles:",
-    "Amount spent on renewing:" : "Amount spent on renewing:",
     "Amount spent on Autopay:" : "Amount spent on Autopay:",
+    "Amount spent on recycles:" : "Amount spent on recycles:",
     "Amount spent on renewing / extending referrals:" : "Amount spent on renewing / extending referrals:",
-    "Amount transferred to your Rental Balance:" : "Amount transferred to your Rental Balance:",
+    "Amount spent on renewing:" : "Amount spent on renewing:",
     "Amount transferred to your Golden Pack Balance:" : "Amount transferred to your Golden Pack Balance:",
+    "Amount transferred to your Rental Balance:" : "Amount transferred to your Rental Balance:",
     "Aujourd'hui" : "Aujourd'hui",
+    "Autopay On: ": "Autopay On: ",
     "AutoPay value" : "AutoPay value",
     "Autopay" : "Autopay",
     "Average Free Recycles: " : "Average Free Recycles: ",
@@ -312,23 +335,21 @@ var tl8strings = {
     "Avg. Clicks: " : "Avg. Clicks: ",
     "Avg. Expense: " : "Avg. Expense: ",
     "Avg. Income: " : "Avg. Income: ",
-    "Ideal Avg. Renewals (#): " : "Ideal Avg. Renewals (#): ",
-    "Ideal Avg. Expense ($): " : "Ideal Avg. Expense ($): ",
-    "Ideal Sum ($): " : "Ideal Sum ($): ",
     "Avg. Renewals (#): " : "Avg. Renewals (#): ",
     "Avg. Transfer: " : "Avg. Transfer: ",
     "Ayer" : "Ayer",
     "Blue" : "Blue",
     "Close" : "Close",
     "Credited clicks" : "Credited clicks",
-    "Credited Rented Referral Clicks:" : "Credited Rented Referral Clicks:",
     "Credited Direct Referral Clicks:" : "Credited Direct Referral Clicks:",
+    "Credited Rented Referral Clicks:" : "Credited Rented Referral Clicks:",
     "Demain" : "Demain",
     "Details about your expenses for " : "Details about your expenses for ",
     "Details about your income sources for " : "Details about your income sources for ",
     "Direct 'Real' Average" : "Direct 'Real' Average",
     "Direct Average" : "Direct Average",
     "Direct Clicks" : "Direct Clicks",
+    "Direct Referrals: ": "Direct Referrals: ",
     "Direct" : "Direct",
     "Do you use autopay?" : "Do you use autopay?",
     "Eilen" : "Eilen",
@@ -350,7 +371,11 @@ var tl8strings = {
     "How many rented referrals do you have?" : "How many rented referrals do you have?",
     "Hoy" : "Hoy",
     "Huomenna" : "Huomenna",
+    "Ideal Avg. Expense ($): " : "Ideal Avg. Expense ($): ",
+    "Ideal Avg. Renewals (#): " : "Ideal Avg. Renewals (#): ",
+    "Ideal Sum ($): " : "Ideal Sum ($): ",
     "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you." : "If you aren't sure about any of these, just click save and the script will automatically detect / correct these for you.",
+    "Length of Renewals: ": "Length of Renewals: ",
     "Local Time" : "Local Time",
     "Mañana" : "Mañana",
     "Micro:" : "Micro:",
@@ -363,6 +388,7 @@ var tl8strings = {
     "Orange" : "Orange",
     "Own clicks, Local Time:" : "Own clicks, Local Time:",
     "Personal Clicks" : "Personal Clicks",
+    "Please check that this is what you have entered then click okay to save it or cancel to retry:": "Please check that this is what you have entered then click okay to save it or cancel to retry:",
     "Projected Gross Income" : "Projected Gross Income",
     "Projected Income" : "Projected Income",
     "Recycle value" : "Recycle value",
@@ -373,29 +399,32 @@ var tl8strings = {
     "Rented 'Real' Average" : "Rented 'Real' Average",
     "Rented Average" : "Rented Average",
     "Rented Clicks" : "Rented Clicks",
+    "Rented Referrals ": "Rented Referrals ",
     "Rented" : "Rented",
     "Save Settings" : "Save Settings",
+    "Settings saved! The script will run on the next Neobux page that you load.": "Settings saved! The script will run on the next Neobux page that you load.",
     "Spanghurt Script Preferences" : "Spanghurt Script Preferences",
     "Spanghurt! Initial Setup" : "Spanghurt! Initial Setup",
     "Statistics Summary" : "Statistics Summary",
     "Sum: " : "Sum: ",
-    "Summary Totals" : "Summary Totals",
     "Summary of Income / Projected Income / Expenses / Profit for " : "Summary of Income / Projected Income / Expenses / Profit for ",
+    "Summary Totals" : "Summary Totals",
     "The last " : "The last ",
+    "Time Difference: ": "Time Difference: ",
     "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it." : "To get the script up and running as quickly as possible you need to supply a few extra details about your account and how you manage it.",
     "Today Only" : "Today Only",
     "Today" : "Today",
     "Tomorrow" : "Tomorrow",
     "Total 'Real' Average" : "Total 'Real' Average",
     "Total Average" : "Total Average",
-    "Total number of referrals" : "Total number of referrals",
     "Total number of referrals due to expire on each date:" : "Total number of referrals due to expire on each date:",
+    "Total number of referrals" : "Total number of referrals",
     "Total" : "Total",
     "Totals between " : "Totals between ",
     "Transfer value" : "Transfer value",
     "Tänään" : "Tänään",
     "What is the time difference between your time and the server's time?" : "What is the time difference between your time and the server's time?",
-    "White" :  "White",
+    "White" : "White",
     "Yellow" : "Yellow",
     "Yesterday Only" : "Yesterday Only",
     "Yesterday" : "Yesterday",
@@ -933,7 +962,7 @@ for(var accountType in tmp_NeobuxAccountTypeDetails) {
 }
 */
 
-debugLog(tmp_NeobuxAccountTypeDetails);
+//debugLog(tmp_NeobuxAccountTypeDetails);
 
 Neobux.accountDefaults =
 {
@@ -1535,7 +1564,7 @@ var currentPage = new function()
 };
 
 debugLog('currentPage.pageCode = ', currentPage.pageCode);
-debugLog('JSON.stringify(currentPage.pageCode) = ', JSON.stringify(currentPage.pageCode));
+//debugLog('JSON.stringify(currentPage.pageCode) = ', JSON.stringify(currentPage.pageCode));
 
 function extractNumberOfRefs()
 {
@@ -3012,19 +3041,24 @@ function REFERRAL(arg_refId, arg_referralProperties)
   function createBlankReferral()
   {
     var tmp_blankReferral = {
-      referralType: "R",
+      referralType: "U",
       lastSeen: 0,
-      goldenGraphClickData: { },
-      ultimateClickData: { },
       referralListingsData: { }
     };
-    tmp_blankReferral.goldenGraphClickData[tmp_currentDateString] = {
-      creditedClicks: 0,
-      actualClicks: 0
-    };
-    tmp_blankReferral.ultimateClickData[tmp_currentDateString] = {
-      creditedClicks: 0
-    };
+    
+    if('standard' !== currentUser.accountType.verbose.toLowerCase()) {
+      tmp_blankReferral.goldenGraphClickData = { };
+      tmp_blankReferral.goldenGraphClickData[tmp_currentDateString] = {
+        creditedClicks: 0,
+        actualClicks: 0
+      };
+    }
+    if('ultimate' === currentUser.accountType.verbose.toLowerCase()) {
+      tmp_blankReferral.ultimateClickData = { };
+      tmp_blankReferral.ultimateClickData[tmp_currentDateString] = {
+        creditedClicks: 0
+      };
+    }
     tmp_blankReferral.referralListingsData[tmp_currentDateString] = {
         nextPayment: 0,
         lastClick: 0,
@@ -3039,17 +3073,21 @@ function REFERRAL(arg_refId, arg_referralProperties)
   tmp_CurrentReferral.referralListingsData = tmp_CurrentReferral.referralListingsData || {};
   tmp_CurrentReferral.referralListingsData[tmp_currentDateString] = tmp_CurrentReferral.referralListingsData[tmp_currentDateString] || {};
 
-  tmp_CurrentReferral.lastSeen = dateToday;
+  tmp_CurrentReferral.lastSeen = dateToday.toString();
 
   var tmp_crToday = tmp_CurrentReferral.referralListingsData[tmp_currentDateString];
 
   //arg_referralSince, arg_lastClick, arg_totalClicks, arg_average, arg_flagColourId
   tmp_CurrentReferral.refId = arg_refId;
+  tmp_CurrentReferral.referralType =    arg_referralProperties['referralType'] || 'U';
   tmp_crToday.referralSince_raw =       arg_referralProperties['referralSince'] || null;
   tmp_crToday.lastClick_raw =           arg_referralProperties['lastClick']     || null;
   tmp_crToday.totalClicks =            (0 <= arg_referralProperties['totalClicks'])          ? arg_referralProperties['totalClicks']   : null;
-  tmp_crToday.clickAverage =           (0 <= arg_referralProperties['clickAverage'])         ? arg_referralProperties['clickAverage']  : null;
+  tmp_crToday.clickAverage =           (-1 <= arg_referralProperties['clickAverage'])         ? arg_referralProperties['clickAverage']  : null;
 
+  // If the given clickAverage is -1, the user hasn't clicked yet, but set it to 0 anyway
+  tmp_crToday.clickAverage = (-1 === tmp_crToday.clickAverage) ? 0 : tmp_crToday.clickAverage;
+  
   //Ultimate mini click graph values
   tmp_crToday.ultimateClickValues_raw = ('undefined' !== typeof arg_referralProperties['ultimateClickValues'])  ? arg_referralProperties['ultimateClickValues'] : null;
 
@@ -3065,6 +3103,7 @@ function REFERRAL(arg_refId, arg_referralProperties)
   }
   if('D' === arg_referralProperties['referralType']) {
     //Direct referral properties
+    tmp_crToday.referralType = "D";
     tmp_crToday.cameFrom =               arg_referralProperties['cameFrom']      || null;
     tmp_crToday.isSellable =             arg_referralProperties['isSellable']    || null;
   }
@@ -3403,7 +3442,7 @@ var referralListings = new function()
       var tmp_objectToPass = {
         lastClick: ('9' == cr[4]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].lastClick_raw : ('N' == cr[4]) ? (('9' == cr[2]) ? tmp_referrals[pr_ID].referralListingsData[dates_array[0]].referralSince_raw : cr[2]) : ('O' == cr[4]) ? dates_array[1] : ('H' == cr[4]) ? dates_array[0]: cr[4],
         totalClicks: cr[5],
-        clickAverage: cr[6]
+        clickAverage: (cr[6] == '-.---' || cr[6] == 999) ? -1 : cr[6]
       };
       if('ultimate' === currentUser.accountType.verbose.toLowerCase()){
         tmp_objectToPass.ultimateClickValues = ('0' == cr[14]) ? '0000000000' : cr[14];
@@ -3438,7 +3477,7 @@ var referralListings = new function()
         );
     }
 
-    debugLog('restructureData:\n\n', 'tmp_referrals', tmp_referrals);
+//    debugLog('restructureData:\n\n', 'tmp_referrals', tmp_referrals);
     return tmp_referrals;
   }
 
@@ -4857,8 +4896,8 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
 
     document.getElementById(arg_adType+'AdCount_incrementButton').addEventListener('click', function ()
     {
-      debugLog('tmp_adCounts (on increment click) = ', JSON.stringify(tmp_adCounts));
-      debugLog('tmp_adCountChange (on increment click) = ', JSON.stringify(tmp_adCountChange));
+//      debugLog('tmp_adCounts (on increment click) = ', JSON.stringify(tmp_adCounts));
+//      debugLog('tmp_adCountChange (on increment click) = ', JSON.stringify(tmp_adCountChange));
       insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
@@ -4888,8 +4927,8 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
 
     document.getElementById(arg_adType+'AdCount_decrementButton').addEventListener('click', function ()
     {
-      debugLog('tmp_adCounts (on increment click) = ', JSON.stringify(tmp_adCounts));
-      debugLog('tmp_adCountChange (on increment click) = ', JSON.stringify(tmp_adCountChange));
+//      debugLog('tmp_adCounts (on increment click) = ', JSON.stringify(tmp_adCounts));
+//      debugLog('tmp_adCountChange (on increment click) = ', JSON.stringify(tmp_adCountChange));
       insertAdCounterBox(arg_dateIndex, tmp_adCounts, tmp_adCountChange);
       // Workaround for GM access checks/violations
       // http://wiki.greasespot.net/Greasemonkey_access_violation
@@ -4957,7 +4996,7 @@ function addClickStatsToGoldenGraph() {
       tmp_referralsData[tmp_refId].goldenGraphClickData[dates_array[i]] = clicks[i];
     }
 
-    console.info(JSON.stringify(tmp_referralsData[tmp_refId]));
+//    console.info(JSON.stringify(tmp_referralsData[tmp_refId]));
 
     for (var i = O[0].data.length - 1; 0 <= i; i--) {
       sum[i] = ('undefined' !== typeof sum[i+1]) ? clicks[i] + sum[i+1] : clicks[i];
@@ -5175,12 +5214,14 @@ var referralListings_columns = new function()
       netIncome:          new COLUMN('new', '$', '', 'Net Income', [], []),
       clickValues:        new COLUMN('new', '', '', 'Ultimate Click Values', ['Ultimate'], []),
       refSince_DHM:       new COLUMN('new', '', '', 'D/H/M Ref Since', [], []),
-      nextPayment_DHM:    new COLUMN('new', '', '', 'D/H/M Next Payment', [], []),
       lastClick_D:        new COLUMN('new', '', '', 'D Last Click', [], [])
     };
 
     if(currentPage.pageCode.match(/referralListings_Rented/i)){
       columns.textifyFlag = new COLUMN('new', '', '', 'Flag Colour', [], []);
+      columns.nextPayment_DHM = new COLUMN('new', '', '', 'D/H/M Next Payment', [], []);
+    }
+    if(currentPage.pageCode.match(/referralListings_Direct/i)){
     }
 
     //Add header row columns
@@ -5238,7 +5279,7 @@ var referralListings_columns = new function()
       tmp_currentID = tmp_currentID[0];
       tmp_currentID = (tmp_currentID.length > 0) ? tmp_currentID : tmp_currentRow.children[colIndexes.refID].textContent;
 
-      console.info('tmp_currentID = ', tmp_currentID);
+//      console.info('tmp_currentID = ', tmp_currentID);
 
       tmp_currentRow.id = tmp_currentID;
       tmp_currentRow.setAttribute('class', tmp_currentRow.getAttribute('class') + ' referralRow');
@@ -5346,7 +5387,7 @@ var referralListings_columns = new function()
       refSince: 5
     };
     var tmp_referralsData = pr['referrals'].getValue();
-    debugLog(tmp_referralsData);
+//    debugLog(tmp_referralsData);
   }
 };
 
@@ -5693,7 +5734,7 @@ if(currentPage.pageCode.match(/referralListings/i))
     };
   }
   var tmp_referralsData = pr['referrals'].getValue();
-  debugLog(tmp_referralsData);
+//  debugLog(tmp_referralsData);
 
 
   //referralListings_columns.init();
