@@ -12,6 +12,7 @@ function modalCheckpoint(arg_context) {
   if (document.location.href === "http://www.neobux.com/c/rl/?ss3=1") {
     arg_context = (arg_context) ? arg_context : "unknown context";
     //    alert(alert_counter + ": \n" + arg_context);
+    console.info(alert_counter + ": \n" + arg_context);
     alert_counter++;
   }
 }
@@ -260,6 +261,8 @@ userPreference.prototype.setValue = function (arg_newValue, arg_overridingOption
 }
 //userPreference('prefName').getValue('integer', defaultValue);
 //userPreference('prefName').setValue('string', value);
+
+modalCheckpoint('a');
 
 var pr = {};
 
@@ -705,7 +708,7 @@ function addToLoggerBox(arg_message) {
 /**
  * Initial Setup of the script
  */
-
+modalCheckpoint('Initial Setup of the script');
 // Depending upon the storage method used, a true value may be stored as boolean or string type so shall test for both
 if (("true" !== getValue('setupComplete') && true !== getValue('setupComplete'))) {
   var shadowBackdrop;
@@ -802,6 +805,7 @@ if (("true" !== getValue('setupComplete') && true !== getValue('setupComplete'))
 
 }
 
+modalCheckpoint('Initial Setup of the script _ end');
 if (("true" !== getValue('setupComplete') && true !== getValue('setupComplete'))) {
   throw "Oops, cannot go this far in the script's execution until the initial setup is complete";
 }
@@ -1093,16 +1097,16 @@ var defaultSettings = {
   },
 
   timePeriods: {
-    smallGraph: [5, 7, 10],
     // Time Periods for 'smaller' 10day graphs
-    largeGraph: [5, 10, 15],
+    smallGraph: [5, 7, 10],
     // Time Periods for larger 15day graphs
-    recent: 7,
+    largeGraph: [5, 10, 15],
     // Time Period for 'recent' section of the Referral statistics sidebar
-    minigraphs: 5,
+    recent: 7,
     // Time Period for footer row clicks average
-    averageCols: [10, 7],
+    minigraphs: 5,
     // Time Period for the 'average1' & 'average2' column (previously defined as the A10&A7 column)
+    averageCols: [10, 7],
     extensionsGraph: [7, 15, 30, 60, 90]
   }
 };
@@ -1331,6 +1335,7 @@ clickValues['Diamond'].Fixed.commission.direct  = clickValues['Diamond'].Standar
 clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standard.commission.direct;
 
 
+modalCheckpoint('var currentPage = new function () {');
 var currentPage = new function () {
     function testAgainstUrlParameters(arg_urlVarTests) {
       var tmpUrlVars = document.location.search.substring(1).split('&');
@@ -1515,7 +1520,7 @@ var currentPage = new function () {
 
 debugLog('currentPage.pageCode = ', currentPage.pageCode);
 //debugLog('JSON.stringify(currentPage.pageCode) = ', JSON.stringify(currentPage.pageCode));
-
+modalCheckpoint('function extractNumberOfRefs()');
 function extractNumberOfRefs() {
   // If currently viewing the rented/direct ref listings, update the stored values accordingly
   if (currentPage.pageCode.match(/referralListings/)) {
@@ -1815,6 +1820,8 @@ function getClickValues(arg_memberType) {
   };*/
 }
 
+modalCheckpoint('var userAccount = new function ()');
+
 /**
  * :Object used for holding information about the account that the current user of the script is logged into
  *
@@ -1845,12 +1852,14 @@ var userAccount = new function () {
     };
     this.username = getUsername();
     };
+modalCheckpoint('var preferences = new function ()');
 
 var preferences = new function () {
     this.preferredExtensionLength = pr['renewalsLength'].getValue();
     }
-    
-    
+
+modalCheckpoint('var currentUser = new function ()');
+
     
 var currentUser = new function () {
     function getPerAutoPayFee(arg_accountType, arg_numberOfRentedReferrals) {
@@ -1949,6 +1958,8 @@ var currentUser = new function () {
 
 debugLog('currentUser', currentUser);
 
+modalCheckpoint('function getGraphData()');
+
 function getGraphData() {
   // Decode evalString using the w(i) function from the Neobux page
   function U(arg_a) {
@@ -2024,6 +2035,7 @@ function getGraphData() {
 
 //NB: calling this on pages that do not have graphs will cause an error in the script
 //console.info(getGraphData());
+modalCheckpoint('function createAccountCache()');
 
 function createAccountCache() {
   var tmp_currentDateTime = new Date();
@@ -2120,6 +2132,7 @@ function createAccountCache() {
 }
 
 var accountCache = createAccountCache();
+modalCheckpoint('function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)');
 
 function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache) {
   var tmp_currentGraph = '';
@@ -2441,6 +2454,7 @@ var chartData = new function () {
     }
     };
 
+modalCheckpoint('function insertLocalServerTime()');
 
 function insertLocalServerTime() {
 
@@ -2823,6 +2837,7 @@ function insertLocalServerTime() {
   this.insertClickGuide();
 }
 
+modalCheckpoint('for (var graphId in friendlyNameLookup)');
 
 var graphsOnCurrentPage = [];
 for (var graphId in friendlyNameLookup) {
@@ -3183,6 +3198,7 @@ function REFERRAL(arg_refId, arg_referralProperties) {
   Object_merge(tmp_CurrentReferral.referralListingsData[tmp_currentDateString], tmp_crToday)
   return tmp_CurrentReferral;
 }
+modalCheckpoint('var referralListings = new function () ');
 
 var referralListings = new function () {
     function extractReferralDataFromListingsPage() {
@@ -5350,6 +5366,8 @@ function codeShouldRun(arg_currentPage, arg_allowedPages) {
 var tmp_iframePages = /viewingAdvertisement|viewingForums_editingMessage|viewingForums_creatingTopic|viewingForums_creatingPoll/i;
 
 if (currentPage.pageCode.match(/referralListings/i)) {
+  modalCheckpoint('if (currentPage.pageCode.match(/referralListings/i)) {');
+
   try {
     referralListings.init();
   } catch (e) {
@@ -5418,6 +5436,8 @@ if (currentPage.pageCode.match(/viewAdvertisementsPage/i)) {
 
 
 if (currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/referralStatistics/i)) {
+  modalCheckpoint('if (currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/referralStatistics/i)) {');
+
   try {
     accountCache = convertRawGraphDataToCacheFormat(getGraphData(), accountCache);
     pr['accountCache'].setValue(accountCache);
@@ -5439,6 +5459,8 @@ if (currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/ref
 
 
 if (currentPage.pageCode.match(/referralStatistics/)) {
+  modalCheckpoint('if (currentPage.pageCode.match(/referralStatistics/)) {');
+
   try {
     insertSidebar();
   } catch (e) {
@@ -5449,6 +5471,8 @@ if (currentPage.pageCode.match(/referralStatistics/)) {
 
 
 if (!currentPage.pageCode.match(tmp_iframePages) && (top === self)) {
+  modalCheckpoint('if (!currentPage.pageCode.match(tmp_iframePages) && (top === self)) {');
+
   try {
     insertLocalServerTime();
   } catch (e) {
