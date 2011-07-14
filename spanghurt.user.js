@@ -9,51 +9,141 @@
 var alert_counter = 0;
 
 function modalCheckpoint(arg_context) {
-  if (document.location.href === "http://www.neobux.com/c/rl/?ss3=1") {
+//  if (document.location.href === "http://www.neobux.com/c/rl/?ss3=1") {
     arg_context = (arg_context) ? arg_context : "unknown context";
     //    alert(alert_counter + ": \n" + arg_context);
     console.info(alert_counter + ": \n" + arg_context);
+    if ('undefined' !== typeof GM_log) {
+      GM_log(alert_counter + ": \n" + arg_context);
+    }
     alert_counter++;
-  }
+//  }
 }
 
 
 /**
  * Compatibility functions
  */
-if ('undefined' === typeof GM_log) {
-  function GM_log() {
-    //console.info(arguments);
-    //location.href = "javascript:void(console.info('JSON.parse('"+JSON.stringify(arguments)+"')'));";
-  }
-}
-
 if ('undefined' === typeof console) {
   var console = {
     info: function () {
       if (arguments.length > 1) {
-        location.href = "javascript:void(console.group());";
-      }
-      for (var i = 0; i < arguments.length; i++) {
-        try {
-          tmp_msg = ('object' === typeof arguments[i]) ? JSON.stringify(arguments[i]) : arguments[i].toString();
-          location.href = "javascript:void(console.info('" + tmp_msg + "'));";
-        } catch (e) {
-          location.href = "javascript:void(console.info('cannot convert argument to string'));";
+        location.href = "javascript:void(console.info(JSON.parse('" + JSON.stringify(arguments) + "')));";
+      } else {
+        if ('object' === typeof arguments[0]) {
+          //NOTE: typeof DOM elements === 'object' and fail to be passed to the console correctly
+          tmp_msg = JSON.stringify(arguments[0]);
+          location.href = "javascript:void(console.info(JSON.parse('" + tmp_msg + "')));";
+        } else {
+          try {
+            tmp_msg = arguments[0].toString();
+            location.href = "javascript:void(console.info('" + tmp_msg + "'));";
+          } catch (e) {
+            location.href = "javascript:void(console.info('cannot convert argument to string'));";
+          }
         }
       }
+    },
+    warn: function () {
       if (arguments.length > 1) {
-        location.href = "javascript:void(console.groupEnd());";
+        location.href = "javascript:void(console.warn(JSON.parse('" + JSON.stringify(arguments) + "')));";
+      } else {
+        if ('object' === typeof arguments[0]) {
+          //NOTE: typeof DOM elements === 'object' and fail to be passed to the console correctly
+          tmp_msg = JSON.stringify(arguments[0]);
+          location.href = "javascript:void(console.warn(JSON.parse('" + tmp_msg + "')));";
+        } else {
+          try {
+            tmp_msg = arguments[0].toString();
+            location.href = "javascript:void(console.warn('" + tmp_msg + "'));";
+          } catch (e) {
+            location.href = "javascript:void(console.warn('cannot convert argument to string'));";
+          }
+        }
+      }
+    },
+    error: function () {
+      if (arguments.length > 1) {
+        location.href = "javascript:void(console.error(JSON.parse('" + JSON.stringify(arguments) + "')));";
+      } else {
+        if ('object' === typeof arguments[0]) {
+          //NOTE: typeof DOM elements === 'object' and fail to be passed to the console correctly
+          tmp_msg = JSON.stringify(arguments[0]);
+          location.href = "javascript:void(console.error(JSON.parse('" + tmp_msg + "')));";
+        } else {
+          try {
+            tmp_msg = arguments[0].toString();
+            location.href = "javascript:void(console.error('" + tmp_msg + "'));";
+          } catch (e) {
+            location.href = "javascript:void(console.error('cannot convert argument to string'));";
+          }
+        }
+      }
+    },
+    debug: function () {
+      if (arguments.length > 1) {
+        location.href = "javascript:void(console.debug(JSON.parse('" + JSON.stringify(arguments) + "')));";
+      } else {
+        if ('object' === typeof arguments[0]) {
+          //NOTE: typeof DOM elements === 'object' and fail to be passed to the console correctly
+          tmp_msg = JSON.stringify(arguments[0]);
+          location.href = "javascript:void(console.debug(JSON.parse('" + tmp_msg + "')));";
+        } else {
+          try {
+            tmp_msg = arguments[0].toString();
+            location.href = "javascript:void(console.debug('" + tmp_msg + "'));";
+          } catch (e) {
+            location.href = "javascript:void(console.debug('cannot convert argument to string'));";
+          }
+        }
+      }
+    },
+    log: function () {
+      if (arguments.length > 1) {
+        location.href = "javascript:void(console.log(JSON.parse('" + JSON.stringify(arguments) + "')));";
+      } else {
+        if ('object' === typeof arguments[0]) {
+          //NOTE: typeof DOM elements === 'object' and fail to be passed to the console correctly
+          tmp_msg = JSON.stringify(arguments[0]);
+          location.href = "javascript:void(console.log(JSON.parse('" + tmp_msg + "')));";
+        } else {
+          try {
+            tmp_msg = arguments[0].toString();
+            location.href = "javascript:void(console.log('" + tmp_msg + "'));";
+          } catch (e) {
+            location.href = "javascript:void(console.log('cannot convert argument to string'));";
+          }
+        }
       }
     },
     group: function () {
-      location.href = "javascript:void(console.group());";
+      if (arguments.length > 1) {
+        location.href = "javascript:void(console.group(JSON.parse('" + JSON.stringify(arguments) + "')));";
+      } else if (arguments.length === 1) {
+        location.href = "javascript:void(console.group('" + arguments[0].toString() + "'));";
+      } else {
+        location.href = "javascript:void(console.group());";
+      }
     },
     groupEnd: function () {
-      location.href = "javascript:void(console.groupEnd());";
+      if (arguments.length > 1) {
+        location.href = "javascript:void(console.groupEnd(JSON.parse('" + JSON.stringify(arguments) + "')));";
+      } else if (arguments.length === 1) {
+        location.href = "javascript:void(console.groupEnd('" + arguments[0].toString() + "'));";
+      } else {
+        location.href = "javascript:void(console.groupEnd());";
+      }
     }
   };
   console.info('console not defined, now replaced');
+}
+
+
+if ('undefined' === typeof GM_log) {
+  function GM_log() {
+    console.info(arguments);
+    //location.href = "javascript:void(console.info('JSON.parse('"+JSON.stringify(arguments)+"')'));";
+  }
 }
 
 if ('undefined' === typeof GM_addStyle) {
@@ -476,15 +566,8 @@ function isArray(arg_input) {
 function debugLog() {
   //  addToLoggerBox(arguments);
   if (2 >= arguments.length) {
-    console.group();
+    console.group('debugLog');
   }
-  //  if('undefined' !== typeof GM_log) {
-  //    if (1 == arguments.length) {
-  //      GM_log(arguments[0]);
-  //    }else {
-  //      GM_log(arguments.join('\n----\n'));
-  //    }
-  //  }
   for (var i = 0; i < arguments.length; i++) {
     console.info(arguments[i]);
     if ('undefined' !== typeof GM_log) {
@@ -492,7 +575,7 @@ function debugLog() {
     }
   }
   if (2 >= arguments.length) {
-    console.groupEnd();
+    console.groupEnd('debugLog');
   }
 }
 //debugger;
@@ -846,17 +929,26 @@ Neobux.possibleAccTypes = [
 var rentalBands = [];
 var tmp_baseBandPrice = 0.20; //The lowest price band starts at $0.20
 var AUTOPAY_DISCOUNT = 0.85; // 15% discount when paying via autopay
+
+function RENTAL_BAND(arg_minRefs, arg_maxRefs, arg_costOfRent, arg_costOfAutopay) {
+  this.minRefs = arg_minRefs;
+  this.maxRefs = arg_maxRefs;
+  this.costOfRent = arg_costOfRent;
+  this.costOfAutopay = arg_costOfAutopay;
+
+  return this;
+}
 for (var i = 0; 8 > i; i++) {
   // Minimum number of referrals for this price band to apply:
   // Maximum number of referrals for this price band to apply:
   // Base cost of initial purchase of a single referral for 30days:
   // Cost of autopay:
-  rentalBands[i] = {
-    minRefs: ( (i*250) + 1 ), //                1,      251,    501,    751,    1001,   1251,   1501,   1751
-    maxRefs: ( (i+1) * 250 ), //                250,    500,    750,    1000,   1250,   1500,   1750,   2000
-    costOfRent: tmp_baseBandPrice + (i*0.01), //$0.20,  $0.21,  $0.22,  $0.23,  $0.24,  $0.25,  $0.26,  $0.27
-    costOfAutopay: Math.round(((tmp_baseBandPrice + (i*0.01)) / 30) * AUTOPAY_DISCOUNT * 10000) / 10000 //NB: rounded to 4 decimal places
-  };
+  rentalBands[i] = new RENTAL_BAND(
+      ( (i*250) + 1 ), // minRefs:                     1,    251,    501,    751,    1001,   1251,   1501,   1751
+      ( (i+1) * 250 ), // maxRefs:                   250,    500,    750,    1000,   1250,   1500,   1750,   2000
+      tmp_baseBandPrice + (i*0.01), // costOfRent: $0.20,  $0.21,  $0.22,   $0.23,  $0.24,  $0.25,  $0.26,  $0.27
+      Math.round(((tmp_baseBandPrice + (i*0.01)) / 30) * AUTOPAY_DISCOUNT * 10000) / 10000 // costOfAutopay: NB: rounded to 4 decimal places
+  );
 }
 //The first band includes people who have zero refs (eg, cost to rent)
 rentalBands[0].minRefs = 0;
@@ -2459,6 +2551,16 @@ modalCheckpoint('function insertLocalServerTime()');
 function insertLocalServerTime() {
 
   function formatTime(arg_time) {
+    // Append zeros to the _input until the _desiredStringLength is reached
+    function padZeros(arg_input, arg_desiredStringLength) {
+      var currentLength = arg_input.toString().length;
+      var output = arg_input;
+      for (var i = 0; i < (arg_desiredStringLength - currentLength); i++) {
+        output = '0' + output;
+      }
+      return output;
+    }
+
     var tmp_Hours = arg_time.getHours();
     var tmp_Minutes = arg_time.getMinutes();
     var tmp_Seconds = arg_time.getSeconds();
@@ -3876,7 +3978,16 @@ var exportTabs = new function () {
       exportTab.addEventListener('click', function exportTabs_onClick(event) {
         // (event.ctrlKey && event.altKey && event.shiftKey)
         var exportTab = new ModalDialog('exportTab_' + arg_exportType);
-        exportTab.create('background-color: white; margin: 8em auto; padding: 2em; position: relative; top:' + window.pageYOffset + 'px; width: 17em;', '' + '<h3>' + 'Exporting to ' + arg_exportTabText + '..' + '</h3>' + '<small><i>' + messageHeader + '</i></small><br>' + '<textarea style="height: 15em; width: 17em;">' + ((event.ctrlKey && textareaContentsReverse) ? textareaContentsReverse : textareaContents) + '</textarea><br>' + '<button id="' + arg_exportType + 'ExportTab_okButton">Ok</button>');
+        exportTab.create(
+            'background-color: white; margin: 8em auto; padding: 2em; position: relative; top:' + window.pageYOffset + 'px; width: 17em;',
+            '' +
+                '<h3>' + 'Exporting to ' + arg_exportTabText + '..' + '</h3>' +
+                '<small><i>' + messageHeader + '</i></small><br>' +
+                '<textarea style="height: 15em; width: 17em;">' +
+                    ((event.ctrlKey && textareaContentsReverse) ? textareaContentsReverse : textareaContents) +
+                '</textarea><br>' +
+                '<button id="' + arg_exportType + 'ExportTab_okButton">Ok</button>' +
+            '');
 
         document.getElementById(arg_exportType + 'ExportTab_okButton').addEventListener('click', function (event) {
           exportTab.hide();
