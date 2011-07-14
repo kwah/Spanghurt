@@ -4451,7 +4451,7 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
       tmp_totalsContainerHTML += [
         "<tr><td>"+ tmp_foo[tmp_label].text,
         "<button id='"+tmp_label+"AdCount_incrementButton' class='adCountIncrementButton'>+</button>",
-        "<span id='"+tmp_label+"AdCount_textCount' title='$"+(tmp_foo[tmp_label].adCount * userAccount.clickValues[tmp_adTypeForClickValue].value)+"'>"+tmp_foo[tmp_label].adCount+"</span>",
+        "<span id='"+tmp_label+"AdCount_textCount' title='$"+(tmp_foo[tmp_label].adCount * userAccount.clickValues[tmp_adTypeForClickValue].value).toFixed(3)+"'>"+tmp_foo[tmp_label].adCount+"</span>",
         "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((0 <
             arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]) ? "+"+arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]:arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label])+")</span>",
         "<button id='"+tmp_label+"AdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"
@@ -5370,7 +5370,7 @@ if (currentPage.pageCode.match(/referralListings/i)) {
   referralListings_columns.mainLoop();
 
   //  referralListingsNewColumnsTest();
-  addClickStatsToGoldenGraph();
+//  addClickStatsToGoldenGraph();
 
 }
 
@@ -5434,3 +5434,58 @@ if (0 < tl8_counter) {
   debugLog(pr['translationStringsNeeded'].getValue());
 }
 
+
+var availableModules = [
+    'scriptLogo',
+    'preferencesBox',
+//    'loggerBox',
+    'graphExportTabs',
+    'graphDatabars',
+    'statisticsSidebar',
+    'widenPage',
+    'adCounterBox',
+    'insertRentedReferralColumns',
+    'insertDirectReferralColumns',
+//    'insertGoldenGraphClickStats', //WARNING: Currently breaks the goldenGraphs
+    'localServerTime'
+];
+
+var pageModulesToRun = {
+  // "pageCode":            [Boolean partialMatch, Boolean caseSensetive, Array modulesToRun],
+  "viewAdvertisementsPage": [false, true, ['localServerTime', 'scriptLogo',]]
+}
+
+function runPageModules(arg_currentPageCode, arg_availablePageModules, arg_pageModulesToBeRun) {
+  for(var tmp_page in arg_pageModulesToBeRun) {
+    if(arg_pageModulesToBeRun.hasOwnProperty(tmp_page)) {
+      ///Loop through all page codes
+      var pageName =        (arg_pageModulesToBeRun[tmp_page][1]) ? tmp_page : tmp_page.toLowerCase();
+      var currentPageCode = (arg_pageModulesToBeRun[tmp_page][1]) ? arg_currentPageCode : arg_currentPageCode.toLowerCase();
+
+      //IF the currentPageCode matches the page name, and not expecting a partial match OR
+      //  the page name is within the currentPageCode and expecting a partial match
+      //THEN do nothing
+      //ELSE continue;
+      if (  ( (pageName === currentPageCode) && !arg_pageModulesToBeRun[tmp_page][0] ) ||
+            ( pageName.match(currentPageCode) && arg_pageModulesToBeRun[tmp_page][0] )
+      ) {}
+      else {
+        continue;
+      }
+
+      for (var i = 0; i < arg_pageModulesToBeRun[tmp_page][1].length; i++) {
+        //Loop through and run the page modules in arg_pageModulesToBeRun[tmp_page][1]
+        var currentlySelectedModuleName = arg_pageModulesToBeRun[tmp_page][1][i];
+        if (availableModules.indexOf(currentlySelectedModuleName)) {
+          //If the currently selected module is not listed as an available module, log error and continue;
+          continue;
+        }
+
+        // Code to run each module;
+        /**
+         *
+         **/
+      }
+    }
+  }
+}
