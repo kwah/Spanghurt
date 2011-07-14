@@ -549,16 +549,6 @@ function tl8(arg_originalString) {
   return tl8strings[getValue('neobuxLanguageCode')][arg_originalString];
 }
 
-
-/**
- * @param arg_input
- * @return boolean
- */
-
-function isArray(arg_input) {
-  return !!arg_input.constructor.toString().match(/array/i);
-}
-
 /**
  * Logging functions
  */
@@ -578,8 +568,6 @@ function debugLog() {
     console.groupEnd('debugLog');
   }
 }
-//debugger;
-
 
 function errorLog() {
   addToLoggerBox("ERROR!\n");
@@ -602,6 +590,16 @@ function errorLog() {
 /**
  * Utility functions
  */
+
+
+/**
+ * @param arg_input
+ * @return boolean
+ */
+
+function isArray(arg_input) {
+  return !!arg_input.constructor.toString().match(/array/i);
+}
 
 function docEvaluate(arg_xpath) {
   return document.evaluate(arg_xpath, document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -744,7 +742,9 @@ function ModalDialog(arg_dialogId) {
 
 
 
-/////////////////////
+/**
+ * logger box
+ */
 
 var loggerBox = new ModalDialog('loggerBox');
 loggerBox.create('background-color: white; margin: 3em; padding: 2em; width: 30em; z-index:3;', '' + '<button id="loggerBox_Close" style="float: right;">Close</button>' + '<button id="loggerBox_Clear" style="float: right;">Clear</button>' + '<h4>Debugging Output</h4>' + '<div style="background-color:#e3e3e3; height:40em; overflow: auto;">' + '<ul id="loggerBox_Output">' + '<li>&nbsp;</li>' + '</ul>' + '</div>');
@@ -792,6 +792,7 @@ function addToLoggerBox(arg_message) {
  * Initial Setup of the script
  */
 modalCheckpoint('Initial Setup of the script');
+
 // Depending upon the storage method used, a true value may be stored as boolean or string type so shall test for both
 if (("true" !== getValue('setupComplete') && true !== getValue('setupComplete'))) {
   var shadowBackdrop;
@@ -889,9 +890,13 @@ if (("true" !== getValue('setupComplete') && true !== getValue('setupComplete'))
 }
 
 modalCheckpoint('Initial Setup of the script _ end');
+
+// If the setup hasn't yet been completed, throw an error to quit the execution of the code
 if (("true" !== getValue('setupComplete') && true !== getValue('setupComplete'))) {
   throw "Oops, cannot go this far in the script's execution until the initial setup is complete";
 }
+
+
 
 var dateToday = new Date();
 var dateYesterday = new Date();
@@ -913,6 +918,9 @@ var YESTERDAY_STRING = dates_array[1];
 var TOMORROW_STRING = dates_array[-1];
 
 
+/**
+ * NEOBUX ACCOUNT DETAILS
+ */
 var Neobux = {};
 Neobux.possibleAccTypes = [
   'Standard',
@@ -925,47 +933,7 @@ Neobux.possibleAccTypes = [
   'Pioneer'
 ];
 
-
-var rentalBands = [];
-var tmp_baseBandPrice = 0.20; //The lowest price band starts at $0.20
-var AUTOPAY_DISCOUNT = 0.85; // 15% discount when paying via autopay
-
-function RENTAL_BAND(arg_minRefs, arg_maxRefs, arg_costOfRent, arg_costOfAutopay) {
-  this.minRefs = arg_minRefs;
-  this.maxRefs = arg_maxRefs;
-  this.costOfRent = arg_costOfRent;
-  this.costOfAutopay = arg_costOfAutopay;
-
-  return this;
-}
-for (var i = 0; 8 > i; i++) {
-  // Minimum number of referrals for this price band to apply:
-  // Maximum number of referrals for this price band to apply:
-  // Base cost of initial purchase of a single referral for 30days:
-  // Cost of autopay:
-  rentalBands[i] = new RENTAL_BAND(
-      ( (i*250) + 1 ), // minRefs:                     1,    251,    501,    751,    1001,   1251,   1501,   1751
-      ( (i+1) * 250 ), // maxRefs:                   250,    500,    750,    1000,   1250,   1500,   1750,   2000
-      tmp_baseBandPrice + (i*0.01), // costOfRent: $0.20,  $0.21,  $0.22,   $0.23,  $0.24,  $0.25,  $0.26,  $0.27
-      Math.round(((tmp_baseBandPrice + (i*0.01)) / 30) * AUTOPAY_DISCOUNT * 10000) / 10000 // costOfAutopay: NB: rounded to 4 decimal places
-  );
-}
-//The first band includes people who have zero refs (eg, cost to rent)
-rentalBands[0].minRefs = 0;
-
-//The final band has no upper limit on the max number of refs
-rentalBands[7].maxRefs = Infinity;
-
-var bulkRenewalDiscounts = {
-  15: 1.00, // 0% discount
-  30: 0.95, // 5% discount
-  60: 0.90, // 10% discount
-  90: 0.82, // 18% discount
-  150: 0.75, // 25% discount
-  240: 0.70 // 30% discount
-};
-
-var tmp_NeobuxAccountTypeDetails = {
+Neobux.defaultAccountTypeDetails = {
   'Standard': { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0},
   'Golden':   { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0},
   'Emerald':  { 'minDaysForAutopay': 20, 'recycleCost': 0.06, 'goldenCost': 90, 'goldenPackCost': 200,  'rentalBandAdjuster': -1},
@@ -978,9 +946,58 @@ var tmp_NeobuxAccountTypeDetails = {
 
 
 
+var rentingRenewing = {};
+
+
+function createRentalBandDetails(arg_basePrice, arg_autopayDiscount){
+  function RENTAL_BAND(arg_minRefs, arg_maxRefs, arg_costOfRent, arg_costOfAutopay) {
+    this.minRefs = arg_minRefs;
+    this.maxRefs = arg_maxRefs;
+    this.costOfRent = arg_costOfRent;
+    this.costOfAutopay = arg_costOfAutopay;
+
+    return this;
+  }
+
+  var tmp_rentalBands = {}
+  for (var i = 0; 8 > i; i++) {
+    // Minimum number of referrals for this price band to apply:
+    // Maximum number of referrals for this price band to apply:
+    // Base cost of initial purchase of a single referral for 30days:
+    // Cost of autopay:
+    tmp_rentalBands[i] = new RENTAL_BAND(
+        ( (i*250) + 1 ), // minRefs:                     1,    251,    501,    751,    1001,   1251,   1501,   1751
+        ( (i+1) * 250 ), // maxRefs:                   250,    500,    750,    1000,   1250,   1500,   1750,   2000
+        arg_basePrice + (i*0.01), // costOfRent: $0.20,  $0.21,  $0.22,   $0.23,  $0.24,  $0.25,  $0.26,  $0.27
+        Math.round(((arg_basePrice + (i*0.01)) / 30) * arg_autopayDiscount * 10000) / 10000 // costOfAutopay: NB: rounded to 4 decimal places
+    );
+  }
+  //The first band includes people who have zero refs (eg, cost to rent)
+  tmp_rentalBands[0].minRefs = 0;
+
+  //The final band has no upper limit on the max number of refs
+  tmp_rentalBands[7].maxRefs = Infinity;
+
+  return tmp_rentalBands;
+}
+
+var tmp_baseBandPrice = 0.20; //The lowest price band starts at $0.20
+var autopayDiscount = 0.85; // 15% discount when paying via autopay
+var rentalBands = createRentalBandDetails(tmp_baseBandPrice, autopayDiscount);
+
+
+var bulkRenewalDiscounts = {
+  15: 1.00, // 0% discount
+  30: 0.95, // 5% discount
+  60: 0.90, // 10% discount
+  90: 0.82, // 18% discount
+  150: 0.75, // 25% discount
+  240: 0.70 // 30% discount
+};
+
 
 function getRenewalFees(arg_accountType, arg_numberOfRentedRefs, arg_lengthOfRenewal) {
-  var tmp_rentingBand = Math.floor(arg_numberOfRentedRefs / 250) + tmp_NeobuxAccountTypeDetails[arg_accountType].rentalBandAdjuster;
+  var tmp_rentingBand = Math.floor(arg_numberOfRentedRefs / 250) + [arg_accountType].rentalBandAdjuster;
   tmp_rentingBand = (0 < tmp_rentingBand) ? tmp_rentingBand : 0;
 
   var tmp_rentingCost = ((rentalBands[tmp_rentingBand].costOfRent / 30) * arg_lengthOfRenewal * bulkRenewalDiscounts[arg_lengthOfRenewal]).toFixed(2);
@@ -988,62 +1005,27 @@ function getRenewalFees(arg_accountType, arg_numberOfRentedRefs, arg_lengthOfRen
   return tmp_rentingCost;
 }
 
+function getAutopayValues(arg_accountType) {
+  /*
+  for(var accountType in Neobux.defaultAccountTypeDetails) {
+    if(Neobux.defaultAccountTypeDetails.hasOwnProperty(accountType))
+    {
+      Neobux.defaultAccountTypeDetails[accountType].referralPrices = {
+        initialRent: 0,
+            autopay: 0
+      };
 
-/*
-for(var accountType in tmp_NeobuxAccountTypeDetails) {
-  if(tmp_NeobuxAccountTypeDetails.hasOwnProperty(accountType))
-  {
-    tmp_NeobuxAccountTypeDetails[accountType].referralPrices = {
-      initialRent: 0,
-          autopay: 0
-    };
-
-    for(var renewalLength in bulkRenewalDiscounts) {
-      if(bulkRenewalDiscounts.hasOwnProperty(renewalLength)) {
-        tmp_NeobuxAccountTypeDetails[accountType].referralPrices[renewalLength] = tmp_NeobuxAccountTypeDetails[accountType].referralPrices.initialRent * renewalLength * bulkRenewalDiscounts[renewalLength];
+      for(var renewalLength in bulkRenewalDiscounts) {
+        if(bulkRenewalDiscounts.hasOwnProperty(renewalLength)) {
+          Neobux.defaultAccountTypeDetails[accountType].referralPrices[renewalLength] = Neobux.defaultAccountTypeDetails[accountType].referralPrices.initialRent * renewalLength * bulkRenewalDiscounts[renewalLength];
+        }
       }
     }
   }
-}
-*/
-
-//debugLog(tmp_NeobuxAccountTypeDetails);
-Neobux.accountDefaults = {
-  'minDaysForAutopay': {
-    'Standard': 20,
-    'Golden':   20,
-    'Emerald':  20,
-    'Sapphire': 18,
-    'Platinum': 20,
-    'Diamond':  14,
-    'Ultimate': 10,
-    'Pioneer':  20
-  },
-
-  'recycleCost': {
-    'Standard': 0.07,
-    'Golden':   0.07,
-    'Emerald':  0.06,
-    'Sapphire': 0.07,
-    'Platinum': 0.06,
-    'Diamond':  0.07,
-    'Ultimate': 0.04,
-    'Pioneer':  0.07
-  },
-
-  'goldenPackCost': {
-    'Standard': 0,
-    'Golden':   90,
-    'Emerald':  290,
-    'Sapphire': 290,
-    'Platinum': 490,
-    'Diamond':  490,
-    'Ultimate': 890,
-    'Pioneer':  0
-  },
+  */
 
   // Values taken from the help files (quoted above)
-  'autopayValues': {
+  tmp_autopayValues = {
     'Standard': [
       {'minRefs': 0, 'cost': 0.0060},
       {'minRefs': 501, 'cost': 0.0065},
@@ -1090,17 +1072,12 @@ Neobux.accountDefaults = {
       {'minRefs': 1251, 'cost': 0.0065},
       {'minRefs': 1501, 'cost': 0.0070}
     ]
-  },
+  };
 
-  'renewalFees': {
-    15: -1,
-    30: -1,
-    60: -1,
-    90: -1,
-    150: -1,
-    240: -1
-  }
-};
+  return tmp_autopayValues[arg_accountType];
+}
+
+//debugLog(Neobux.defaultAccountTypeDetails);
 
 var defaultSettings = {
   columnPrefixes: {
@@ -1278,155 +1255,6 @@ var graphLengthLookup = {
 };
 
 
-
-
-var clickValues = {
-  Standard: {
-    Extended: {
-      value: 0.015,
-      commission: {
-        rented: 0.01,
-        direct: 0.01
-      }
-    },
-    Standard: {
-      value: 0.01,
-      commission: {
-        rented: 0.005,
-        direct: 0.005
-      }
-    },
-    Mini: {
-      value: 0.005,
-      commission: {
-        rented: 0,
-        direct: 0
-      }
-    },
-    Micro: {
-      value: 0.001,
-      commission: {
-        rented: 0,
-        direct: 0
-      }
-    },
-    Fixed: {
-      value: 0.001,
-      commission: {
-        rented: 0.005,
-        direct: 0.0005
-      }
-    }
-  },
-  Golden: {
-    Extended: {
-      value: 0.02,
-      commission: {
-        rented: 0.02,
-        direct: 0.02
-      }
-    },
-    Standard: {
-      value: 0.01,
-      commission: {
-        rented: 0.01,
-        direct: 0.01
-      }
-    },
-    Micro: {
-      value: 0.001,
-      commission: {
-        rented: 0,
-        direct: 0
-      }
-    },
-    Fixed: {
-      value: 0.01,
-      commission: {
-        rented: 0.01,
-        direct: 0.005
-      }
-    }
-  }
-};
-
-// Fixed Micro ads are the same value and commission for standard AND golden members
-clickValues['Standard'].FixedMicro = {
-  value: 0.001,
-  commission: {
-    rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
-    direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
-  }
-};
-clickValues['Golden'].FixedMicro = {
-  value: 0.001,
-  commission: {
-    rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
-    direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
-  }
-};
-
-// Mini ads are the same value and commission for standard AND golden members
-clickValues['Standard'].Mini = {
-  value: 0.005,
-  commission: {
-    rented: 0,
-    direct: 0
-  }
-};
-clickValues['Golden'].Mini = {
-  value: 0.005,
-  commission: {
-    rented: 0,
-    direct: 0
-  }
-};
-
-//Initially set all golden packs to be the same as the Golden values
-clickValues['Emerald'] = {};
-clickValues['Sapphire'] = {};
-clickValues['Platinum'] = {};
-clickValues['Diamond'] = {};
-clickValues['Ultimate'] = {};
-
-
-// The golden-pack prices are all based on the golden values so merge those into these and
-//   tweak just the parts that are different
-Object_merge(clickValues['Emerald'], clickValues['Golden']);
-Object_merge(clickValues['Sapphire'], clickValues['Golden']);
-Object_merge(clickValues['Platinum'], clickValues['Golden']);
-Object_merge(clickValues['Diamond'], clickValues['Golden']);
-Object_merge(clickValues['Ultimate'], clickValues['Golden']);
-
-
-
-//Now to do the golden-pack-specific settings::
-/*Standard Ads click value*/
-clickValues['Emerald'].Standard.value   = 0.012;
-clickValues['Sapphire'].Standard.value  = 0.012;
-clickValues['Platinum'].Standard.value  = 0.015;
-clickValues['Diamond'].Standard.value   = 0.015;
-clickValues['Ultimate'].Standard.value  = 0.02;
-
-
-/*Fixed Ads click value - same as standard ads for golden & golden-pack members*/
-clickValues['Emerald'].Fixed.value  = clickValues['Emerald'].Standard.value;
-clickValues['Sapphire'].Fixed.value = clickValues['Sapphire'].Standard.value;
-clickValues['Platinum'].Fixed.value = clickValues['Platinum'].Standard.value;
-clickValues['Diamond'].Fixed.value  = clickValues['Diamond'].Standard.value;
-clickValues['Ultimate'].Fixed.value = clickValues['Ultimate'].Standard.value;
-
-/*Fixed Ads direct-click value - same as standard ads for golden & golden-pack members
- * Except Golden members*/
-clickValues['Standard'].Fixed.commission.direct = 0.0005;
-clickValues['Golden'].Fixed.commission.direct   = 0.005;
-clickValues['Emerald'].Fixed.commission.direct  = clickValues['Emerald'].Standard.commission.direct;
-clickValues['Sapphire'].Fixed.commission.direct = clickValues['Sapphire'].Standard.commission.direct;
-clickValues['Platinum'].Fixed.commission.direct = clickValues['Platinum'].Standard.commission.direct;
-clickValues['Diamond'].Fixed.commission.direct  = clickValues['Diamond'].Standard.commission.direct;
-clickValues['Ultimate'].Fixed.commission.direct = clickValues['Ultimate'].Standard.commission.direct;
-
-
 modalCheckpoint('var currentPage = new function () {');
 var currentPage = new function () {
     function testAgainstUrlParameters(arg_urlVarTests) {
@@ -1482,10 +1310,7 @@ var currentPage = new function () {
       return pr['neobuxLanguageCode'].getValue();
     };
 
-    this.languageCode = detectLanguageCode();
-
-    function detectPageCode ()
-    {
+    function detectPageCode () {
       if(testAgainstUrlPath(['forum'])) {
         if(testAgainstUrlParameters(['u_x_u=replymsg']))  { return 'viewingForums_replyingToThread'; }
         if(testAgainstUrlParameters(['u_x_u=editmsg']))   { return 'viewingForums_editingMessage'; }
@@ -1605,6 +1430,7 @@ var currentPage = new function () {
       return 'unrecognisedUrlParameters';
     }
 
+    this.languageCode = detectLanguageCode();
     this.pageCode = detectPageCode();
 
   };
@@ -1710,59 +1536,26 @@ extractNumberOfRefs();
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-function getUsername() {
-  if (document.getElementById('t_conta')) {
-    pr['username'].setValue(document.getElementById('t_conta').textContent);
-  }
-  var tmp_username = pr['username'].getValue() || 'failedToGetUsername';
-
-  return tmp_username;
-}
 
 
-function getMembershipType() {
-  var xpath_elmt_accountBadge = '//div[@class="tag"][last()]';
-  var elmt_accountBadge = document.evaluate(
-      xpath_elmt_accountBadge,
-      document,
-      null,
-      XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
-      null);
 
-  var tmp_membershipType_name = '';
-  if (0 < elmt_accountBadge.snapshotLength) {
-    var tmp_membershipType_name = elmt_accountBadge.snapshotItem(0).textContent.match(/\w+/);
-    pr['membershipType'].setValue(tmp_membershipType_name);
-  }
-  tmp_membershipType_name = pr['membershipType'].getValue();
 
-  return tmp_membershipType_name;
-}
+modalCheckpoint('var userAccount = new function ()');
 
-function getClickValues(arg_memberType) {
-  var clickValues = {
-    Extended: {
-      Golden: {
-        value: 0.02,
-        commission: {
-          rented: 0.02,
-          direct: 0.02
-        }
-      },
-      Standard: {
+/**
+ * :Object used for holding information about the account that the current user of the script is logged into
+ *
+ **/
+
+
+function getClickValues(arg_accountType) {
+  var tmp_clickValues = {
+    Standard: {
+      Extended: {
         value: 0.015,
         commission: {
           rented: 0.01,
           direct: 0.01
-        }
-      }
-    },
-    Regular: {
-      Golden: {
-        value: 0.01,
-        commission: {
-          rented: 0.010,
-          direct: 0.005
         }
       },
       Standard: {
@@ -1771,52 +1564,71 @@ function getClickValues(arg_memberType) {
           rented: 0.005,
           direct: 0.005
         }
-      }
-    },
-    Micro: {
-      Golden: {
+      },
+      Mini: {
+        value: 0.005,
+        commission: {
+          rented: 0,
+          direct: 0
+        }
+      },
+      Micro: {
         value: 0.001,
         commission: {
           rented: 0,
           direct: 0
         }
       },
-      Standard: {
+      Fixed: {
         value: 0.001,
         commission: {
-          rented: 0,
-          direct: 0
+          rented: 0.005,
+          direct: 0.0005
         }
       }
     },
-    Fixed: {
-      Golden: {
+    Golden: {
+      Extended: {
+        value: 0.02,
+        commission: {
+          rented: 0.02,
+          direct: 0.02
+        }
+      },
+      Standard: {
+        value: 0.01,
+        commission: {
+          rented: 0.01,
+          direct: 0.01
+        }
+      },
+      Micro: {
         value: 0.001,
         commission: {
           rented: 0,
           direct: 0
         }
       },
-      Standard: {
-        value: 0.001,
+      Fixed: {
+        value: 0.01,
         commission: {
-          rented: 0,
-          direct: 0
+          rented: 0.01,
+          direct: 0.005
         }
       }
     }
   };
 
-  // Fixed Micro ads are the same value and commission for standard AND golden members
-  clickValues.FixedMicro = {};
-  clickValues.FixedMicro['Standard'] = {
+
+// Fixed Micro ads are the same value and commission for standard AND golden members
+  tmp_clickValues['Standard'].FixedMicro = {
     value: 0.001,
     commission: {
       rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
       direct: 0 //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
     }
   };
-  clickValues.FixedMicro['Golden'] = {
+  tmp_clickValues['Golden'].FixedMicro = {
     value: 0.001,
     commission: {
       rented: 0, //Note that if the ad is purchased for 90days or more, will get comissions - same as fixed
@@ -1824,16 +1636,15 @@ function getClickValues(arg_memberType) {
     }
   };
 
-  // Mini ads are the same value and commission for standard AND golden members
-  clickValues.Mini = {};
-  clickValues.Mini['Standard'] = {
+// Mini ads are the same value and commission for standard AND golden members
+  tmp_clickValues['Standard'].Mini = {
     value: 0.005,
     commission: {
       rented: 0,
       direct: 0
     }
   };
-  clickValues.Mini['Golden'] = {
+  tmp_clickValues['Golden'].Mini = {
     value: 0.005,
     commission: {
       rented: 0,
@@ -1841,84 +1652,83 @@ function getClickValues(arg_memberType) {
     }
   };
 
-  //The golden-pack values are based on the golden membership details
-  //   Create them with the golden values initially then add more specific detail later
-  for (var tmp_advertisementType in clickValues) {
-    if (clickValues.hasOwnProperty((tmp_advertisementType))) {
-      clickValues[tmp_advertisementType].Emerald = {};
-      Object_merge(clickValues[tmp_advertisementType].Emerald, clickValues[tmp_advertisementType].Golden);
-      clickValues[tmp_advertisementType].Sapphire = {};
-      Object_merge(clickValues[tmp_advertisementType].Sapphire, clickValues[tmp_advertisementType].Golden);
-      clickValues[tmp_advertisementType].Platinum = {};
-      Object_merge(clickValues[tmp_advertisementType].Platinum, clickValues[tmp_advertisementType].Golden);
-      clickValues[tmp_advertisementType].Diamond = {};
-      Object_merge(clickValues[tmp_advertisementType].Diamond, clickValues[tmp_advertisementType].Golden);
-      clickValues[tmp_advertisementType].Ultimate = {};
-      Object_merge(clickValues[tmp_advertisementType].Ultimate, clickValues[tmp_advertisementType].Golden);
-    }
-  }
+//Initially set all golden packs to be the same as the Golden values
+  tmp_clickValues['Emerald'] = {};
+  tmp_clickValues['Sapphire'] = {};
+  tmp_clickValues['Platinum'] = {};
+  tmp_clickValues['Diamond'] = {};
+  tmp_clickValues['Ultimate'] = {};
 
-  //Now to do the golden-pack-specific settings::
+
+// The golden-pack prices are all based on the golden values so merge those into these and
+//   tweak just the parts that are different
+  Object_merge(tmp_clickValues['Emerald'], tmp_clickValues['Golden']);
+  Object_merge(tmp_clickValues['Sapphire'], tmp_clickValues['Golden']);
+  Object_merge(tmp_clickValues['Platinum'], tmp_clickValues['Golden']);
+  Object_merge(tmp_clickValues['Diamond'], tmp_clickValues['Golden']);
+  Object_merge(tmp_clickValues['Ultimate'], tmp_clickValues['Golden']);
+
+
+
+//Now to do the golden-pack-specific settings::
   /*Standard Ads click value*/
-  clickValues.Regular['Emerald'].value   = 0.012;
-  clickValues.Regular['Sapphire'].value  = 0.012;
-  clickValues.Regular['Platinum'].value  = 0.015;
-  clickValues.Regular['Diamond'].value   = 0.015;
-  clickValues.Regular['Ultimate'].value  = 0.02;
+  tmp_clickValues['Emerald'].Standard.value   = 0.012;
+  tmp_clickValues['Sapphire'].Standard.value  = 0.012;
+  tmp_clickValues['Platinum'].Standard.value  = 0.015;
+  tmp_clickValues['Diamond'].Standard.value   = 0.015;
+  tmp_clickValues['Ultimate'].Standard.value  = 0.02;
 
 
   /*Fixed Ads click value - same as standard ads for golden & golden-pack members*/
-  clickValues.Fixed['Emerald'].value  = clickValues.Regular['Emerald'].value;
-  clickValues.Fixed['Sapphire'].value = clickValues.Regular['Sapphire'].value;
-  clickValues.Fixed['Platinum'].value = clickValues.Regular['Platinum'].value;
-  clickValues.Fixed['Diamond'].value  = clickValues.Regular['Diamond'].value;
-  clickValues.Fixed['Ultimate'].value = clickValues.Regular['Ultimate'].value;
+  tmp_clickValues['Emerald'].Fixed.value  = tmp_clickValues['Emerald'].Standard.value;
+  tmp_clickValues['Sapphire'].Fixed.value = tmp_clickValues['Sapphire'].Standard.value;
+  tmp_clickValues['Platinum'].Fixed.value = tmp_clickValues['Platinum'].Standard.value;
+  tmp_clickValues['Diamond'].Fixed.value  = tmp_clickValues['Diamond'].Standard.value;
+  tmp_clickValues['Ultimate'].Fixed.value = tmp_clickValues['Ultimate'].Standard.value;
 
   /*Fixed Ads direct-click value - same as standard ads for golden & golden-pack members
    * Except Golden members*/
-  clickValues.Fixed['Standard'].commission.direct = 0.0005;
-  clickValues.Fixed['Golden'].commission.direct   = 0.005;
-  clickValues.Fixed['Emerald'].commission.direct  = clickValues.Regular['Emerald'].commission.direct;
-  clickValues.Fixed['Sapphire'].commission.direct = clickValues.Regular['Sapphire'].commission.direct;
-  clickValues.Fixed['Platinum'].commission.direct = clickValues.Regular['Platinum'].commission.direct;
-  clickValues.Fixed['Diamond'].commission.direct  = clickValues.Regular['Diamond'].commission.direct;
-  clickValues.Fixed['Ultimate'].commission.direct = clickValues.Regular['Ultimate'].commission.direct;
+  tmp_clickValues['Standard'].Fixed.commission.direct = 0.0005;
+  tmp_clickValues['Golden'].Fixed.commission.direct   = 0.005;
+  tmp_clickValues['Emerald'].Fixed.commission.direct  = tmp_clickValues['Emerald'].Standard.commission.direct;
+  tmp_clickValues['Sapphire'].Fixed.commission.direct = tmp_clickValues['Sapphire'].Standard.commission.direct;
+  tmp_clickValues['Platinum'].Fixed.commission.direct = tmp_clickValues['Platinum'].Standard.commission.direct;
+  tmp_clickValues['Diamond'].Fixed.commission.direct  = tmp_clickValues['Diamond'].Standard.commission.direct;
+  tmp_clickValues['Ultimate'].Fixed.commission.direct = tmp_clickValues['Ultimate'].Standard.commission.direct;
 
-  var tmp_clickValueToReturn = {};
-  tmp_clickValueToReturn.own = {
-      Extended:   clickValues.Extended[arg_memberType],
-      Regular:    clickValues.Regular[arg_memberType],
-      Mini:       clickValues.Mini[arg_memberType],
-      Fixed:      clickValues.Fixed[arg_memberType],
-      FixedMicro: clickValues.FixedMicro[arg_memberType],
-      Micro:      clickValues.Micro[arg_memberType]
-    };
-  tmp_clickValueToReturn.rented = clickValues.Fixed[arg_memberType].commission.rented;
-  tmp_clickValueToReturn.direct = clickValues.Fixed[arg_memberType].commission.direct;
-
-  return tmp_clickValueToReturn;
-
-  /*return {
-    own: {
-      extended: 0.020,
-      regular: 0.010,
-      mini: 0.005,
-      fixed: 0.010,
-      fixedMicro: 0.001,
-      micro: 0.001
-    },
-    rented: 0.010,
-    direct: 0.005
-  };*/
+  return tmp_clickValues[arg_accountType];
 }
 
-modalCheckpoint('var userAccount = new function ()');
 
-/**
- * :Object used for holding information about the account that the current user of the script is logged into
- *
- **/
 var userAccount = new function () {
+  function getUsername() {
+    if (document.getElementById('t_conta')) {
+      pr['username'].setValue(document.getElementById('t_conta').textContent);
+    }
+    var tmp_username = pr['username'].getValue() || 'failedToGetUsername';
+
+    return tmp_username;
+  }
+
+  function getMembershipType() {
+    var xpath_elmt_accountBadge = '//div[@class="tag"][last()]';
+    var elmt_accountBadge = document.evaluate(
+        xpath_elmt_accountBadge,
+        document,
+        null,
+        XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
+        null);
+
+    var tmp_membershipType_name = '';
+    if (0 < elmt_accountBadge.snapshotLength) {
+      var tmp_membershipType_name = elmt_accountBadge.snapshotItem(0).textContent.match(/\w+/);
+      pr['membershipType'].setValue(tmp_membershipType_name);
+    }
+    tmp_membershipType_name = pr['membershipType'].getValue();
+
+    return tmp_membershipType_name;
+  }
+
     this.membershipType = getMembershipType();
     this.override_showUltimateFeatures = false;
     this.clickValues = getClickValues(this.membershipType);
@@ -1952,103 +1762,114 @@ var preferences = new function () {
 
 modalCheckpoint('var currentUser = new function ()');
 
-    
+
 var currentUser = new function () {
-    function getPerAutoPayFee(arg_accountType, arg_numberOfRentedReferrals) {
-      var defaultAutopayValues = Neobux.accountDefaults.autopayValues[arg_accountType.verbose];
+  /**
+   * @param arg_accountType Name of the account type with only the first initial uppercase
+   * @param arg_numberOfRentedReferrals Integer count of how many rented referrals the user has
+   */
+  function getPerAutoPayFee(arg_accountType, arg_numberOfRentedReferrals) {
+    var defaultAutopayValues = getAutopayValues(arg_accountType.verbose);
 
-      var totalRentedRefs = (0 <= arg_numberOfRentedReferrals) ? arg_numberOfRentedReferrals : 0;
-      var perAutoPayCost = 0;
+    var totalRentedRefs = (0 <= arg_numberOfRentedReferrals) ? arg_numberOfRentedReferrals : 0;
+    var perAutoPayCost = 0;
 
-      var j = defaultAutopayValues.length - 1;
-      var currentTest;
-      do {
-        currentTest = defaultAutopayValues[j];
-        if (parseInt(currentTest.minRefs, 10) < parseInt(totalRentedRefs, 10)) {
-          perAutoPayCost = currentTest.cost;
-        }
-      } while ((parseInt(defaultAutopayValues[j--].minRefs, 10) > parseInt(totalRentedRefs, 10)));
+    var j = defaultAutopayValues.length - 1;
+    var currentTest;
+    do {
+      currentTest = defaultAutopayValues[j];
+      if (parseInt(currentTest.minRefs, 10) < parseInt(totalRentedRefs, 10)) {
+        perAutoPayCost = currentTest.cost;
+      }
+    } while ((parseInt(defaultAutopayValues[j--].minRefs, 10) > parseInt(totalRentedRefs, 10)));
 
-      return perAutoPayCost;
-    }
+    return perAutoPayCost;
+  }
 
 
-    if (document.getElementById('t_conta')) {
-      this.username = pr['username'].setValue(document.getElementById('t_conta').textContent);
-    } else {
-      this.username = pr['username'].getValue();
-    }
+  if (document.getElementById('t_conta')) {
+    this.username = pr['username'].setValue(document.getElementById('t_conta').textContent);
+  }
+  else {
+    this.username = pr['username'].getValue();
+  }
 
-    this.accountType = new function () {
-      var accDiv = docEvaluate('//div[@class="tag"][last()]');
-      var tmp_accountType;
+  this.accountType = new function () {
+    var accDiv = docEvaluate('//div[@class="tag"][last()]');
+    var tmp_accountType;
 
-      // If the accType can be grabbed from the page, cache it
-      if (0 < accDiv.snapshotLength) {
-        accDiv = accDiv.snapshotItem(0);
+    // If the accType can be grabbed from the page, cache it
+    if (0 < accDiv.snapshotLength) {
+      accDiv = accDiv.snapshotItem(0);
 
-        for (var i = 0; i < Neobux.possibleAccTypes.length; i++) {
-          if (accDiv.textContent.match(Neobux.possibleAccTypes[i])) {
-            tmp_accountType = {
-              "numerical": i,
-              'verbose': Neobux.possibleAccTypes[i]
-            };
-            pr['accountType'].setValue(tmp_accountType);
-          }
+      for (var i = 0; i < Neobux.possibleAccTypes.length; i++) {
+        if (accDiv.textContent.match(Neobux.possibleAccTypes[i])) {
+          tmp_accountType = {
+            "numerical": i,
+            'verbose': Neobux.possibleAccTypes[i]
+          };
+          pr['accountType'].setValue(tmp_accountType);
         }
       }
+    }
 
-      // If the accountType info was on the page, the stored copy will have been updated
-      // (else we'll just be grabbing the cached version)
-      tmp_accountType = pr['accountType'].getValue();
+    // If the accountType info was on the page, the stored copy will have been updated
+    // (else we'll just be grabbing the cached version)
+    tmp_accountType = pr['accountType'].getValue();
 
-      this.numerical = tmp_accountType.numerical;
-      this.verbose = tmp_accountType.verbose;
+    this.numerical = tmp_accountType.numerical;
+    this.verbose = tmp_accountType.verbose;
 
-      this.showUltimateFeatures = (6 == tmp_accountType.numerical);
-      this.isUltimate = 6 === tmp_accountType.numerical;
-      this.isStandard = 0 === tmp_accountType.numerical;
+    this.showUltimateFeatures = (6 == tmp_accountType.numerical);
+    this.isUltimate = 6 === tmp_accountType.numerical;
+    this.isStandard = 0 === tmp_accountType.numerical;
 
-      this.cost = pr['accountTypeCost'].getValue(Neobux.accountDefaults.goldenPackCost[this.verbose]);
+    this.cost = pr['accountTypeCost'].getValue(Neobux.defaultAccountTypeDetails[this.verbose].goldenPackCost);
 
-      return this;
-    };
+    return this;
+  };
 
-    this.ownClickValue = clickValues[this.accountType.verbose].Fixed.value;
-    this.rentedReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.rented;
-    this.directReferralClickValue = clickValues[this.accountType.verbose].Fixed.commission.direct;
+  this.clickValues = getClickValues(this.accountType.verbose);
 
-    this.numberOfRefs = {
-      Rented: pr['numberOfRentedReferrals'].getValue(),
-      Direct: pr['numberOfDirectReferrals'].getValue()
-    };
+  console.info('this.clickValues = ',this.clickValues);
+  this.ownClickValue = this.clickValues['Fixed'].value;
+  this.rentedReferralClickValue = this.clickValues['Fixed'].commission.rented;
+  this.directReferralClickValue = this.clickValues['Fixed'].commission.direct;
 
-    this.recycleFee = pr['recycleFee'].getValue(Neobux.accountDefaults['recycleCost'][this.accountType.verbose]);
+  this.numberOfRefs = {
+    Rented: pr['numberOfRentedReferrals'].getValue(),
+    Direct: pr['numberOfDirectReferrals'].getValue()
+  };
 
-    this.autopayFee = getPerAutoPayFee(this.accountType, this.numberOfRefs.Rented);
+  this.recycleFee = pr['recycleFee'].getValue(Neobux.defaultAccountTypeDetails[this.accountType.verbose].recycleCost);
+
+  this.autopayFee = getPerAutoPayFee(this.accountType, this.numberOfRefs.Rented);
 
 
-    this.renewalsLength = pr['renewalsLength'].getValue();
-    this.renewalFees = getRenewalFees(this.accountType.verbose, this.numberOfRefs.Rented, this.renewalsLength);
+  this.renewalsLength = pr['renewalsLength'].getValue();
+  this.renewalFees = getRenewalFees(this.accountType.verbose, this.numberOfRefs.Rented, this.renewalsLength);
 
-    this.preferences = new function () {
-      //    this.columnPrefixes = getPref(tmp_prefs[i], defaultSettings['columnPrefixes'], { prefType: 'JSON' });
-      //    this.numeriseDate = getPref(tmp_prefs[i], defaultSettings['numeriseDate'], { prefType: 'JSON' });
-      //    this.shortFormatTimer = getPref(tmp_prefs[i], defaultSettings['shortFormatTimer'], { prefType: 'JSON' });
-      //    this.showColumn = getPref(tmp_prefs[i], defaultSettings['showColumn'], { prefType: 'JSON' });
-      //    this.shrinkColumnContents = getPref(tmp_prefs[i], defaultSettings['shrinkColumnContents'], { prefType: 'JSON' });
-      //    this.timePeriods = getPref(tmp_prefs[i], defaultSettings['timePeriods'], { prefType: 'JSON' });
+  this.preferences = new function () {
+    //    this.columnPrefixes = getPref(tmp_prefs[i], defaultSettings['columnPrefixes'], { prefType: 'JSON' });
+    //    this.numeriseDate = getPref(tmp_prefs[i], defaultSettings['numeriseDate'], { prefType: 'JSON' });
+    //    this.shortFormatTimer = getPref(tmp_prefs[i], defaultSettings['shortFormatTimer'], { prefType: 'JSON' });
+    //    this.showColumn = getPref(tmp_prefs[i], defaultSettings['showColumn'], { prefType: 'JSON' });
+    //    this.shrinkColumnContents = getPref(tmp_prefs[i], defaultSettings['shrinkColumnContents'], { prefType: 'JSON' });
+    //    this.timePeriods = getPref(tmp_prefs[i], defaultSettings['timePeriods'], { prefType: 'JSON' });
+
+    /**
+     * Shortcut for above:
+     */
+
       //JSON vars
-      var tmp_prefs = ['columnPrefixes', 'numeriseDates', 'shortFormatTimer', 'showColumn', 'shrinkColumnContents', 'timePeriods'];
-      for (var i = 0; i < tmp_prefs.length; i++) {
-        this[tmp_prefs[i]] = pr[tmp_prefs[i]].getValue(defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
-      }
-      //Boolean vars
-      this['flag_textify'] = pr['flag_textify'].getValue();
-    };
-    };
-
-debugLog('currentUser', currentUser);
+    var tmp_prefs = ['columnPrefixes', 'numeriseDates', 'shortFormatTimer', 'showColumn', 'shrinkColumnContents', 'timePeriods'];
+    for (var i = 0; i < tmp_prefs.length; i++) {
+      this[tmp_prefs[i]] = pr[tmp_prefs[i]].getValue(defaultSettings[tmp_prefs[i]], { prefType: 'JSON' });
+    }
+    //Boolean vars
+    this['flag_textify'] = pr['flag_textify'].getValue();
+  };
+};
 
 modalCheckpoint('function getGraphData()');
 
@@ -2091,6 +1912,12 @@ function getGraphData() {
 
 
   var xpathResults_graphData = docEvaluate('//script[contains(text(), "eval")]');
+
+  //If not found any graphs, return 'noGraphs'
+  if(xpathResults_graphData.snapshotLength === 0) {
+    return 'noGraphs';
+  }
+
   //NB: If testing in Firebug, xpathResults_graphData.snapshotLength increases the snapshotLength
   for (var i = 0; i < xpathResults_graphData.snapshotLength; i++) {
     //debugLog(xpathResults_graphData.snapshotItem(i).innerHTML.match(/eval/g).length);
@@ -2227,6 +2054,10 @@ var accountCache = createAccountCache();
 modalCheckpoint('function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache)');
 
 function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache) {
+  if(arg_rawGraphData === 'noGraphs') {
+    throw "function convertRawGraphDataToCacheFormat(arg_rawGraphData, arg_accountCache) {....\n\n ERROR!!\n\n No graphs on current page";
+  }
+
   var tmp_currentGraph = '';
   var tmp_accountCache = arg_accountCache;
 
@@ -3300,6 +3131,7 @@ function REFERRAL(arg_refId, arg_referralProperties) {
   Object_merge(tmp_CurrentReferral.referralListingsData[tmp_currentDateString], tmp_crToday)
   return tmp_CurrentReferral;
 }
+
 modalCheckpoint('var referralListings = new function () ');
 
 var referralListings = new function () {
@@ -3459,82 +3291,84 @@ var referralListings = new function () {
     };
 
 
-function PREFERENCE_INPUT_FIELD(arg_inputType, arg_preferenceId, arg_label, arg_values, arg_longDescription, arg_cssStyle_Label, arg_cssStyle_Input) {
-  var tmp_container = document.createElement('span');
-  tmp_container.id = 'label_' + arg_preferenceId;
-  tmp_container.title = arg_longDescription;
-  var tmp_innerHTML = '';
-  tmp_innerHTML += '<label for="' + arg_preferenceId + '">' + arg_label;
+function createPreferencesDialog() {
+  function PREFERENCE_INPUT_FIELD(arg_inputType, arg_preferenceId, arg_label, arg_values, arg_longDescription, arg_cssStyle_Label, arg_cssStyle_Input) {
+    var tmp_container = document.createElement('span');
+    tmp_container.id = 'label_' + arg_preferenceId;
+    tmp_container.title = arg_longDescription;
+    var tmp_innerHTML = '';
+    tmp_innerHTML += '<label for="' + arg_preferenceId + '">' + arg_label;
 
-  switch (arg_inputType) {
-  case 'text':
-    tmp_innerHTML += '<input type="text" value="' + arg_values.toString() + '" id="' + arg_preferenceId + '"/>';
-    break;
+    switch (arg_inputType) {
+    case 'text':
+      tmp_innerHTML += '<input type="text" value="' + arg_values.toString() + '" id="' + arg_preferenceId + '"/>';
+      break;
+    }
+
+    tmp_innerHTML += '' + '</label>' + '<br>';
+
+    tmp_container.innerHTML = tmp_innerHTML;
+    return tmp_container.innerHTML;
+
   }
 
-  tmp_innerHTML += '' + '</label>' + '<br>';
+  var preferencesDialogStuff = {
+    'username': {
+      inputType: 'text',
+      preferenceId: 'username',
+      label: 'Username: ',
+      values: 'kwah',
+      longDescription: "Your account's username.",
+      cssStyle_Label: '',
+      cssStyle_Input: ''
+    },
+    'rentedReferralsCount': {
+      inputType: 'text',
+      preferenceId: 'rentedReferralsCount',
+      label: 'Rented Refs: ',
+      values: 417,
+      longDescription: "How many rented referrals you have.",
+      cssStyle_Label: '',
+      cssStyle_Input: ''
+    }
+  };
 
-  tmp_container.innerHTML = tmp_innerHTML;
-  return tmp_container.innerHTML;
+  var tmp_preferencesDialogInnerHtml = ''+
+      '<div style="max-height:99%; background-color:pink;">'+
+      '<h1>Preferences</h1>'+
+      '<br>';
 
-}
-
-var preferencesDialogStuff = {
-  'username': {
-    inputType: 'text',
-    preferenceId: 'username',
-    label: 'Username: ',
-    values: 'kwah',
-    longDescription: "Your account's username.",
-    cssStyle_Label: '',
-    cssStyle_Input: ''
-  },
-  'rentedReferralsCount': {
-    inputType: 'text',
-    preferenceId: 'rentedReferralsCount',
-    label: 'Rented Refs: ',
-    values: 417,
-    longDescription: "How many rented referrals you have.",
-    cssStyle_Label: '',
-    cssStyle_Input: ''
+  for (var tmp_prefId in preferencesDialogStuff) {
+    tmp_preferencesDialogInnerHtml += ''+
+        PREFERENCE_INPUT_FIELD(
+            preferencesDialogStuff[tmp_prefId].inputType,
+            preferencesDialogStuff[tmp_prefId].preferenceId,
+            preferencesDialogStuff[tmp_prefId].label,
+            preferencesDialogStuff[tmp_prefId].values,
+            preferencesDialogStuff[tmp_prefId].longDescription,
+            preferencesDialogStuff[tmp_prefId].cssStyle_Label,
+            preferencesDialogStuff[tmp_prefId].cssStyle_Input
+            );
   }
-};
 
-var tmp_preferencesDialogInnerHtml = ''+
-    '<div style="max-height:99%; background-color:pink;">'+
-    '<h1>Preferences</h1>'+
-    '<br>';
-
-for (var tmp_prefId in preferencesDialogStuff) {
   tmp_preferencesDialogInnerHtml += ''+
-      PREFERENCE_INPUT_FIELD(
-          preferencesDialogStuff[tmp_prefId].inputType,
-          preferencesDialogStuff[tmp_prefId].preferenceId,
-          preferencesDialogStuff[tmp_prefId].label,
-          preferencesDialogStuff[tmp_prefId].values,
-          preferencesDialogStuff[tmp_prefId].longDescription,
-          preferencesDialogStuff[tmp_prefId].cssStyle_Label,
-          preferencesDialogStuff[tmp_prefId].cssStyle_Input
-          );
+      ''+
+      '</div>' +
+      '<div>' +
+      '<button id="preferencesDialog_Close">Close</button>' +
+      '</div>';
+
+
+  var preferencesDialog;
+  preferencesDialog = new ModalDialog('preferencesDialog');
+  preferencesDialog.create('background-color: white; margin: 8em auto; padding: 2em; width: 40em;', tmp_preferencesDialogInnerHtml);
+
+  document.getElementById('preferencesDialog_Close').addEventListener('click', function () {
+    preferencesDialog.hide();
+  }, false);
 }
 
-tmp_preferencesDialogInnerHtml += ''+
-    ''+
-    '</div>' +
-    '<div>' +
-    '<button id="preferencesDialog_Close">Close</button>' +
-    '</div>';
-
-
-var preferencesDialog;
-preferencesDialog = new ModalDialog('preferencesDialog');
-preferencesDialog.create('background-color: white; margin: 8em auto; padding: 2em; width: 40em;', tmp_preferencesDialogInnerHtml);
-
-document.getElementById('preferencesDialog_Close').addEventListener('click', function () {
-  preferencesDialog.hide();
-}, false);
-
-
+createPreferencesDialog();
 
 
 var logo = {
@@ -3600,8 +3434,6 @@ var logo = {
   }
 
 };
-
-
 
 var profitGraph = new function () {
 
@@ -3739,10 +3571,10 @@ var chartDataBars = new function () {
         };
 
         if ('ch_cr' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.rentedReferralClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
+          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * userAccount.clickValues['Fixed'].commission.rented * tmp_decimalPrecision) / tmp_decimalPrecision;
         }
         if ('ch_cd' == arg_graphId) {
-          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.directReferralClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
+          dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * userAccount.clickValues['Fixed'].commission.direct * tmp_decimalPrecision) / tmp_decimalPrecision;
         }
         if ('ch_cliques' == arg_graphId) {
           dataBarData[tmp_currentDate].avgIncome = Math.round(tmp_average[dateIndex] * currentUser.ownClickValue * tmp_decimalPrecision) / tmp_decimalPrecision;
@@ -4592,21 +4424,34 @@ function insertAdCounterBox(arg_dateIndex, arg_adCounts, arg_adCountChange_curre
   };
 
 
+  var tmp_sumValuesOfClicks = 0 +
+      tmp_foo['extended'].adCount * userAccount.clickValues['Extended'].value +
+      tmp_foo['regular'].adCount * userAccount.clickValues['Standard'].value +
+      tmp_foo['mini'].adCount * userAccount.clickValues['Mini'].value +
+      tmp_foo['fixed'].adCount * userAccount.clickValues['Fixed'].value +
+      tmp_foo['fixedMicro'].adCount * userAccount.clickValues['FixedMicro'].value +
+      tmp_foo['micro'].adCount * userAccount.clickValues['Micro'].value;
+
   var tmp_totalsContainerHTML = "";
 
   tmp_totalsContainerHTML += "" +
-      "<center><button id='date_decrementButton' class='adCountDecrementButton'>-</button>" +
+      "<center><button id='date_decrementButton' class='adCountDecrementButton'>&laquo;</button>" +
       "<span id='date_textCount'>"+dates_array[arg_dateIndex]+"</span>" +
-      "<button id='date_incrementButton' class='adCountIncrementButton'>+</button></center>" +
-      "<br>"+
+      "<button id='date_incrementButton' class='adCountIncrementButton'>&raquo;</button></center>" +
+      "<center>" + "$" + tmp_sumValuesOfClicks.toFixed(3) + "</center>" +
+      "<br>" +
       "<table>";
 
+  var tmp_adTypeForClickValue;
   for (var tmp_label in tmp_foo) {
     if (tmp_foo.hasOwnProperty(tmp_label)) {
+      tmp_adTypeForClickValue = (tmp_label.slice(0,1).toUpperCase() + tmp_label.slice(1)).replace(/Regular/,'Standard');
+//      console.info(tmp_adTypeForClickValue);
+
       tmp_totalsContainerHTML += [
         "<tr><td>"+ tmp_foo[tmp_label].text,
         "<button id='"+tmp_label+"AdCount_incrementButton' class='adCountIncrementButton'>+</button>",
-        "<span id='extendedAdCount_textCount'>"+tmp_foo[tmp_label].adCount+"</span>",
+        "<span id='"+tmp_label+"AdCount_textCount' title='$"+(tmp_foo[tmp_label].adCount * userAccount.clickValues[tmp_adTypeForClickValue].value)+"'>"+tmp_foo[tmp_label].adCount+"</span>",
         "<span style='font-size:xx-small; font-style: italic; font-color: #333333; '>("+((0 <
             arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]) ? "+"+arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label]:arg_adCountChange_currentPageview[dates_array[arg_dateIndex]][tmp_label])+")</span>",
         "<button id='"+tmp_label+"AdCount_decrementButton' class='adCountDecrementButton'>-</button>"+"</td></tr>"
@@ -5084,10 +4929,10 @@ var referralListings_columns = new function () {
         incomeExpenses[tmp_currentID] = incomeExpenses[tmp_currentID] || {};
 
         if (currentPage.pageCode.match(/referralListings_Rented/)) {
-          incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * currentUser.rentedReferralClickValue).toFixed(3);
+          incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * userAccount.clickValues['Fixed'].commission.rented).toFixed(3);
           incomeExpenses[tmp_currentID].totalExpenses = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].age_dec * costPerReferralPerDay).toFixed(3);
         } else if (currentPage.pageCode.match(/referralListings_Direct/)) {
-          incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * currentUser.directReferralClickValue).toFixed(3);
+          incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * userAccount.clickValues['Fixed'].commission.direct).toFixed(3);
           incomeExpenses[tmp_currentID].totalExpenses = 0;
         }
 
@@ -5221,8 +5066,8 @@ function insertSidebar() {
   sidebarData.projectedClicks['Total'] = sidebarData.projectedClicks['Rented'] + sidebarData.projectedClicks['Direct'];
 
   sidebarData.projectedIncome = {};
-  sidebarData.projectedIncome['Rented'] = (sidebarData.projectedClicks['Rented'] * currentUser.rentedReferralClickValue);
-  sidebarData.projectedIncome['Direct'] = (sidebarData.projectedClicks['Direct'] * currentUser.directReferralClickValue);
+  sidebarData.projectedIncome['Rented'] = (sidebarData.projectedClicks['Rented'] * userAccount.clickValues['Fixed'].commission.rented);
+  sidebarData.projectedIncome['Direct'] = (sidebarData.projectedClicks['Direct'] * userAccount.clickValues['Fixed'].commission.direct);
   sidebarData.projectedIncome['Total'] = (sidebarData.projectedIncome['Rented'] + sidebarData.projectedIncome['Direct']);
 
   // // NOW CREATE THE ACTUAL SIDEBAR ////
@@ -5386,9 +5231,9 @@ function insertSidebar() {
     var numberOfDays = (endDay - startDay) + 1;
 
     var valueType = (1 === numberOfDays) ? 'value' : 'sum';
-    var tmp_income = (sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] * currentUser.rentedReferralClickValue) + (sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] * currentUser.directReferralClickValue);
+    var tmp_income = (sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] * userAccount.clickValues['Fixed'].commission.rented) + (sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] * userAccount.clickValues['Fixed'].commission.direct);
     var tmp_income_inclOwnClicks = tmp_income + (sidebarData['ownClicks_localTime'][dates_array[endDay]][valueType] * currentUser.ownClickValue);
-    var tmp_expenses = sidebarData['recycleFees'][dates_array[endDay]][valueType] + sidebarData['extensions'][dates_array[endDay]][valueType] + sidebarData['autopay'][dates_array[endDay]][valueType] + (numberOfDays * Neobux.accountDefaults['goldenPackCost'][currentUser.accountType.verbose] / 365);
+    var tmp_expenses = sidebarData['recycleFees'][dates_array[endDay]][valueType] + sidebarData['extensions'][dates_array[endDay]][valueType] + sidebarData['autopay'][dates_array[endDay]][valueType] + (numberOfDays * currentUser.accountType.cost / 365);
 
 
     tmp += "<h5 class='bold grey'>[ " + header + " ]</h5>";
@@ -5401,8 +5246,8 @@ function insertSidebar() {
     tmp += "<h6 title='" + tl8('Details about your income sources for ') + header.toLowerCase() + "'> + Income</h6>";
     tmp += "<div class='sidebarDetails'>";
     tmp += "- " + tl8('Personal Clicks') + ": " + sidebarData['ownClicks_localTime'][dates_array[endDay]][valueType] + " / $" + (sidebarData['ownClicks_localTime'][dates_array[endDay]][valueType] * currentUser.ownClickValue).toFixed(3) + "<br>";
-    tmp += SIRR("- " + tl8('Rented Clicks') + ": " + sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] + " / $" + (sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] * currentUser.rentedReferralClickValue).toFixed(3) + "<br>");
-    tmp += SIDR("- " + tl8('Direct Clicks') + ": " + sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] + " / $" + (sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] * currentUser.directReferralClickValue).toFixed(3) + "<br>");
+    tmp += SIRR("- " + tl8('Rented Clicks') + ": " + sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] + " / $" + (sidebarData['referralClicks_rented'][dates_array[endDay]][valueType] * userAccount.clickValues['Fixed'].commission.rented).toFixed(3) + "<br>");
+    tmp += SIDR("- " + tl8('Direct Clicks') + ": " + sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] + " / $" + (sidebarData['referralClicks_direct'][dates_array[endDay]][valueType] * userAccount.clickValues['Fixed'].commission.direct).toFixed(3) + "<br>");
     tmp += "</div>";
 
     if (showProjected) {
@@ -5479,13 +5324,7 @@ var tmp_iframePages = /viewingAdvertisement|viewingForums_editingMessage|viewing
 if (currentPage.pageCode.match(/referralListings/i)) {
   modalCheckpoint('if (currentPage.pageCode.match(/referralListings/i)) {');
 
-  try {
-    referralListings.init();
-  } catch (e) {
-    console.info("ERROR!\n\n referralListings.init() failed\n\n" + e);
-    //    alert("ERROR!\n\n referralListings.init() failed\n\n"+e);
-    throw e;
-  }
+  referralListings.init();
 
   widenPages.referralListings();
 
@@ -5536,36 +5375,20 @@ if (currentPage.pageCode.match(/referralListings/i)) {
 }
 
 if (currentPage.pageCode.match(/viewAdvertisementsPage/i)) {
-  try {
-    var adCountData = pr['ownAdCountTally'].getValue();
-    insertAdCounterBox(0, adCountData, {});
-  } catch (e) {
-    console.info("ERROR!\n\n insertAdCounterBox(0, adCountData, {}); failed\n\n" + e);
-    //    alert("ERROR!\n\n insertAdCounterBox(0, adCountData, {}); failed\n\n"+e);
-  }
+  var adCountData = pr['ownAdCountTally'].getValue();
+  insertAdCounterBox(0, adCountData, {});
 }
 
 
 if (currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/referralStatistics/i)) {
   modalCheckpoint('if (currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/referralStatistics/i)) {');
 
-  try {
-    accountCache = convertRawGraphDataToCacheFormat(getGraphData(), accountCache);
-    pr['accountCache'].setValue(accountCache);
-    chartDataBars.init();
-  } catch (e) {
-    console.info("ERROR!\n\n chartDataBars.init(); failed\n\n" + e);
-    //    alert("ERROR!\n\n chartDataBars.init(); failed\n\n"+e);
-    throw e;
-  }
-  try {
-    exportTabs.init();
-  } catch (e) {
-    console.info("ERROR!\n\n  exportTabs.init(); failed\n\n" + e);
-    //    alert("ERROR!\n\n  exportTabs.init(); failed\n\n"+e);
-    throw e;
-  }
+  accountCache = convertRawGraphDataToCacheFormat(getGraphData(), accountCache);
+  pr['accountCache'].setValue(accountCache);
+  chartDataBars.init();
 
+
+  exportTabs.init();
 }
 
 
@@ -5611,5 +5434,3 @@ if (0 < tl8_counter) {
   debugLog(pr['translationStringsNeeded'].getValue());
 }
 
-
-debugLog(pr['neobuxLanguageCode'].getValue());
