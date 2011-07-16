@@ -4749,6 +4749,8 @@ var referralListings_columns = new function () {
     refID: 1,
     refSince: 2,
     refSince_DHM: 2,
+    nextPayment: 3,
+    nextPayment_DHM: 3,
     lastClick: 4,
     lastClick_D: 4
   };
@@ -4756,6 +4758,8 @@ var referralListings_columns = new function () {
     refID: 3,
     refSince: 4,
     refSince_DHM: 4,
+    nextPayment: 5,
+    nextPayment_DHM: 5,
     lastClick: 6,
     lastClick_D: 6
   };
@@ -4875,12 +4879,12 @@ var referralListings_columns = new function () {
     var diff_secs = Math.floor(remaining_time / oneSecond);
     remaining_time -= diff_secs * oneSecond;
 
-    return '['+
+    return ''+
         diff_days+'d'+
         ', '+diff_hrs+'h'+
         ', '+diff_mins+'m'+
       //       ', '+diff_secs+'s'+
-        ']';
+        '';
   }
 
   function dateToD(arg_date) {
@@ -4902,7 +4906,7 @@ var referralListings_columns = new function () {
       return '--';
     }
 
-    return '[' + diff_days + 'd' + ']';
+    return  diff_days + 'd';
   }
 
   function nextPaymentStringToDate(arg_nextPaymentString) {
@@ -4969,8 +4973,8 @@ var referralListings_columns = new function () {
     };
 
     if (currentPage.pageCode.match(/referralListings_Rented/i)) {
-      columns.textifyFlag = new COLUMN('new', '', '', 'Flag Colour', [], [], '');
-      columns.nextPayment_DHM = new COLUMN('new', '', '', 'D/H/M Next Payment', [], [], '');
+      columns.textifyFlag = new COLUMN('new', '', '', 'Flag Colour', [], [], tmp_defaultCSS);
+      columns.nextPayment_DHM = new COLUMN('replace', '', '', 'D/H/M Next Payment', [], [], '');
     }
     if (currentPage.pageCode.match(/referralListings_Direct/i)) {}
 
@@ -5103,10 +5107,10 @@ var referralListings_columns = new function () {
               }
               break;
             case 'append':
-              appendToColumnContents(tmp_currentRow, tmp_value + columns[columnName].colSuffix, colIndexes[columnName], { "customCSS": columns[columnName].customCSS });
+              appendToColumnContents(tmp_currentRow, '[' + tmp_value + columns[columnName].colSuffix + ']', colIndexes[columnName], { "customCSS": columns[columnName].customCSS });
               break;
             case 'prepend':
-              prependToColumnContents(tmp_currentRow, columns[columnName].colPrefix + tmp_value, colIndexes[columnName], { "customCSS": columns[columnName].customCSS });
+              prependToColumnContents(tmp_currentRow, '[' + columns[columnName].colPrefix + tmp_value + ']', colIndexes[columnName], { "customCSS": columns[columnName].customCSS });
               break;
             case 'replace':
               replaceColumnContents(tmp_currentRow, columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix, colIndexes[columnName], { "customCSS": columns[columnName].customCSS });
