@@ -365,6 +365,8 @@ pr['AutoDetectTimeOffset'] = new userPreference('AutoDetectTimeOffset', true, { 
 pr['autopayOn'] = new userPreference('autopayOn', false, { prefType: 'boolean' });
 pr['columnPrefixes'] = new userPreference('columnPrefixes', {}, { prefType: 'JSON' });
 pr['flag_textify'] = new userPreference('flag_textify', true, { prefType: 'boolean' });
+pr['goldenCost'] = new userPreference('goldenCost', 0, { prefType: 'float' });
+pr['goldenPackCost'] = new userPreference('goldenPackCost', 0, { prefType: 'float' });
 pr['graphData'] = new userPreference('graphData', {}, { prefType: 'JSON' });
 pr['localMidnight'] = new userPreference('localMidnight', '', { prefType: 'string' });
 pr['membershipType'] = new userPreference('membershipType', 'unableToFetchNameFromStorage', { prefType: 'string' });
@@ -1729,6 +1731,28 @@ var userAccount = new function () {
     return tmp_membershipType_name;
   }
 
+    /**
+   * @param arg_accountType Name of the account type with only the first initial uppercase
+   * @param arg_numberOfRentedReferrals Integer count of how many rented referrals the user has
+   */
+  function getPerAutoPayFee(arg_accountType, arg_numberOfRentedReferrals) {
+    var defaultAutopayValues = getAutopayValues(arg_accountType);
+
+    var totalRentedRefs = (0 <= arg_numberOfRentedReferrals) ? arg_numberOfRentedReferrals : 0;
+    var perAutoPayCost = 0;
+
+    var j = defaultAutopayValues.length - 1;
+    var currentTest;
+    do {
+      currentTest = defaultAutopayValues[j];
+      if (parseInt(currentTest.minRefs, 10) < parseInt(totalRentedRefs, 10)) {
+        perAutoPayCost = currentTest.cost;
+      }
+    } while ((parseInt(defaultAutopayValues[j--].minRefs, 10) > parseInt(totalRentedRefs, 10)));
+
+    return perAutoPayCost;
+  }
+
     this.membershipType = getMembershipType();
     this.override_showUltimateFeatures = false;
     this.clickValues = getClickValues(this.membershipType);
@@ -1737,12 +1761,12 @@ var userAccount = new function () {
       Direct: pr['numberOfDirectReferrals'].getValue()
     };
     this.feesCosts = {
-      autopay: 0,
+      autopay: getPerAutoPayFee(this.membershipType, this.numberOfReferrals.Rented),
       expiredReferral: 0,
-      golden: 0,
-      goldenPack: 0,
+      golden: pr['goldenCost'].getValue(Neobux.defaultAccountTypeDetails[this.membershipType].goldenCost),
+      goldenPack: pr['goldenPackCost'].getValue(Neobux.defaultAccountTypeDetails[this.membershipType].goldenPackCost),
       initialRent: 0,
-      recycle: 0,
+      recycle: pr['recycleFee'].getValue(Neobux.defaultAccountTypeDetails[this.membershipType].recycleCost),
       extensions: {
         15:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 15),
         30:  getRenewalFees(this.membershipType, this.numberOfReferrals.Rented, 30),
@@ -4795,9 +4819,8 @@ var referralListings_columns = new function () {
   }
   
   function appendToColumnContents(arg_row, arg_columnText, arg_colIndex, arg_options) {
-    console.info(arguments);
-    var tmp_newColumn;
-    var tmp_customCSS = arg_options['customCSS'] || '';
+    var tmp_customCSS = '';
+    tmp_customCSS = arg_options['customCSS'] || '';
 
     //    debugLog(arg_colIndex);
 
@@ -4816,8 +4839,8 @@ var referralListings_columns = new function () {
   }
 
   function prependToColumnContents(arg_row, arg_columnText, arg_colIndex, arg_options) {
-    var tmp_newColumn;
-    var tmp_customCSS = arg_options['customCSS'] || '';
+    var tmp_customCSS = '';
+    tmp_customCSS = arg_options['customCSS'] || '';
 
     //    debugLog(arg_colIndex);
 
@@ -4835,8 +4858,8 @@ var referralListings_columns = new function () {
   }
 
   function replaceColumnContents(arg_row, arg_columnText, arg_colIndex, arg_options) {
-    var tmp_newColumn;
-    var tmp_customCSS = arg_options['customCSS'] || '';
+    var tmp_customCSS = '';
+    tmp_customCSS = arg_options['customCSS'] || '';
 
     //    debugLog(arg_colIndex);
 
@@ -4964,17 +4987,17 @@ var referralListings_columns = new function () {
     var tmp_dhmCSS = 'color: #888; font-size: 90%; letter-spacing: -1px;';
     
     var columns = {
-      totalIncomeCol:     new COLUMN('new', '$', '', 'Total Income', [], [], tmp_defaultCSS),
-      totalExpensesCol:   new COLUMN('new', '$', '', 'Total Expenses', [], [], tmp_defaultCSS),
-      netIncome:          new COLUMN('new', '$', '', 'Net Income', [], [], tmp_defaultCSS),
-      clickValues:        new COLUMN('new', '', '', 'Ultimate Click Values', ['Ultimate'], [], tmp_defaultCSS),
+      totalIncomeCol:     new COLUMN('new', '$', '', '<small>Total Income</small>', [], [], tmp_defaultCSS),
+      totalExpensesCol:   new COLUMN('new', '$', '', '<small>Total Expenses</small>', [], [], tmp_defaultCSS),
+      netIncome:          new COLUMN('new', '$', '', '<small>Net Income</small>', [], [], 'letter-spacing: 0px;'),
+//      clickValues:        new COLUMN('new', '', '', '<small>Ultimate Click Values</small>', ['Ultimate'], [], tmp_defaultCSS),
       refSince_DHM:       new COLUMN('append', '', '', ' <small>[D/H/M]</small>', [], [], tmp_dhmCSS),
       lastClick_D:        new COLUMN('append', '', '', ' <small>[D]</small>', [], [], tmp_dhmCSS)
     };
 
     if (currentPage.pageCode.match(/referralListings_Rented/i)) {
-      columns.textifyFlag = new COLUMN('new', '', '', 'Flag Colour', [], [], tmp_defaultCSS);
-      columns.nextPayment_DHM = new COLUMN('replace', '', '', 'D/H/M Next Payment', [], [], '');
+      columns.textifyFlag = new COLUMN('new', '', '', '<small>Flag Colour', [], [], tmp_defaultCSS);
+      columns.nextPayment_DHM = new COLUMN('replace', '', '', '<small>D/H/M Next Payment</small>', [], [], '');
     }
     if (currentPage.pageCode.match(/referralListings_Direct/i)) {}
 
@@ -5070,6 +5093,16 @@ var referralListings_columns = new function () {
               break;
             case 'netIncome':
               tmp_value = (incomeExpenses[tmp_currentID].totalIncome - incomeExpenses[tmp_currentID].totalExpenses).toFixed(3);
+                console.info('userAccount.feesCosts.recycle = ',userAccount.feesCosts.recycle);
+              if(tmp_value < 0) {
+                  tmp_value = '<span style="color: red;">'+tmp_value+'</span>';
+                }
+                if(tmp_value > 0 && tmp_value < userAccount.feesCosts.recycle) {
+                  tmp_value = '<span style="color: blue;">'+tmp_value+'</span>';
+                }
+                if(tmp_value > userAccount.feesCosts.recycle) {
+                  tmp_value = '<span style="color: green;">'+tmp_value+'</span>';
+                }
               break;
             case 'clickValues':
               //              console.info(tmp_referralsData[tmp_currentID].ultimateClickValues.clicks);
