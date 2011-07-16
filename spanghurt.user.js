@@ -4788,6 +4788,24 @@ var referralListings_columns = new function () {
     lastClick_D: 6
   };
 
+  if(currentPage.pageCode.match(/direct/i)) {
+    var colHeaderIndexes = {
+      refID: 1,
+      cameFrom: 2,
+      refSince: 3,
+      refSince_DHM: 3,
+      lastClick: 4,
+      lastClick_D: 4
+    };
+    var colIndexes = {
+      refID: 1,
+      cameFrom: 2,
+      refSince: 3,
+      refSince_DHM: 3,
+      lastClick: 4,
+      lastClick_D: 4
+    };
+  }
 
   function addColumn(arg_row, arg_columnText, arg_colId, arg_options) {
     var tmp_newColumn;
