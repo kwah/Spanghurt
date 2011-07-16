@@ -3055,9 +3055,14 @@ function REFERRAL(arg_refId, arg_referralProperties) {
 
 
   function ultimateClickValuesRaw_toStats(arg_ultimateClickValues_raw) {
+    debugLog('arg_ultimateClickValues_raw = ',arg_ultimateClickValues_raw);
     if (arg_ultimateClickValues_raw === null) {
       return null;
     }
+    if(arg_ultimateClickValues_raw === undefined) {
+      throw "Error! (arg_ultimateClickValues_raw === undefined){}";
+    }
+    
     var minigraph = {
       'rawClickData': arg_ultimateClickValues_raw,
       'clicks': new Array()
@@ -3119,12 +3124,19 @@ function REFERRAL(arg_refId, arg_referralProperties) {
   tmp_crToday.age_dec = dateToDec('', tmp_crToday.referralSince, '') * 1;
 
   if ('ultimate' === currentUser.accountType.verbose.toLowerCase()) {
-    tmp_crToday.ultimateClickStats = ultimateClickValuesRaw_toStats(tmp_CurrentReferral.ultimateClickValues_raw);
+    try {
+      tmp_crToday.ultimateClickStats = ultimateClickValuesRaw_toStats(tmp_CurrentReferral.ultimateClickValues_raw);
 
-    for (var i = 0; i < tmp_crToday.ultimateClickStats.clicks.length; i++) {
-      tmp_CurrentReferral.ultimateClickData = tmp_CurrentReferral.ultimateClickData || {};
-      tmp_CurrentReferral.ultimateClickData[dates_array[i]] = tmp_CurrentReferral.ultimateClickData[dates_array[i]] || {};
-      tmp_CurrentReferral.ultimateClickData[dates_array[i]].creditedClicks = tmp_crToday.ultimateClickStats.clicks[i];
+      for (var i = 0; i < tmp_crToday.ultimateClickStats.clicks.length; i++) {
+        tmp_CurrentReferral.ultimateClickData = tmp_CurrentReferral.ultimateClickData || {};
+        tmp_CurrentReferral.ultimateClickData[dates_array[i]] = tmp_CurrentReferral.ultimateClickData[dates_array[i]] || {};
+        tmp_CurrentReferral.ultimateClickData[dates_array[i]].creditedClicks = tmp_crToday.ultimateClickStats.clicks[i];
+      }
+    }
+    catch(e) {
+      GM_log("Error! Something went wrong with the ultimate click stats");
+      console.info("Error! Something went wrong with the ultimate click stats");
+      debugLog('e', e);
     }
   }
 
@@ -4733,148 +4745,304 @@ function addClickStatsToGoldenGraph() {
 }
 
 var referralListings_columns = new function () {
-    function addColumn(arg_row, arg_columnText, arg_colId, arg_customCSS) {
-      var tmp_newColumn;
+  var colHeaderIndexes = {
+    refID: 1,
+    refSince: 2,
+    refSince_DHM: 2,
+    lastClick: 4,
+    lastClick_D: 4
+  };
+  var colIndexes = {
+    refID: 3,
+    refSince: 4,
+    refSince_DHM: 4,
+    lastClick: 6,
+    lastClick_D: 6
+  };
 
-      //    debugLog(arg_colId);
-      var tmp_existingCol = document.getElementById(arg_colId);
-      if (tmp_existingCol) {
-        tmp_existingCol.parentNode.removeChild(tmp_existingCol);
-      }
 
-      /*NB: container needs to be a table otherwise Firefox disposes of the contaning <td> due to it not being within a suitable containing element*/
-      var tmp_container = document.createElement('table');
+  function addColumn(arg_row, arg_columnText, arg_colId, arg_options) {
+    var tmp_newColumn;
+    var tmp_customCSS = ( arg_options.hasOwnProperty('customCSS') ) ? arg_options['customCSS'] : '';
+
+    //    debugLog(arg_colId);
+    var tmp_existingCol = document.getElementById(arg_colId);
+    if (tmp_existingCol) {
+      tmp_existingCol.parentNode.removeChild(tmp_existingCol);
+    }
+
+    /** NB: container needs to be a table otherwise Firefox disposes of the contaning <td>
+     * due to it not being within a suitable containing element
+     **/
+    var tmp_container = document.createElement('table');
     tmp_container.innerHTML = '' +
         '<tbody><tr><td id="'+arg_colId+'"' +
-          ' class="'+arg_row.children[arg_row.children.length - 1].getAttribute('class')+'"' +
-          ' style="'+arg_row.children[arg_row.children.length - 1].getAttribute('style') +
-          arg_customCSS+'"' +
+        ' class="'+arg_row.children[arg_row.children.length - 1].getAttribute('class')+'"' +
+        ' style="'+arg_row.children[arg_row.children.length - 1].getAttribute('style') +
+        tmp_customCSS+'"' +
         '>' +
-          arg_columnText+
+        arg_columnText+
         '</td></tr></tbody>';
 
-      tmp_newColumn = tmp_container.children[0].children[0].children[0];
-      arg_row.appendChild(tmp_newColumn);
-      colCount++;
+    tmp_newColumn = tmp_container.children[0].children[0].children[0];
+    arg_row.appendChild(tmp_newColumn);
+    colCount++;
 
+  }
+  
+  function appendToColumnContents(arg_row, arg_columnText, arg_colIndex, arg_options) {
+    console.info(arguments);
+    var tmp_newColumn;
+    var tmp_customCSS = arg_options['customCSS'] || '';
+
+    //    debugLog(arg_colIndex);
+
+    var tmp_existingCol = arg_row.children[arg_colIndex];
+    if (!tmp_existingCol) {
+      console.info("Error! appendToColumnContents() - invalid column index. \nArguments:");
+      console.info('arg_row.innerText = ', arg_row.innerText);
+      console.info(arguments);
+      return false;
+//      throw "Error! appendToColumnContents() - invalid column index. \nArguments:"
     }
 
-    function dateToDHM(arg_date) {
-      var oneSecond = 1000;
-      var oneMinute = oneSecond * 60;
-      var oneHour = oneMinute * 60;
-      var oneDay = oneHour * 24;
+    //Add to the end of the column's innerHTML
+    tmp_existingCol.innerHTML = tmp_existingCol.innerHTML + '<span style="' + tmp_customCSS + '">' + arg_columnText + '</span>';
+    return tmp_existingCol;
+  }
 
-      var now = new Date();
+  function prependToColumnContents(arg_row, arg_columnText, arg_colIndex, arg_options) {
+    var tmp_newColumn;
+    var tmp_customCSS = arg_options['customCSS'] || '';
 
-      //    debugLog('now: ', now, 'another date: ', arg_date);
-      var t_diff = new Date(arg_date) - now;
+    //    debugLog(arg_colIndex);
 
-      var future = (0 < t_diff);
-      var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
+    var tmp_existingCol = arg_row.children[arg_colIndex];
+    if (!tmp_existingCol) {
+      console.info("Error! prependToColumnContents() - invalid column index. \nArguments:");
+      console.info(arguments);
+      return false;
+//      throw "Error! prependToColumnContents() - invalid column index. \nArguments:"
+    }
 
-      var diff_days = Math.floor(remaining_time / oneDay);
-      remaining_time -= diff_days * oneDay;
+    //Add to the beginning of the column's innerHTML
+    tmp_existingCol.innerHTML = '<span style="' + tmp_customCSS + '">' + arg_columnText + '</span>' + tmp_existingCol.innerHTML;
+    return tmp_existingCol;
+  }
 
-      var diff_hrs = Math.floor(remaining_time / oneHour);
-      remaining_time -= diff_hrs * oneHour;
+  function replaceColumnContents(arg_row, arg_columnText, arg_colIndex, arg_options) {
+    var tmp_newColumn;
+    var tmp_customCSS = arg_options['customCSS'] || '';
 
-      var diff_mins = Math.floor(remaining_time / oneMinute);
-      remaining_time -= diff_mins * oneMinute;
+    //    debugLog(arg_colIndex);
 
-      var diff_secs = Math.floor(remaining_time / oneSecond);
-      remaining_time -= diff_secs * oneSecond;
+    var tmp_existingCol = arg_row.children[arg_colIndex];
+    if (!tmp_existingCol) {
+      console.info("Error! replaceColumnContents() - invalid column index. \nArguments:");
+      console.info(arguments);
+      return false;
+//      throw "Error! replaceColumnContents() - invalid column index. \nArguments:"
+    }
 
-   return '['+
-       diff_days+'d'+
-       ', '+diff_hrs+'h'+
-       ', '+diff_mins+'m'+
+    //Replace the column's innerHTML
+    tmp_existingCol.innerHTML = '<span style="' + tmp_customCSS + '">' + arg_columnText + '</span>';
+    return tmp_existingCol;
+  }
+
+  function dateToDHM(arg_date) {
+    var oneSecond = 1000;
+    var oneMinute = oneSecond * 60;
+    var oneHour = oneMinute * 60;
+    var oneDay = oneHour * 24;
+
+    var now = new Date();
+
+    //    debugLog('now: ', now, 'another date: ', arg_date);
+    var t_diff = new Date(arg_date) - now;
+
+    var future = (0 < t_diff);
+    var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
+
+    var diff_days = Math.floor(remaining_time / oneDay);
+    remaining_time -= diff_days * oneDay;
+
+    var diff_hrs = Math.floor(remaining_time / oneHour);
+    remaining_time -= diff_hrs * oneHour;
+
+    var diff_mins = Math.floor(remaining_time / oneMinute);
+    remaining_time -= diff_mins * oneMinute;
+
+    var diff_secs = Math.floor(remaining_time / oneSecond);
+    remaining_time -= diff_secs * oneSecond;
+
+    return '['+
+        diff_days+'d'+
+        ', '+diff_hrs+'h'+
+        ', '+diff_mins+'m'+
       //       ', '+diff_secs+'s'+
-      ']';
+        ']';
+  }
+
+  function dateToD(arg_date) {
+    var oneSecond = 1000;
+    var oneMinute = oneSecond * 60;
+    var oneHour = oneMinute * 60;
+    var oneDay = oneHour * 24;
+
+    var now = new Date();
+    var t_diff = new Date(arg_date) - now;
+
+    var future = (0 < t_diff);
+    var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
+
+    var diff_days = Math.floor(remaining_time / oneDay);
+    remaining_time -= diff_days * oneDay;
+
+    if (isNaN(diff_days)) {
+      return '--';
     }
 
-    function dateToD(arg_date) {
-      var oneSecond = 1000;
-      var oneMinute = oneSecond * 60;
-      var oneHour = oneMinute * 60;
-      var oneDay = oneHour * 24;
+    return '[' + diff_days + 'd' + ']';
+  }
 
-      var now = new Date();
-      var t_diff = new Date(arg_date) - now;
+  function nextPaymentStringToDate(arg_nextPaymentString) {
+    arg_nextPaymentString = arg_nextPaymentString.toString();
+    //    debugLog('nextPaymentStringToDate: \n', 'arg_nextPaymentString : ', arg_nextPaymentString);
+    var onesec = 1000;
+    var onemin = onesec * 60;
+    var onehr = onemin * 60;
+    var oneday = onehr * 24;
 
-      var future = (0 < t_diff);
-      var remaining_time = (0 < t_diff) ? t_diff : t_diff * -1;
+    /* nb: bugfix - occasionally neobux displafs displays a negative # of hours for the next payment date which breaks the regex */
+    //    var spliced = arg_nextPaymentString.match(/([0-9]+).*([0-9]{2}):([0-9]{2})/);
+    var spliced = arg_nextPaymentString.match(/([0-9]+)[^-]*(-?[0-9]{2}):([0-9]{2})/);
+    var tmp_days = spliced[1] * 1;
+    var tmp_hours = spliced[2] * 1;
+    var tmp_mins = spliced[3] * 1;
 
-      var diff_days = Math.floor(remaining_time / oneDay);
-      remaining_time -= diff_days * oneDay;
+    var tmp_date = new Date( (new Date()*1) +
+        (tmp_days * oneday) +
+        (tmp_hours * onehr) +
+        (tmp_mins * onemin) );
 
-      if (isNaN(diff_days)) {
-        return '--';
+    return tmp_date;
+
+  }
+
+  this.editHeaderRow = function () {
+
+  }
+
+  this.mainLoop = function () {
+    var tmp_currentID, tmp_income, tmp_value;
+    var tmp_dhmOwned;
+
+    var headerCol_idPrefix = 'header_';
+    var newCol_idPrefix = ''; // set within the loop
+
+    function COLUMN(arg_colType, arg_colPrefix, arg_colSuffix, arg_colHeaderText, arg_inclMemberType, arg_exclMemberType, arg_customCSS) {
+      if(arguments.length !== 7) {
+        console.info('arguments:', arguments);
+        throw 'ERROR! Not enough arguments to create a COLUMN()';
+      }
+      
+      this.colType = arg_colType;
+      this.colPrefix = arg_colPrefix;
+//      this.colReplacementText = arg_replacementColumnText;
+      this.colSuffix = arg_colSuffix;
+      this.colHeaderText = arg_colHeaderText;
+      this.inclMemberType = arg_inclMemberType;
+      this.exclMemberType = arg_exclMemberType;
+      this.customCSS = arg_customCSS;
+    }
+
+    var tmp_defaultCSS = 'letter-spacing: -1px;';
+    var tmp_dhmCSS = 'color: #888; font-size: 90%; letter-spacing: -1px;';
+    
+    var columns = {
+      totalIncomeCol:     new COLUMN('new', '$', '', 'Total Income', [], [], tmp_defaultCSS),
+      totalExpensesCol:   new COLUMN('new', '$', '', 'Total Expenses', [], [], tmp_defaultCSS),
+      netIncome:          new COLUMN('new', '$', '', 'Net Income', [], [], tmp_defaultCSS),
+      clickValues:        new COLUMN('new', '', '', 'Ultimate Click Values', ['Ultimate'], [], tmp_defaultCSS),
+      refSince_DHM:       new COLUMN('append', '', '', ' <small>[D/H/M]</small>', [], [], tmp_dhmCSS),
+      lastClick_D:        new COLUMN('append', '', '', ' <small>[D]</small>', [], [], tmp_dhmCSS)
+    };
+
+    if (currentPage.pageCode.match(/referralListings_Rented/i)) {
+      columns.textifyFlag = new COLUMN('new', '', '', 'Flag Colour', [], [], '');
+      columns.nextPayment_DHM = new COLUMN('new', '', '', 'D/H/M Next Payment', [], [], '');
+    }
+    if (currentPage.pageCode.match(/referralListings_Direct/i)) {}
+
+    //Add header row columns
+    for (var columnName in columns) {
+      if (columns.hasOwnProperty(columnName)) {
+        if (columns[columnName].inclMemberType.length > 0) {
+          //If membersip type not found on the includes list, continue
+          if (columns[columnName].inclMemberType.indexOf(userAccount.membershipType) === -1) {
+            continue;
+          }
+        }
+        if (columns[columnName].exclMemberType.length > 0) {
+          //If membership type found on the excludes list, continue
+          if (columns[columnName].exclMemberType.indexOf(userAccount.membershipType) >= 0) {
+            continue;
+          }
+        }
+        console.info('columnName = ',columnName);
+        switch (columns[columnName].colType)
+        {
+          case 'new':
+            addColumn(headerRow, columns[columnName].colHeaderText, headerCol_idPrefix + columnName, {});
+            break;
+          case 'append':
+            appendToColumnContents(headerRow, columns[columnName].colHeaderText, colHeaderIndexes[columnName], {});
+            break;
+          case 'prepend':
+            prependToColumnContents(headerRow, columns[columnName].colHeaderText, colHeaderIndexes[columnName], {});
+            break;
+          case 'replace':
+            replaceColumnContents(headerRow, columns[columnName].colHeaderText, colHeaderIndexes[columnName], {});
+            break;
+        }
+      }
+    }
+
+    var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
+    for (var i = 1; i < tmp_colspans.length - 1; i++) {
+      tmp_colspans[i], tmp_colspans[i].setAttribute('colspan', colCount);
+    }
+
+    var extensionCostPerDay = userAccount.feesCosts.extensions[preferences.preferredExtensionLength] / preferences.preferredExtensionLength;
+    var goldenFeePerDay = currentUser.accountType.cost / 365;
+    var goldenFeePerDayPerReferral = goldenFeePerDay / currentUser.numberOfRefs.Rented;
+
+    var costPerReferralPerDay = extensionCostPerDay; // + goldenFeePerDayPerReferral;
+    var incomeExpenses = {};
+
+    for (var i = 0; i < referralRows.length; i++) {
+      tmp_currentRow = referralRows[i];
+
+      tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/) || tmp_currentRow.children[colIndexes.refID].textContent.match(/[a-z]+/);
+      tmp_currentID = tmp_currentID[0];
+      tmp_currentID = (tmp_currentID.length > 0) ? tmp_currentID : tmp_currentRow.children[colIndexes.refID].textContent;
+
+      tmp_currentRow.id = tmp_currentID;
+      tmp_currentRow.setAttribute('class', tmp_currentRow.getAttribute('class') + ' referralRow');
+
+      incomeExpenses[tmp_currentID] = incomeExpenses[tmp_currentID] || {};
+
+      if (currentPage.pageCode.match(/referralListings_Rented/)) {
+        incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * userAccount.clickValues['Fixed'].commission.rented).toFixed(3);
+        incomeExpenses[tmp_currentID].totalExpenses = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].age_dec * costPerReferralPerDay).toFixed(3);
+      } else if (currentPage.pageCode.match(/referralListings_Direct/)) {
+        incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * userAccount.clickValues['Fixed'].commission.direct).toFixed(3);
+        incomeExpenses[tmp_currentID].totalExpenses = 0;
       }
 
-      return '[' + diff_days + 'd' + ']';
-    }
+      GM_addStyle('.referralRow { letter-spacing: -0.01em; }');
 
-    function nextPaymentStringToDate(arg_nextPaymentString) {
-      arg_nextPaymentString = arg_nextPaymentString.toString();
-      //    debugLog('nextPaymentStringToDate: \n', 'arg_nextPaymentString : ', arg_nextPaymentString);
-      var onesec = 1000;
-      var onemin = onesec * 60;
-      var onehr = onemin * 60;
-      var oneday = onehr * 24;
-
-      /* nb: bugfix - occasionally neobux displafs displays a negative # of hours for the next payment date which breaks the regex */
-      //    var spliced = arg_nextPaymentString.match(/([0-9]+).*([0-9]{2}):([0-9]{2})/);
-      var spliced = arg_nextPaymentString.match(/([0-9]+)[^-]*(-?[0-9]{2}):([0-9]{2})/);
-      var tmp_days = spliced[1] * 1;
-      var tmp_hours = spliced[2] * 1;
-      var tmp_mins = spliced[3] * 1;
-
-      var tmp_date = new Date( (new Date()*1) +
-          (tmp_days * oneday) +
-          (tmp_hours * onehr) +
-          (tmp_mins * onemin) );
-
-      return tmp_date;
-
-    }
-
-    this.editHeaderRow = function () {
-
-    }
-
-    this.mainLoop = function () {
-      var tmp_currentID, tmp_income, tmp_value;
-      var tmp_dhmOwned;
-
-      var headerCol_idPrefix = 'header_';
-      var newCol_idPrefix = ''; // set within the loop
-
-      function COLUMN(arg_colType, arg_colPrefix, arg_colSuffix, arg_colHeaderText, arg_inclMemberType, arg_exclMemberType) {
-        this.colType = arg_colType;
-        this.colPrefix = arg_colPrefix;
-        this.colSuffix = arg_colSuffix;
-        this.colHeaderText = arg_colHeaderText;
-        this.inclMemberType = arg_inclMemberType;
-        this.exclMemberType = arg_exclMemberType;
-      }
-
-      var columns = {
-        totalIncomeCol:     new COLUMN('new', '$', '', 'Total Income', [], []),
-        totalExpensesCol:   new COLUMN('new', '$', '', 'Total Expenses', [], []),
-        netIncome:          new COLUMN('new', '$', '', 'Net Income', [], []),
-        clickValues:        new COLUMN('new', '', '', 'Ultimate Click Values', ['Ultimate'], []),
-        refSince_DHM:       new COLUMN('new', '', '', 'D/H/M Ref Since', [], []),
-        lastClick_D:        new COLUMN('new', '', '', 'D Last Click', [], [])
-      };
-
-      if (currentPage.pageCode.match(/referralListings_Rented/i)) {
-        columns.textifyFlag = new COLUMN('new', '', '', 'Flag Colour', [], []);
-        columns.nextPayment_DHM = new COLUMN('new', '', '', 'D/H/M Next Payment', [], []);
-      }
-      if (currentPage.pageCode.match(/referralListings_Direct/i)) {}
-
-      //Add header row columns
+      newCol_idPrefix = tmp_currentID + '_';
       for (var columnName in columns) {
         if (columns.hasOwnProperty(columnName)) {
           if (columns[columnName].inclMemberType.length > 0) {
@@ -4889,71 +5057,7 @@ var referralListings_columns = new function () {
               continue;
             }
           }
-          switch (columns[columnName].colType)
-          {
-          case 'new':
-            addColumn(headerRow, columns[columnName].colHeaderText, headerCol_idPrefix + columnName, '');
-            break;
-          case 'append':
-            break;
-          case 'prepend':
-            break;
-          case 'replace':
-            break;
-          }
-        }
-      }
-
-      var tmp_colspans = document.querySelectorAll('div#tblprp td[colspan]');
-      for (var i = 1; i < tmp_colspans.length - 1; i++) {
-        tmp_colspans[i], tmp_colspans[i].setAttribute('colspan', colCount);
-      }
-
-      var extensionCostPerDay = userAccount.feesCosts.extensions[preferences.preferredExtensionLength] / preferences.preferredExtensionLength;
-      var goldenFeePerDay = currentUser.accountType.cost / 365;
-      var goldenFeePerDayPerReferral = goldenFeePerDay / currentUser.numberOfRefs.Rented;
-
-      var costPerReferralPerDay = extensionCostPerDay; // + goldenFeePerDayPerReferral;
-      var incomeExpenses = {};
-
-      for (var i = 0; i < referralRows.length; i++) {
-        tmp_currentRow = referralRows[i];
-
-        tmp_currentID = tmp_currentRow.children[colIndexes.refID].textContent.match(/[0-9]+/) || tmp_currentRow.children[colIndexes.refID].textContent.match(/[a-z]+/);
-        tmp_currentID = tmp_currentID[0];
-        tmp_currentID = (tmp_currentID.length > 0) ? tmp_currentID : tmp_currentRow.children[colIndexes.refID].textContent;
-
-        tmp_currentRow.id = tmp_currentID;
-        tmp_currentRow.setAttribute('class', tmp_currentRow.getAttribute('class') + ' referralRow');
-
-        incomeExpenses[tmp_currentID] = incomeExpenses[tmp_currentID] || {};
-
-        if (currentPage.pageCode.match(/referralListings_Rented/)) {
-          incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * userAccount.clickValues['Fixed'].commission.rented).toFixed(3);
-          incomeExpenses[tmp_currentID].totalExpenses = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].age_dec * costPerReferralPerDay).toFixed(3);
-        } else if (currentPage.pageCode.match(/referralListings_Direct/)) {
-          incomeExpenses[tmp_currentID].totalIncome = (tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].totalClicks * userAccount.clickValues['Fixed'].commission.direct).toFixed(3);
-          incomeExpenses[tmp_currentID].totalExpenses = 0;
-        }
-
-        GM_addStyle('.referralRow { letter-spacing: -0.01em; }');
-
-        newCol_idPrefix = tmp_currentID + '_';
-        for (var columnName in columns) {
-          if (columns.hasOwnProperty(columnName)) {
-            if (columns[columnName].inclMemberType.length > 0) {
-              //If membersip type not found on the includes list, continue
-              if (columns[columnName].inclMemberType.indexOf(userAccount.membershipType) === -1) {
-                continue;
-              }
-            }
-            if (columns[columnName].exclMemberType.length > 0) {
-              //If membership type found on the excludes list, continue
-              if (columns[columnName].exclMemberType.indexOf(userAccount.membershipType) >= 0) {
-                continue;
-              }
-            }
-            switch (columnName) {
+          switch (columnName) {
             case 'totalIncomeCol':
               tmp_value = incomeExpenses[tmp_currentID].totalIncome;
               break;
@@ -4985,43 +5089,44 @@ var referralListings_columns = new function () {
             case 'textifyFlag':
               tmp_value = tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].flagColour.split('')[0] || "Unknown".split('')[0] || 'E';
               break;
-            }
+          }
 
 
-            switch (columns[columnName].colType) {
-              case 'new':
-                try {
-                  addColumn(tmp_currentRow, columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix, newCol_idPrefix + columnName, '');
-                } catch (e) {
-                  errorLog('error with new column - ' + columnName + ' ::\n', e);
-                }
-                break;
-              case 'append':
-                break;
-              case 'prepend':
-                break;
-              case 'replace':
-                break;
-            }
+          switch (columns[columnName].colType) {
+            case 'new':
+              try {
+                addColumn(tmp_currentRow, columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix, newCol_idPrefix + columnName, { "customCSS": columns[columnName].customCSS });
+                addColumn(tmp_currentRow, columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix, newCol_idPrefix + columnName, { "customCSS": columns[columnName].customCSS });
+              } catch (e)
+              {
+                errorLog('error with new column - ' + columnName + ' ::\n', e);
+              }
+              break;
+            case 'append':
+              appendToColumnContents(tmp_currentRow, tmp_value + columns[columnName].colSuffix, colIndexes[columnName], { "customCSS": columns[columnName].customCSS });
+              break;
+            case 'prepend':
+              prependToColumnContents(tmp_currentRow, columns[columnName].colPrefix + tmp_value, colIndexes[columnName], { "customCSS": columns[columnName].customCSS });
+              break;
+            case 'replace':
+              replaceColumnContents(tmp_currentRow, columns[columnName].colPrefix + tmp_value + columns[columnName].colSuffix, colIndexes[columnName], { "customCSS": columns[columnName].customCSS });
+              break;
           }
         }
       }
     }
+  }
 
-    this.init = function (arg_options) {
-      var settings = {};
-      var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
-      var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
-      var tmp_currentRow;
+  this.init = function (arg_options) {
+    var settings = {};
+    var headerRow = document.querySelectorAll('div#tblprp table tr[onmouseover]')[0].parentNode.children[0];
+    var referralRows = document.querySelectorAll('div#tblprp tr[onmouseover]');
+    var tmp_currentRow;
 
-      var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
+    var colCount = document.querySelectorAll('div#tblprp td[colspan]')[1].getAttribute('colspan');
 
-      var colIndexes = {
-        refID: 3,
-        refSince: 5
-      };
-      var tmp_referralsData = pr['referrals'].getValue();
-    }
+    var tmp_referralsData = pr['referrals'].getValue();
+  }
 };
 
 
