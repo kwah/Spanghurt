@@ -938,7 +938,7 @@ Neobux.possibleAccTypes = [
 
 Neobux.defaultAccountTypeDetails = {
   'Standard': { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0},
-  'Golden':   { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 0,  'goldenPackCost': 0,    'rentalBandAdjuster': 0},
+  'Golden':   { 'minDaysForAutopay': 20, 'recycleCost': 0.07, 'goldenCost': 90, 'goldenPackCost': 0,    'rentalBandAdjuster': 0},
   'Emerald':  { 'minDaysForAutopay': 20, 'recycleCost': 0.06, 'goldenCost': 90, 'goldenPackCost': 200,  'rentalBandAdjuster': -1},
   'Sapphire': { 'minDaysForAutopay': 18, 'recycleCost': 0.07, 'goldenCost': 90, 'goldenPackCost': 200,  'rentalBandAdjuster': 0},
   'Platinum': { 'minDaysForAutopay': 20, 'recycleCost': 0.06, 'goldenCost': 90, 'goldenPackCost': 400,  'rentalBandAdjuster': -1},
@@ -1440,8 +1440,8 @@ var currentPage = new function () {
 
 
 debugLog('currentPage.pageCode = ', currentPage.pageCode);
-//debugLog('JSON.stringify(currentPage.pageCode) = ', JSON.stringify(currentPage.pageCode));
 modalCheckpoint('function extractNumberOfRefs()');
+
 function extractNumberOfRefs() {
   // If currently viewing the rented/direct ref listings, update the stored values accordingly
   if (currentPage.pageCode.match(/referralListings/)) {
@@ -1484,16 +1484,14 @@ function extractNumberOfRefs() {
 
     modalCheckpoint('extractNumberOfRefs() before if(0 <= tmp_numberOfRefs) {');
     // Now store the number of detected referrals if numberOfRefs is not false
-    //    debugLog('tmp_numberOfRefs = ', tmp_numberOfRefs);
     if (0 <= tmp_numberOfRefs) {
-      //      alert('numberOf' + _pageRefType + 'Referrals');
-      //      alert('tmp_numberOfRefs = ' + tmp_numberOfRefs);
       pr['numberOf' + _pageRefType + 'Referrals'].setValue(tmp_numberOfRefs);
     }
     modalCheckpoint('extractNumberOfRefs() after if(0 <= tmp_numberOfRefs) {');
     return tmp_numberOfRefs;
-  } else if (currentPage.pageCode.match(/accSummary/)) {
-    //    TODO: Extract number of refs from main page
+  }
+  else if (currentPage.pageCode.match(/accSummary/)) {
+    //    TODO: Extract number of refs from account summary page
     var tmp_elmAccountInfo = docEvaluate('//td[@class="t_preto_r"]/parent::tr/parent::tbody/descendant::td');
 
     function displayTextContent(arg_element) {
@@ -1503,7 +1501,7 @@ function extractNumberOfRefs() {
     var tmp_currentTd;
     var tmp_nextTd;
 
-    var tmp_lookupArray = [
+    var tmp_accSummaryString_lookupArray = [
       [/since:/i, 'You have been a member since {value}'],
       [/type:/i, 'You are a {value} member'],
       [/expires:/i, 'Your membership expires on {value}'],
@@ -1523,9 +1521,9 @@ function extractNumberOfRefs() {
       tmp_currentTd = tmp_elmAccountInfo.snapshotItem(i);
       tmp_nextTd = tmp_elmAccountInfo.snapshotItem(i + 1);
 
-      for (var j = 0; j < tmp_lookupArray.length; j++) {
-        if (tmp_currentTd.textContent.match(tmp_lookupArray[j][0])) {
-          //          debugLog(tmp_lookupArray[j][1].replace(/{value}/, displayTextContent(tmp_nextTd)));
+      for (var j = 0; j < tmp_accSummaryString_lookupArray.length; j++) {
+        if (tmp_currentTd.textContent.match(tmp_accSummaryString_lookupArray[j][0])) {
+          //          debugLog(tmp_accSummaryString_lookupArray[j][1].replace(/{value}/, displayTextContent(tmp_nextTd)));
         }
       }
     }
@@ -1538,18 +1536,6 @@ extractNumberOfRefs();
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-
-
-
-
-
-modalCheckpoint('var userAccount = new function ()');
-
-/**
- * :Object used for holding information about the account that the current user of the script is logged into
- *
- **/
-
 
 function getClickValues(arg_accountType) {
   var tmp_clickValues = {
@@ -1703,6 +1689,12 @@ function getClickValues(arg_accountType) {
 }
 
 
+modalCheckpoint('var userAccount = new function ()');
+
+/**
+ * :Object used for holding information about the account that the current user of the script is logged into
+ *
+ **/
 var userAccount = new function () {
   function getUsername() {
     if (document.getElementById('t_conta')) {
@@ -1755,6 +1747,11 @@ var userAccount = new function () {
   }
 
     this.membershipType = getMembershipType();
+    console.info('Neobux.defaultAccountTypeDetails[this.membershipType]');
+    console.info(Neobux.defaultAccountTypeDetails[this.membershipType]);
+    pr['goldenCost'].setValue(Neobux.defaultAccountTypeDetails[this.membershipType].goldenCost, { prefType: 'float' });
+    pr['goldenPackCost'].setValue(Neobux.defaultAccountTypeDetails[this.membershipType].goldenPackCost, { prefType: 'float' });
+
     this.override_showUltimateFeatures = false;
     this.clickValues = getClickValues(this.membershipType);
     this.numberOfReferrals = {
@@ -3472,10 +3469,146 @@ var logo = {
 
 };
 
-var profitGraph = new function () {
 
-  };
+var insertProfitGraph = function()
+{
+  var graphData = pr['accountCache'].getValue()['graphs'];
+  console.info('graphData = ', graphData);
 
+  var income = [];
+  var expenses = [];
+  var netIncome = [];
+  var netIncome_sum = [];
+  var netIncome_avg = [];
+
+  var tmp_index = 0;
+
+  for(var i = 9; i > 0; i--) {
+    tmp_index = 9 - i;
+
+    income[tmp_index] = ( 0 +
+        graphData[dates_array[i]]['ownClicks_localTime'] * userAccount.clickValues['Fixed'].value +
+        graphData[dates_array[i]]['referralClicks_direct'] * userAccount.clickValues['Fixed'].commission.direct +
+        graphData[dates_array[i]]['referralClicks_rented'] * userAccount.clickValues['Fixed'].commission.rented
+        ).toFixed(3) * 1;
+
+
+    expenses[tmp_index] = ( 0 - (
+          graphData[dates_array[i]]['autopay'] +
+          graphData[dates_array[i]]['recycleFees'] +
+          graphData[dates_array[i]]['extensions'] +
+          graphData[dates_array[i]]['autopay'] +
+          ((userAccount.feesCosts.golden + userAccount.feesCosts.goldenPack) / 365)
+        )
+        ).toFixed(3) * 1;
+
+    netIncome[tmp_index] = ( ( income[tmp_index] + expenses[tmp_index] ).toFixed(3) * 1 );
+
+    netIncome_sum[tmp_index] = ( ( netIncome_sum[i + 1] + netIncome[tmp_index] || netIncome[tmp_index] ).toFixed(3) * 1 );
+
+    netIncome_avg[tmp_index] = ( (netIncome_sum[tmp_index] / (tmp_index + 1) ).toFixed(3) *1 );
+  }
+
+  console.info('income = ');
+  console.info(JSON.stringify(income));
+  console.info('expenses');
+  console.info(JSON.stringify(expenses));
+  console.info('netIncome');
+  console.info(JSON.stringify(netIncome));
+  console.info('netIncome_sum');
+  console.info(JSON.stringify(netIncome_sum));
+  console.info('netIncome_avg');
+  console.info(JSON.stringify(netIncome_avg));
+
+
+
+
+  var locationToInsertProfitGraph = docEvaluate('//*[@id="ch_cr"]').snapshotItem(0).parentNode.parentNode.parentNode || document.body;
+
+  // Add a new row (and spacer to keep aestetics constant) to accomodate the profit graph
+  var newSpacerRow = document.createElement('tr');
+  var newSpacerCol = document.createElement('td');
+
+  newSpacerCol.setAttribute('style','height: 6px; font-size: 6px; padding: 0px;');
+  newSpacerCol.setAttribute('colspan',3);
+  newSpacerCol.innerHTML = '&nbsp;';
+
+  newSpacerRow.appendChild(newSpacerCol);
+
+
+  var newRow = document.createElement('tr');
+  var newCol = document.createElement('td');
+
+  newCol.innerHTML = '<div align="center" style="color: rgb(112, 112, 112);" class="f_b" >Profit</div>'+
+      '<img width="80%" height="2" style="margin-top: 5px;" src="http://www.neobux.com/imagens/n/gr/250.jpg">'+
+      '<div style="height: 220px;" id="ch_scriptProfit"></div>';
+  newCol.setAttribute('style','border: 1px solid rgb(170, 170, 170); background-color: rgb(255, 255, 255);');
+  newCol.setAttribute('colspan', 3);
+  newRow.appendChild(newCol);
+
+  // Insert them after the row that contains the recycle graph
+  locationToInsertProfitGraph.appendChild(newSpacerRow);
+  locationToInsertProfitGraph.appendChild(newRow);
+
+  var graphDatesArray = [];
+  for (var i = 0; i < 10; i++) {
+    graphDatesArray[i] = dates_array[i];
+  }
+  console.info(JSON.stringify(graphDatesArray));
+
+  location.href = "javascript:(" + function (arg_datesArray, arg_expenses, arg_income, arg_netIncome, arg_netIncome_avg) {
+    console.info(arguments);
+
+    mk_ch('ch_scriptProfit', '',
+            arg_datesArray,
+            '<b>$', '</b>',
+            [
+              {
+                name:'Expenses',
+                data: arg_expenses,
+                type:'area',
+                color: '#bA5653',
+                fillOpacity: 0.5
+              },
+              {
+                name:'Income',
+                data: arg_income,
+                type:'area',
+                color: '#99b55E',
+                fillOpacity: 0.5
+              },
+              {
+                name:'Profit',
+                data: arg_netIncome,
+                type:'line',
+                color: '#4572A7',
+                lineWidth:'2'
+              },
+              {
+                name:'Avg. Profit',
+                data: arg_netIncome_avg,
+                type:'line',
+                color: '#5592C7',
+                lineWidth:'1'
+              }
+            ],
+            0,
+            [0,0,0,0],
+            null,
+            [0,0,0,0]);
+
+  } + ")(" +
+      "JSON.parse('"+JSON.stringify(graphDatesArray)+"'), " +
+      "JSON.parse('"+JSON.stringify(expenses)+"'), " +
+      "JSON.parse('"+JSON.stringify(income)+"'), " +
+      "JSON.parse('"+JSON.stringify(netIncome)+"')," +
+      "JSON.parse('"+JSON.stringify(netIncome_avg)+"')" +
+      ")";
+
+
+}
+
+insertProfitGraph();
 
 function graphShortCodeToReadableDescription(arg_graphId) {
   var tmp_headerValue = '';
@@ -3493,7 +3626,7 @@ function graphShortCodeToReadableDescription(arg_graphId) {
     case 'ch_recycle':
       tmp_headerValue = tl8('Amount spent on recycles:');
       break;
-    case 'ch_extensions':
+    case 'ch_extensions':};
       tmp_headerValue = tl8('Amount spent on renewing / extending referrals:');
       break;
     case 'ch_autopay':
