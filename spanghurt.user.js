@@ -5002,7 +5002,7 @@ var referralListings_columns = new function () {
     }
 
     var tmp_defaultCSS = 'letter-spacing: -1px;';
-    var tmp_dhmCSS = 'color: #888; font-size: 90%; letter-spacing: -1px;';
+    var tmp_dhmCSS = 'color: #333; font-size: 90%; font-style: italic;';
     
     var columns = {
       totalIncomeCol:     new COLUMN('new', '$', '', '<small>Total Income</small>', [], [], tmp_defaultCSS),
