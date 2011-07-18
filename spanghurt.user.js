@@ -396,8 +396,9 @@ var tl8strings = {
     " [nb: the second value includes an estimate of your personal clicks]": " [nb: the second value includes an estimate of your personal clicks]",
     " Days <small>(excl. Today)</small>": " Days <small>(excl. Today)</small>",
     " Days <small>(incl. Today)</small>": " Days <small>(incl. Today)</small>",
-    " Days Ago and ": " Days Ago and ",
     " Days Ago": " Days Ago",
+    " Days Ago and ": " Days Ago and ",
+    " Days Ago Only": " Days Ago Only",
     ", based on the projected values": ", based on the projected values",
     "15 days (The \"Base Rate\")": "15 days (The \"Base Rate\")",
     "150 days (25% discount)": "150 days (25% discount)",
@@ -3912,13 +3913,13 @@ var exportTabs = new function () {
           for (var i = 0; i < maxCount; i++) {
             tmp_valuesToExportArray[i] = tmp_valuesArray[i].join("\t");
           }
-          return tmp_valuesToExportArray.join("\t\n");
+          return tmp_valuesToExportArray.join("\n");
           break;
         case 'text':
           for (var i = 0; i < maxCount; i++) {
             tmp_valuesToExportArray[i] = tmp_valuesArray[i][1];
           }
-          return tmp_valuesToExportArray.join("\t\n");
+          return tmp_valuesToExportArray.join("\n");
           break;
         }
       } catch (e) {
@@ -5187,71 +5188,13 @@ var referralListings_columns = new function () {
 
 function insertSidebar() {
   // Function which inserts the 'Statistics Sidebar' to the referral statistics page
+  modalCheckpoint('inside function insertSidebar() {');
+
   // Location to insert the sidebar (right hand side)
   var locationToInsertSidebar = {
     right: docEvaluate("//td[@width='729']").snapshotItem(0).parentNode || document.body,
     left: document.body.children[1].children[1].children[0].children[0].children[0] || document.body
   };
-
-
-  // Time periods for the statistics sidebar where:
-  // 0=today, 1=1day ago, 14=14days ago etc
-  // [
-  //    [starting day, ending day],
-  //    [next time periods....],
-  //    [another time period....],
-  //    [etc..]
-  // ]
-  var sidebarTimePeriods = [[0,0], [1,1], [0,6], [1,6], [0,9], [1,9]];
-  var tmp_dataSet = pr['accountCache'].getValue({});
-
-  var sidebarData = {};
-  var currentSidebarTimePeriod;
-  var showProjected;
-
-  var tmp_sum = [],
-      tmp_currentValue = [],
-      tmp_average = [];
-  var tmp_currentDate;
-  var tmp_foobar;
-
-  var dataIsComplete = {};
-
-  var tmp_projectedClicks_rented = parseFloat(document.querySelectorAll('span.f_b')[4].textContent);
-  var tmp_projectedClicks_direct = parseFloat(document.querySelectorAll('span.f_b')[2].textContent);
-
-  sidebarData.projectedClicks = {};
-  sidebarData.projectedClicks['Rented'] = currentUser.numberOfRefs.Rented * tmp_projectedClicks_rented;
-  sidebarData.projectedClicks['Direct'] = currentUser.numberOfRefs.Direct * tmp_projectedClicks_direct;
-  sidebarData.projectedClicks['Total'] = sidebarData.projectedClicks['Rented'] + sidebarData.projectedClicks['Direct'];
-
-  sidebarData.projectedIncome = {};
-  sidebarData.projectedIncome['Rented'] = (sidebarData.projectedClicks['Rented'] * userAccount.clickValues['Fixed'].commission.rented);
-  sidebarData.projectedIncome['Direct'] = (sidebarData.projectedClicks['Direct'] * userAccount.clickValues['Fixed'].commission.direct);
-  sidebarData.projectedIncome['Total'] = (sidebarData.projectedIncome['Rented'] + sidebarData.projectedIncome['Direct']);
-
-  // // NOW CREATE THE ACTUAL SIDEBAR ////
-  if (document.getElementById("sidebarContainer")) {
-    document.getElementById("sidebarContainer").parentNode.removeChild(document.getElementById("sidebarContainer"));
-  }
-
-  var sidebarContainer = document.createElement("div");
-  sidebarContainer.id = "sidebarContainer";
-
-  GM_addStyle("#sidebarContainer { background-color:#FFFFFF; background-repeat:no-repeat; border:1px solid #AAAAAA; margin-left:5px; padding:0 10px 15px 8px; vertical-align:top; width:182px; }" +
-      ".leftSide { position: inline-block; opacity: 1; }" +
-//      ".rightSide { position: fixed; right: 2px; top:117px; opacity: 0.5; }" +
-      ".rightSide { position: relative; right: 2px; top:0; }" +
-      ".sidebarContent { font-family: Verdana, Arial, Helvetica, sans-serif; font-size: x-small !important; }" +
-      ".sidebarHeader { display:block; font-size:1.1em; text-align:center; } " +
-      ".sidebarDetails { font-size: x-small; margin-left: 5px; } " +
-      "h4 { color: #444; margin-top: 10px; margin-bottom:2px } " +
-      "h5 { margin-top: 7px; margin-bottom:2px; margin-left:2px; } " +
-      "h6 { font-size: xx-small !important; margin-top: 2px; margin-bottom:2px } " +
-      ".h5_subHead { margin-top:2px; font-size:xx-small; } " +
-      ".bold { font-weight: bold; } " +
-      ".grey { color: #aaa; }");
-
 
   //Functions to quickly decide if info should be shown
   function showInfo(arg_toDisplay, arg_refType) {
@@ -5270,6 +5213,7 @@ function insertSidebar() {
     return (0 < currentUser.numberOfRefs.Direct || 0 < currentUser.numberOfRefs.Rented) ? arg_toDisplay : '';
   }
 
+
   function outputIfExists(arg_varToOutput, arg_textToDisplayOtherwise) {
     try {
       return arg_varToOutput;
@@ -5278,6 +5222,61 @@ function insertSidebar() {
     }
   }
 
+  var sidebarStyle = ""+
+      "#sidebarContainer { background-color:#FFFFFF; background-repeat:no-repeat; border:1px solid #AAAAAA; margin-left:5px; padding:0 10px 15px 8px; vertical-align:top; width:182px; }" +
+      ".leftSide { position: inline-block; opacity: 1; }" +
+      ".rightSide { position: relative; right: 2px; top:0; }" +
+      ".sidebarContent { font-family: Verdana, Arial, Helvetica, sans-serif; font-size: x-small !important; }" +
+      ".sidebarHeader { display:block; font-size:1.1em; text-align:center; } " +
+      ".sidebarDetails { font-size: x-small; margin-left: 5px; } " +
+      "h4 { color: #444; margin-top: 10px; margin-bottom:2px } " +
+      "h5 { margin-top: 7px; margin-bottom:2px; margin-left:2px; } " +
+      "h6 { font-size: xx-small !important; margin-top: 2px; margin-bottom:2px } " +
+      ".h5_subHead { margin-top:2px; font-size:xx-small; } " +
+      ".bold { font-weight: bold; } " +
+      ".grey { color: #aaa; }";
+
+  GM_addStyle(sidebarStyle);
+
+
+  // Time periods for the statistics sidebar where:
+  // 0=today, 1=1day ago, 14=14days ago etc
+  // [
+  //    [starting day, ending day],
+  //    [next time periods....],
+  //    [another time period....],
+  //    [etc..]
+  // ]
+  var sidebarTimePeriods = [[0,0], [1,1], [0,6], [1,6], [0,9], [1,9]];
+  var tmp_dataSet = pr['accountCache'].getValue({});
+
+  var tmp_projectedClickAvg_rented = parseFloat(document.querySelectorAll('span.f_b')[4].textContent);
+  var tmp_projectedClickAvg_direct = parseFloat(document.querySelectorAll('span.f_b')[2].textContent);
+
+  var startDay;
+  var endDay;
+  var sidebarData;
+  var currentSidebarTimePeriod;
+  var showProjected;
+
+  var tmp_sum = [],
+      tmp_currentValue = [],
+      tmp_average = [];
+  var tmp_currentDate;
+  var tmp_foobar;
+
+  var dataIsComplete = {};
+
+
+  //Remove the existing sidebar from the DOM if it already exists
+  if (document.getElementById("sidebarContainer")) {
+    document.getElementById("sidebarContainer").parentNode.removeChild(document.getElementById("sidebarContainer"));
+  }
+
+
+  //Create new sidebar
+  var sidebarContainer = document.createElement("div");
+  sidebarContainer.id = "sidebarContainer";
 
   var tmp = "";
   tmp += "<span class='sidebarContent'>";
@@ -5288,16 +5287,21 @@ function insertSidebar() {
   tmp += " </span>";
 
 
+  var maxTimePeriod = 0;
+  var minTimePeriod = 0;
+
+
+  /**
+   * Check for the min and max time period size
+   * Also create list of timePeriods taht are valid
+   */
+
+  var timePeriods = [];
+  var startDay, endDay;
+
   for (var i = 0; i < sidebarTimePeriods.length; i++) {
     currentSidebarTimePeriod = sidebarTimePeriods[i];
 
-    //Default showing the projected values for the current time period to false and only enable it if required
-    showProjected = false;
-
-    /**
-     * CHECK IF THE CURRENTLY SELECTED TIME PERIOD IS VALID
-     * IF NOT, CONTINUE TO THE NEXT SIDEBAR TIME PERIOD
-     **/
     if (2 !== currentSidebarTimePeriod.length) {
       errorLog("ERROR!\n\n", "Sidebar Timeperiods incorrect length (" + currentSidebarTimePeriod.length + ") not 2. Moving onto next time period.");
       continue;
@@ -5306,7 +5310,6 @@ function insertSidebar() {
       errorLog("ERROR!\n\n", "Sidebar Timeperiod #" + i + " is not numerical. Moving onto next time period.");
       continue;
     }
-
     if (currentSidebarTimePeriod[0] > currentSidebarTimePeriod[1]) {
       errorLog("Error!\n\n", "Sidebar Timeperiod #" + i + ' is not in the correct order (end day is earlier than the start day). Moving onto next time period');
       continue;
@@ -5321,8 +5324,40 @@ function insertSidebar() {
       endDay = currentSidebarTimePeriod[0];
     }
 
+    minTimePeriod = (startDay <= minTimePeriod) ? startDay : minTimePeriod;
+    maxTimePeriod = (endDay >= maxTimePeriod) ? endDay : maxTimePeriod;
 
-    for (var dayCounterIndex = startDay; dayCounterIndex <= endDay; dayCounterIndex++) {
+    timePeriods[i] = [startDay, endDay];
+  }
+
+
+  function createLookupList(arg_startDay, arg_endDay) {
+    function generateSidebarData (arg_projectedClicks_Rented, arg_projectedClicks_Direct) {
+
+      var sdbr = {};
+      sdbr.projectedClicks = {};
+      sdbr.projectedClicks['Rented'] = currentUser.numberOfRefs.Rented * tmp_projectedClickAvg_rented;
+      sdbr.projectedClicks['Direct'] = currentUser.numberOfRefs.Direct * tmp_projectedClickAvg_direct;
+      sdbr.projectedClicks['Total'] = sdbr.projectedClicks['Rented'] + sdbr.projectedClicks['Direct'];
+
+      sdbr.projectedIncome = {};
+      sdbr.projectedIncome['Rented'] = (sdbr.projectedClicks['Rented'] * userAccount.clickValues['Fixed'].commission.rented);
+      sdbr.projectedIncome['Direct'] = (sdbr.projectedClicks['Direct'] * userAccount.clickValues['Fixed'].commission.direct);
+      sdbr.projectedIncome['Total'] = (sdbr.projectedIncome['Rented'] + sdbr.projectedIncome['Direct']);
+
+      return sdbr;
+    }
+
+    var tmp_sidebarData = generateSidebarData();
+
+    
+    /**
+     * Loop through the max ranges of the time periods and create a lookup list of data in this range
+     */
+    for (var dayCounterIndex = arg_startDay; dayCounterIndex <= arg_endDay; dayCounterIndex++) {
+
+      //Default showing the projected values for the current time period to false and only enable it if required
+      showProjected = (0 === dayCounterIndex) ? true: false;
       tmp_currentDate = dates_array[dayCounterIndex];
 
       //Check whether data is stored for the current date
@@ -5337,38 +5372,64 @@ function insertSidebar() {
       //Loop through the data contained for the current date,
       for (var tmpGraphIndex in lookup_graphCache) {
         if (lookup_graphCache.hasOwnProperty(tmpGraphIndex)) {
+
+          //Skip the sceheduled payments graph
           if (tmpGraphIndex.match(/ch_ext_schedule/i)) {
             continue;
           }
+          
+          //Check whether data exists for the current graph & date, else continue
           if ("undefined" === typeof tmp_dataSet.graphs[tmp_currentDate][lookup_graphCache[tmpGraphIndex]]) {
-            //Data for this specific graph is not found for this date
-            errorLog("Data for this specific graph (" + tmpGraphIndex + " / " + lookup_graphCache[tmpGraphIndex] + ")is not found for this date (" + tmp_currentDate + ").");
+            //Data for this specific graph {} is not found for this date {}
+            errorLog("Data for this specific graph (" + tmpGraphIndex + " / " + lookup_graphCache[tmpGraphIndex] + ") is not found for this date (" + tmp_currentDate + ").");
             continue;
           }
 
-          tmp_currentValue = tmp_dataSet.graphs[tmp_currentDate][lookup_graphCache[tmpGraphIndex]];
+          //If the sum[] object does not exist, create it
           if (!tmp_sum[lookup_graphCache[tmpGraphIndex]]) {
             tmp_sum[lookup_graphCache[tmpGraphIndex]] = {};
           }
-
+          
+          //Calculations
+          tmp_currentValue = tmp_dataSet.graphs[tmp_currentDate][lookup_graphCache[tmpGraphIndex]];
           tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex] = ("undefined" === typeof tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex - 1]) ? tmp_currentValue : tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex - 1] + tmp_currentValue;
-          tmp_average[dayCounterIndex] = tmp_sum[lookup_graphCache[tmpGraphIndex]] / (dayCounterIndex + 1);
+          tmp_average[dayCounterIndex] = tmp_sum[lookup_graphCache[tmpGraphIndex]][[dayCounterIndex]] / (dayCounterIndex + 1);
 
-          if ("undefined" === typeof sidebarData[lookup_graphCache[tmpGraphIndex]]) {
-            sidebarData[lookup_graphCache[tmpGraphIndex]] = {};
+          //If the tmp_sidebarData[] object does not exist, create it
+          if ("undefined" === typeof tmp_sidebarData[lookup_graphCache[tmpGraphIndex]]) {
+            tmp_sidebarData[lookup_graphCache[tmpGraphIndex]] = {};
           }
 
-          sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate] = {
+          //Insert calculated values to the tmp_sidebarData[] object
+          tmp_sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate] = {
             'value': tmp_currentValue,
             'sum': tmp_sum[lookup_graphCache[tmpGraphIndex]][dayCounterIndex],
             'avg': tmp_average[dayCounterIndex]
           };
+
+//          console.info(tmpGraphIndex);
+          if(showProjected && tmpGraphIndex.match(/ch_cr/)) {
+            if(!tmp_sidebarData.projectedClicks) { tmp_sidebarData.projectedClicks = {}; }
+            tmp_sidebarData.projectedClicks['Rented'] = tmp_projectedClickAvg_rented * tmp_sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate].value;
+          }
+          if(showProjected && tmpGraphIndex.match(/ch_cd/)) {
+            if(!tmp_sidebarData.projectedClicks) { tmp_sidebarData.projectedClicks = {}; }
+            tmp_sidebarData.projectedClicks['Direct'] = tmp_projectedClickAvg_direct * tmp_sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate].value;
+          }
         }
       }
     }
+    return tmp_sidebarData;
+  }
 
-    debugLog('sidebarData = ', sidebarData);
+  sidebarData = createLookupList(minTimePeriod, maxTimePeriod);
 
+  debugLog('sidebarData = ', sidebarData);
+
+  for (var i=0; i<timePeriods.length; i++) {
+    startDay = timePeriods[i][0];
+    endDay = timePeriods[i][1];
+    
     var header = tl8("Totals between ") + startDay + tl8(" Days Ago and ") + (endDay + 1) + tl8(" Days Ago");
 
     if (0 == startDay) {
@@ -5378,6 +5439,7 @@ function insertSidebar() {
       header = tl8("The last ") + (endDay + 1) + tl8(" Days <small>(excl. Today)</small>");
     }
 
+    showProjected = false;
     if (startDay == endDay) {
       if (0 == endDay) {
         header = tl8("Today Only");
@@ -5385,7 +5447,7 @@ function insertSidebar() {
       } else if (1 == endDay) {
         header = tl8("Yesterday Only");
       } else {
-        header = startDay + tl8("Days Ago");
+        header = startDay + tl8(" Days Ago Only");
       }
     }
     var numberOfDays = (endDay - startDay) + 1;
@@ -5445,6 +5507,7 @@ function insertSidebar() {
     tmp += "- " + tl8('Expenses') + ": $" + (tmp_expenses).toFixed(3) + "<br>";
     tmp += "- " + tl8('Net Income') + ": $" + (tmp_income - tmp_expenses).toFixed(3) + " / $" + (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
     tmp += "</div>";
+
   }
 
   tmp += "</span>";
@@ -5457,7 +5520,6 @@ function insertSidebar() {
   wrapperTD.appendChild(sidebarContainer);
 
   var statsSidebarPosition = pr['statsSidebarPosition'].getValue();
-  debugLog('statsSidebarPosition = ', statsSidebarPosition, '\n', 'locationToInsertSidebar[statsSidebarPosition] = ', locationToInsertSidebar[statsSidebarPosition]);
 
   if ('right' === statsSidebarPosition) {
     //    sidebarContainer.setAttribute('onmouseover', 'document.getElementById("sidebarContainer").style.opacity = "1";');
@@ -5549,6 +5611,11 @@ if (currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/ref
 
 
   exportTabs.init();
+}
+
+
+function insertProfitGraph() {
+
 }
 
 
