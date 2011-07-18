@@ -3626,7 +3626,7 @@ function graphShortCodeToReadableDescription(arg_graphId) {
     case 'ch_recycle':
       tmp_headerValue = tl8('Amount spent on recycles:');
       break;
-    case 'ch_extensions':};
+    case 'ch_extensions':
       tmp_headerValue = tl8('Amount spent on renewing / extending referrals:');
       break;
     case 'ch_autopay':
