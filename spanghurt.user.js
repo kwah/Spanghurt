@@ -5336,8 +5336,8 @@ function insertSidebar() {
 
       var sdbr = {};
       sdbr.projectedClicks = {};
-      sdbr.projectedClicks['Rented'] = currentUser.numberOfRefs.Rented * tmp_projectedClickAvg_rented;
-      sdbr.projectedClicks['Direct'] = currentUser.numberOfRefs.Direct * tmp_projectedClickAvg_direct;
+      sdbr.projectedClicks['Rented'] = currentUser.numberOfRefs.Rented * arg_projectedClicks_Rented;
+      sdbr.projectedClicks['Direct'] = currentUser.numberOfRefs.Direct * arg_projectedClicks_Direct;
       sdbr.projectedClicks['Total'] = sdbr.projectedClicks['Rented'] + sdbr.projectedClicks['Direct'];
 
       sdbr.projectedIncome = {};
@@ -5348,7 +5348,7 @@ function insertSidebar() {
       return sdbr;
     }
 
-    var tmp_sidebarData = generateSidebarData();
+    var tmp_sidebarData = generateSidebarData(tmp_projectedClickAvg_rented, tmp_projectedClickAvg_direct);
 
     
     /**
