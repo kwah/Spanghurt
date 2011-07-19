@@ -3483,7 +3483,7 @@ var insertProfitGraph = function()
 
   var tmp_index = 0;
 
-  for(var i = 9; i > 0; i--) {
+  for(var i = 9; i >= 0; i--) {
     tmp_index = 9 - i;
 
     income[tmp_index] = ( 0 +
@@ -3503,22 +3503,20 @@ var insertProfitGraph = function()
         ).toFixed(3) * 1;
 
     netIncome[tmp_index] = ( ( income[tmp_index] + expenses[tmp_index] ).toFixed(3) * 1 );
-
     netIncome_sum[tmp_index] = ( ( netIncome_sum[i + 1] + netIncome[tmp_index] || netIncome[tmp_index] ).toFixed(3) * 1 );
-
     netIncome_avg[tmp_index] = ( (netIncome_sum[tmp_index] / (tmp_index + 1) ).toFixed(3) *1 );
   }
 
-  console.info('income = ');
-  console.info(JSON.stringify(income));
-  console.info('expenses');
-  console.info(JSON.stringify(expenses));
-  console.info('netIncome');
-  console.info(JSON.stringify(netIncome));
-  console.info('netIncome_sum');
-  console.info(JSON.stringify(netIncome_sum));
-  console.info('netIncome_avg');
-  console.info(JSON.stringify(netIncome_avg));
+//  console.info('income = ');
+//  console.info(JSON.stringify(income));
+//  console.info('expenses');
+//  console.info(JSON.stringify(expenses));
+//  console.info('netIncome');
+//  console.info(JSON.stringify(netIncome));
+//  console.info('netIncome_sum');
+//  console.info(JSON.stringify(netIncome_sum));
+//  console.info('netIncome_avg');
+//  console.info(JSON.stringify(netIncome_avg));
 
 
 
@@ -5747,9 +5745,6 @@ if (currentPage.pageCode.match(/accSummary/i) || currentPage.pageCode.match(/ref
 }
 
 
-function insertProfitGraph() {
-
-}
 
 
 if (currentPage.pageCode.match(/referralStatistics/)) {
