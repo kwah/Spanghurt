@@ -3608,7 +3608,7 @@ var insertProfitGraph = function()
 
 }
 
-insertProfitGraph();
+
 
 function graphShortCodeToReadableDescription(arg_graphId) {
   var tmp_headerValue = '';
@@ -5754,6 +5754,8 @@ function insertProfitGraph() {
 
 if (currentPage.pageCode.match(/referralStatistics/)) {
   modalCheckpoint('if (currentPage.pageCode.match(/referralStatistics/)) {');
+
+  insertProfitGraph();
 
   try {
     insertSidebar();
