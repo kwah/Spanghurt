@@ -5658,6 +5658,9 @@ function insertSidebar() {
     }
     tmp += "- " + tl8('Expenses') + ": $" + (tmp_expenses).toFixed(3) + "<br>";
     tmp += "- " + tl8('Net Income') + ": $" + (tmp_income - tmp_expenses).toFixed(3) + " / $" + (tmp_income_inclOwnClicks - tmp_expenses).toFixed(3) + "<br>";
+    if (showProjected) {
+      tmp += "- " + tl8('Projected Net Income') + ": $" + (sidebarData['projectedIncome'].Total - tmp_expenses).toFixed(3) + " / $" + (sidebarData['projectedIncome'].Total + (sidebarData['ownClicks_localTime'][dates_array[endDay]][valueType] * currentUser.ownClickValue) - tmp_expenses).toFixed(3) + "<br>";
+    }
     tmp += "</div>";
 
   }
