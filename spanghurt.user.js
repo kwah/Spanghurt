@@ -5562,11 +5562,11 @@ function insertSidebar() {
 //          console.info(tmpGraphIndex);
           if(showProjected && tmpGraphIndex.match(/ch_cr/)) {
             if(!tmp_sidebarData.projectedClicks) { tmp_sidebarData.projectedClicks = {}; }
-            tmp_sidebarData.projectedClicks['Rented'] = tmp_projectedClickAvg_rented * tmp_sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate].value;
+            tmp_sidebarData.projectedClicks['Rented'] = tmp_projectedClickAvg_rented * currentUser.numberOfRefs.Rented;
           }
           if(showProjected && tmpGraphIndex.match(/ch_cd/)) {
             if(!tmp_sidebarData.projectedClicks) { tmp_sidebarData.projectedClicks = {}; }
-            tmp_sidebarData.projectedClicks['Direct'] = tmp_projectedClickAvg_direct * tmp_sidebarData[lookup_graphCache[tmpGraphIndex]][tmp_currentDate].value;
+            tmp_sidebarData.projectedClicks['Direct'] = tmp_projectedClickAvg_direct * currentUser.numberOfRefs.Direct;
           }
         }
       }
