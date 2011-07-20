@@ -3483,7 +3483,8 @@ var insertProfitGraph = function()
 
   var tmp_index = 0;
 
-  for(var i = 9; i >= 0; i--) {
+  for(var i = 9; i >= 0; i--)
+  {
     tmp_index = 9 - i;
 
     income[tmp_index] = ( 0 +
@@ -3494,17 +3495,32 @@ var insertProfitGraph = function()
 
 
     expenses[tmp_index] = ( 0 - (
-          graphData[dates_array[i]]['autopay'] +
-          graphData[dates_array[i]]['recycleFees'] +
-          graphData[dates_array[i]]['extensions'] +
-          graphData[dates_array[i]]['autopay'] +
-          ((userAccount.feesCosts.golden + userAccount.feesCosts.goldenPack) / 365)
+        graphData[dates_array[i]]['autopay'] +
+            graphData[dates_array[i]]['recycleFees'] +
+            graphData[dates_array[i]]['extensions'] +
+            graphData[dates_array[i]]['autopay'] +
+            ((userAccount.feesCosts.golden + userAccount.feesCosts.goldenPack) / 365)
         )
         ).toFixed(3) * 1;
 
     netIncome[tmp_index] = ( ( income[tmp_index] + expenses[tmp_index] ).toFixed(3) * 1 );
-    netIncome_sum[tmp_index] = ( ( netIncome_sum[i + 1] + netIncome[tmp_index] || netIncome[tmp_index] ).toFixed(3) * 1 );
-    netIncome_avg[tmp_index] = ( (netIncome_sum[tmp_index] / (tmp_index + 1) ).toFixed(3) *1 );
+    if (tmp_index === 0) {
+      netIncome_sum[tmp_index] = ( ( 0 + netIncome[tmp_index] ).toFixed(3) * 1 );
+    }
+    else {
+      netIncome_sum[tmp_index] = ( ( netIncome_sum[tmp_index - 1] + netIncome[tmp_index] ).toFixed(3) * 1 );
+    }
+    netIncome_avg[tmp_index] = ( (netIncome_sum[tmp_index] / (tmp_index + 1) ).toFixed(3) * 1 );
+
+//    console.info(
+//        JSON.stringify({
+//          income: income[tmp_index],
+//          expenses: expenses[tmp_index],
+//          netIncome: netIncome[tmp_index],
+//          netIncome_sum: netIncome_sum[tmp_index],
+//          netIncome_avg: netIncome_avg[tmp_index]
+//        })
+//    );
   }
 
 //  console.info('income = ');
@@ -3536,8 +3552,9 @@ var insertProfitGraph = function()
 
   var newRow = document.createElement('tr');
   var newCol = document.createElement('td');
-
-  newCol.innerHTML = '<div align="center" style="color: rgb(112, 112, 112);" class="f_b" >Profit</div>'+
+  newCol.align = "center";
+  
+  newCol.innerHTML = '<div style="color: rgb(112, 112, 112);" class="f_b" >Profit</div>'+
       '<img width="80%" height="2" style="margin-top: 5px;" src="http://www.neobux.com/imagens/n/gr/250.jpg">'+
       '<div style="height: 220px;" id="ch_scriptProfit"></div>';
   newCol.setAttribute('style','border: 1px solid rgb(170, 170, 170); background-color: rgb(255, 255, 255);');
@@ -3549,8 +3566,12 @@ var insertProfitGraph = function()
   locationToInsertProfitGraph.appendChild(newRow);
 
   var graphDatesArray = [];
+  var tmp_avgNetIncome = (netIncome_sum[netIncome_sum.length - 1] / netIncome_sum.length).toFixed(3) * 1;
+  var tmp_avgNetIncomeArray = [];
+
   for (var i = 0; i < 10; i++) {
     graphDatesArray[i] = dates_array[i];
+    tmp_avgNetIncomeArray.push(tmp_avgNetIncome);
   }
   console.info(JSON.stringify(graphDatesArray));
 
@@ -3558,7 +3579,7 @@ var insertProfitGraph = function()
     console.info(arguments);
 
     mk_ch('ch_scriptProfit', '',
-            arg_datesArray,
+            arg_datesArray.reverse(),
             '<b>$', '</b>',
             [
               {
@@ -3576,18 +3597,18 @@ var insertProfitGraph = function()
                 fillOpacity: 0.5
               },
               {
-                name:'Profit',
+                name:'Avg. Net Profit',
+                data: arg_netIncome_avg,
+                type:'line',
+                color: '#75A2D7',
+                lineWidth:'1'
+              },
+              {
+                name:'Net Profit',
                 data: arg_netIncome,
                 type:'line',
                 color: '#4572A7',
                 lineWidth:'2'
-              },
-              {
-                name:'Avg. Profit',
-                data: arg_netIncome_avg,
-                type:'line',
-                color: '#5592C7',
-                lineWidth:'1'
               }
             ],
             0,
@@ -3600,7 +3621,7 @@ var insertProfitGraph = function()
       "JSON.parse('"+JSON.stringify(expenses)+"'), " +
       "JSON.parse('"+JSON.stringify(income)+"'), " +
       "JSON.parse('"+JSON.stringify(netIncome)+"')," +
-      "JSON.parse('"+JSON.stringify(netIncome_avg)+"')" +
+      "JSON.parse('"+JSON.stringify(tmp_avgNetIncomeArray)+"')" +
       ")";
 
 
