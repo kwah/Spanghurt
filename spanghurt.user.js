@@ -5042,6 +5042,14 @@ var referralListings_columns = new function () {
 //      throw "Error! replaceColumnContents() - invalid column index. \nArguments:"
     }
 
+    if(
+        tmp_existingCol.children.length > 0 &&
+        (tmp_existingCol.children[0].tagName.toLowerCase() === 'a' || tmp_existingCol.children[0].nodeName.toLowerCase() === 'a')
+        )
+    {
+      tmp_existingCol = tmp_existingCol.children[0];
+    }
+
     //Replace the column's innerHTML
     tmp_existingCol.innerHTML = '<span style="' + tmp_customCSS + '">' + arg_columnText + '</span>';
     return tmp_existingCol;
@@ -5264,7 +5272,6 @@ var referralListings_columns = new function () {
               break;
             case 'netIncome':
               tmp_value = (incomeExpenses[tmp_currentID].totalIncome - incomeExpenses[tmp_currentID].totalExpenses).toFixed(3);
-                console.info('userAccount.feesCosts.recycle = ',userAccount.feesCosts.recycle);
               if(tmp_value < 0) {
                   tmp_value = '<span style="color: red;">'+tmp_value+'</span>';
                 }
