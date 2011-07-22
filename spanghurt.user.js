@@ -5694,6 +5694,97 @@ function insertSidebar() {
 
 
 
+function addSortingArrows(arg_headerRow)
+{
+  /**
+   * Adds sort ascending and descending arrows to all columns
+   *
+   * TODO: Check which column contains the gold arrow before removing them
+   * Currently uses the URL to determine which ordering method is in use
+   */
+
+  /**
+   * Name           &ss1=2 &ss2= (1Asc/2Desc)??
+   * Ref Since      &ss1=1 &ss2= (1Asc/2Desc) // Opposite to actual arrow directions
+   * Next Payment   &ss1=5 &ss2= (2Asc/1Desc)
+   * Last Click     &ss1=4 &ss2= (2Asc/1Desc) // Opposite to actual arrow directions
+   * Clicks         &ss1=3 &ss2= (2Asc/1Desc)
+   * Average        &ss1=7 &ss2= (2Asc/1Desc)
+   *
+   * &ss1 = column to be sorted by
+   * &ss2 = asc / desc
+   * &ss3 = direct / rented refs
+   *
+   */
+
+  var vars = new Array();
+  //  vars[n] = [ss1, ss2, ss3]
+  //  vars[n] = [colIndex, up, down]
+  vars[1] = [2,2,1,'Sort by Referral ID#'];
+  vars[2] = [1,1,2,'Sort by the total time that the referral has been Owned']; // Does not match existing arrow directions
+  vars[3] = [5,2,1,'Sort by time until Next Payment is Due'];
+  vars[4] = [4,1,2,"Sort by time since the referral's Last Click"];
+  vars[5] = [3,2,1,'Sort by Total Number of Clicks'];
+  vars[6] = [7,2,1,'Sort by Average number of clicks'];
+
+
+  var blah = new Array();
+
+  for(var i = 1; 7 > i; i++)
+  {
+    blah [i] = {
+      colUrlIndex: vars[i][0],
+      up: vars[i][1],
+      down: vars[i][2],
+      upTitle: vars[i][3] + ', Ascending',
+      downTitle: vars[i][3] + ', Descending'
+    }
+  }
+
+  //  Removes existing arrows
+  arg_headerRow.innerHTML = arg_headerRow.innerHTML.replace('<img src="http://neobux.cachefly.net/forum/images/up_gold.gif" height="6" width="10">', '');
+  arg_headerRow.innerHTML = arg_headerRow.innerHTML.replace('<img src="http://neobux.cachefly.net/forum/images/down_gold.gif" height="6" width="10">', '');
+
+  //  Loop through column headers and add custom arrows & links
+  for (var x in blah)
+  {
+    var currentColumn = arg_headerRow.childNodes[x];
+    var href = 'http://www.neobux.com/?u=c&s=r&sp=1';
+    var imgSrc = '/forum/images/';
+
+
+
+    //  If the current sorting method is acting upon the current column AND the current sort direction is up,
+    //  this status should be indicated by the gold arrow in this column header
+    //  Else, the script should default to the gray arrow
+    if (document.location.href.match('&ss1=' + blah[x]['colUrlIndex']) && document.location.href.match('&ss2=' + blah[x]['up'])) {
+      href += "&ss1=" + blah[x]['colUrlIndex'] + "&ss2=" + blah[x]['up'] + "&ss3=2";
+      imgSrc += 'up_gold.gif';
+    }
+    else {
+      href += "&ss1=" + blah[x]['colUrlIndex'] + "&ss2=" + blah[x]['up'] + "&ss3=2";
+      imgSrc += 'up.gif';
+    }
+
+    currentColumn.innerHTML += " <a href='" + href + "'><img width='10' height='6' style='border:none; margin-left:2px;' title=\""+blah[x]['upTitle']+"\" src='" + imgSrc + "'></a>";
+
+    /*Reset variables for down arrow*/
+    href = 'http://www.neobux.com/?u=c&s=r&sp=1';
+    imgSrc = '/forum/images/';
+
+    if (document.location.href.match('&ss1=' + blah[x]['colUrlIndex']) && document.location.href.match('&ss2=' + blah[x]['down'])) {
+      href += "&ss1=" + blah[x]['colUrlIndex'] + "&ss2=" + blah[x]['down'] + "&ss3=2";
+      imgSrc += 'down_gold.gif';
+    }
+    else {
+      href += "&ss1=" + blah[x]['colUrlIndex'] + "&ss2=" + blah[x]['down'] + "&ss3=2";
+      imgSrc += 'down.gif';
+    }
+
+    currentColumn.innerHTML += " <a href='" + href + "'><img width='10' height='6' style='border:none; margin-left:-2px;' title=\""+blah[x]['downTitle']+"\" src='" + imgSrc + "'></a>";
+
+  }
+}
 
 ///
 // Start Code that actually tries to run stuff
@@ -5747,6 +5838,16 @@ if (currentPage.pageCode.match(/referralListings/i)) {
       refSince: 4
     };
   }
+
+
+
+
+
+//  document.querySelectorAll()[]
+  addSortingArrows(headerRow);
+
+
+
   var tmp_referralsData = pr['referrals'].getValue();
 
   //referralListings_columns.init();
