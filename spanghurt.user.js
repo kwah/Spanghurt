@@ -3488,7 +3488,7 @@ var insertProfitGraph = function()
     tmp_index = 9 - i;
 
     income[tmp_index] = ( 0 +
-        graphData[dates_array[i]]['ownClicks_localTime'] * userAccount.clickValues['Fixed'].value +
+        graphData[dates_array[i]]['ownClicks_localTime']   * userAccount.clickValues['Fixed'].value +
         graphData[dates_array[i]]['referralClicks_direct'] * userAccount.clickValues['Fixed'].commission.direct +
         graphData[dates_array[i]]['referralClicks_rented'] * userAccount.clickValues['Fixed'].commission.rented
         ).toFixed(3) * 1;
@@ -5843,7 +5843,19 @@ if (currentPage.pageCode.match(/referralListings/i)) {
 
 
 
-//  document.querySelectorAll()[]
+  //Remove the existing gold colour arrows
+  var upArrows = document.querySelectorAll('td.bgt img[src="http://c.nbx.bz/forum/images/up_gold.gif"]');
+  var downArrows = document.querySelectorAll('td.bgt img[src="http://c.nbx.bz/forum/images/down_gold.gif"]');
+
+  for(var i=0; i<upArrows.length; i++) {
+    upArrows[i].parentNode.removeChild(upArrows[i]);
+  }
+  for(var i=0; i<downArrows.length; i++) {
+    downArrows[i].parentNode.removeChild(downArrows[i]);
+  }
+
+  //Add grey arrows to the column headers that can be clicked to sort the tables,
+  //   with a golden one to indicate the current sorting direction
   addSortingArrows(headerRow);
 
 
