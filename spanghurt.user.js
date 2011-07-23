@@ -199,7 +199,22 @@ for (var i = 0; i < preferredStorageOrder_setValue.length; i++) {
 
 function userPreference(arg_preferenceName, arg_defaultValue, arg_options) {
   this.preferenceName = arg_preferenceName.toString();
-  this.defaultValue = arg_defaultValue || '';
+  if(false === arg_defaultValue) {
+    this.defaultValue = false;
+  }
+  else if (0 === arg_defaultValue) {
+    this.defaultValue = arg_defaultValue;
+  }
+  else if ('null' === typeof arg_defaultValue) {
+    this.defaultValue = '{{{null}}}';
+  }
+  else if ('undefined' === typeof arg_defaultValue) {
+    this.defaultValue = '{{{undefined}}}';
+  }
+  else {
+    this.defaultValue = arg_defaultValue || '';
+  }
+  
   this.options = arg_options || {};
 
   return this;
@@ -228,7 +243,7 @@ userPreference.prototype.getValue = function (arg_overridingDefaultValue, arg_ov
   returnType = (!returnType) ? 'string' : returnType;
 
 
-  if (null === getValue(this.preferenceName) || undefined === getValue(this.preferenceName)) {
+  if ('null' === typeof getValue(this.preferenceName) || 'undefined' === typeof getValue(this.preferenceName)) {
     //Assume that the value cannot be retrieved
     this.setValue(defaultValue, {
       'prefType': returnType
@@ -383,6 +398,7 @@ pr['serverTimeOffset'] = new userPreference('serverTimeOffset', 0, { prefType: '
 pr['setupComplete'] = new userPreference('setupComplete', false, { prefType: 'boolean' });
 pr['shortFormatTimer'] = new userPreference('shortFormatTimer', {}, { prefType: 'JSON' });
 pr['showColumn'] = new userPreference('showColumn', {}, { prefType: 'JSON' });
+pr['showRefClicks'] = new userPreference('showRefClicks', false, { prefType: 'boolean' });
 pr['shrinkColumnContents'] = new userPreference('shrinkColumnContents', {}, { prefType: 'JSON' });
 pr['statsSidebarPosition'] = new userPreference('statsSidebarPosition', 'right', { prefType: 'string' });
 pr['timePeriods'] = new userPreference('timePeriods', {}, { prefType: 'JSON' });
@@ -5140,6 +5156,7 @@ var referralListings_columns = new function () {
   }
 
   this.mainLoop = function () {
+    var loopCounter = 0;
     var tmp_currentID, tmp_income, tmp_value;
     var tmp_dhmOwned;
 
@@ -5173,6 +5190,10 @@ var referralListings_columns = new function () {
       refSince_DHM:       new COLUMN('append', '', '', ' <small>[D/H/M]</small>', [], [], tmp_dhmCSS),
       lastClick_D:        new COLUMN('append', '', '', ' <small>[D]</small>', [], [], tmp_dhmCSS)
     };
+
+    if(true === pr['showRefClicks'].getValue()) {
+      columns['refClicks'] = new COLUMN('new', '', '', ' <small>Clicks</small>', [], [], 'font-size: 90%; letter-spacing: 0;');
+    }
 
     if (currentPage.pageCode.match(/referralListings_Rented/i)) {
       columns.textifyFlag = new COLUMN('new', '', '', '<small>Flag Colour', [], [], tmp_defaultCSS);
@@ -5303,6 +5324,54 @@ var referralListings_columns = new function () {
               break;
             case 'textifyFlag':
               tmp_value = tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].flagColour.split('')[0] || "Unknown".split('')[0] || 'E';
+              break;
+            case 'refClicks':
+              var curRef;
+              var curRef_ListingsData;
+              var data_totalClicks = [];
+              var data_dailyClicks = [];
+              var lastValidDateIndex = 0;
+              var clicksSinceLastValidDateIndex;
+
+              curRef = tmp_referralsData[tmp_currentID];
+              curRef_ListingsData = curRef.referralListingsData;
+
+//              console.info('curRef\n',curRef);
+
+              data_totalClicks = [];
+              data_dailyClicks = [];
+
+
+//                console.info('loopCounter = ',loopCounter);
+                
+//                loopCounter++;
+//                if(loopCounter > 3) { throw ""; }
+
+              for(var dateCounter = 9; dateCounter >= 0; dateCounter--) {
+                if(curRef_ListingsData[dates_array[dateCounter]]) {
+//                  console.info('dateCounter = ',dateCounter);
+
+                  data_totalClicks.push(curRef_ListingsData[dates_array[dateCounter]].totalClicks);
+
+//                  console.info('curRef_ListingsData[dates_array[dateCounter]].totalClicks = ',curRef_ListingsData[dates_array[dateCounter]].totalClicks);
+
+                  clicksSinceLastValidDateIndex = (lastValidDateIndex === 0 ) ? curRef_ListingsData[dates_array[dateCounter]].totalClicks : curRef_ListingsData[dates_array[dateCounter]].totalClicks - curRef_ListingsData[dates_array[lastValidDateIndex]].totalClicks;
+                  data_dailyClicks.push(clicksSinceLastValidDateIndex);
+
+//                  console.info('clicksSinceLastValidDateIndex = ',clicksSinceLastValidDateIndex);
+
+                  lastValidDateIndex = dateCounter;
+                }
+                else {
+                  data_totalClicks.push('#');
+                  data_dailyClicks.push('#');
+                }
+              }
+
+//              console.info(data_totalClicks);
+//              console.info(data_dailyClicks);
+
+              tmp_value = data_dailyClicks.join(' | ') || 'Error';
               break;
           }
 
@@ -5866,8 +5935,8 @@ if (currentPage.pageCode.match(/referralListings/i)) {
   //  referralListings_columns.readReferralData();
   referralListings_columns.mainLoop();
 
-  //  referralListingsNewColumnsTest();
 //  addClickStatsToGoldenGraph();
+
 
 }
 
