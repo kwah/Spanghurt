@@ -1339,8 +1339,6 @@ var currentPage = new function () {
         {
           if(testAgainstUrlParameters(['ss3=1']))
           {
-            //WARNING: TODO: NOT TESTED LINKS / ARROW DIRECTIONS FOR DIRECT REFS PAGES
-
             if(testAgainstUrlParameters(['ss2=1']))
             {
               if(testAgainstUrlParameters(['ss1=2'])) { return 'referralListings_Direct_name_Desc'; }
@@ -2687,18 +2685,9 @@ function insertLocalServerTime() {
 
     }
 
-    // Transfer script variables to the window
-    location.href = "javascript:void(window._timePeriods = new Array())";
-    for (var i = 0; i < _timePeriods.length; i++) {
-      location.href = "javascript:void(window._timePeriods["+i+"] = JSON.parse('"+JSON.stringify(_timePeriods[i])+"'))";
-    }
-    location.href = "javascript:void(window.adResetTime = new Date('" + adResetTime.toString() + "'))";
-    location.href = "javascript:void(window.neoMidnight = new Date('" + neoMidnight.toString() + "'))";
-    location.href = "javascript:void(window.localMidnight = new Date('" + localMidnight.toString() + "'))";
-
     //    debugLog(_timePeriods);
     location.href = "javascript:(" +
-    function () {
+    function (_timePeriods, adResetTime, neoMidnight, localMidnight) {
 
       // Append zeros to the _input until the _desiredStringLength is reached
       function padZeros(arg_input, arg_desiredStringLength) {
@@ -2771,10 +2760,12 @@ function insertLocalServerTime() {
         });
 
       }
-
-
-      //todo: look into passing parameters into the ()
-    } + ")()";
+    } + ")(" +
+        "JSON.parse('" + JSON.stringify(_timePeriods) + "')," +
+        "new Date('" + adResetTime.toString() + "')," +
+        "new Date('" + neoMidnight.toString() + "')," +
+        "new Date('" + localMidnight.toString() + "')," +
+        ")";
 
     document.getElementById('localServerTimeText').addEventListener('click', function localServerTime_onClick() {
       document.getElementById('containerDiv_timer').style.display = ('none' == document.getElementById('containerDiv_timer').style.display) ? '' : 'none';
