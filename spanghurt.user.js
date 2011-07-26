@@ -1240,13 +1240,17 @@ var graphLengthLookup = {
   'ch_recycle': 15,
   'ch_extensions': 15,
   'ch_autopay': 15,
-  'ch_trrb': 15,
 
-  'ch_earnings': 15,
-  'ch_profit': 15,
+  //Transfers
+  'ch_trrb': 15,
   'ch_trar': 15,
   'ch_trpb': 15,
 
+  //Ultimate-only
+  'ch_earnings': 10,
+  'ch_profit': 10,
+
+  //Golden-only
   'ch_ext_schedule8': 90,
   'ch_ext_schedule7': 90,
   'ch_ext_schedule6': 90,
@@ -3892,7 +3896,9 @@ var chartDataBars = new function () {
             graphBarTable.appendChild(
             createDataBarRow(this.graphsOnCurrentPage[i], 'sum', [tl8('Sum: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'sum', '(', ') $', 3)], ''));
             graphBarTable.appendChild(
-            createDataBarRow(this.graphsOnCurrentPage[i], 'avg', [tl8('Avg. Expense: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avg', '(', ') $', 3)], ''));
+            createDataBarRow(this.graphsOnCurrentPage[i], 'avg', [tl8('Avg.: '), dataToOutputToDataBar(tmp_dataSet, dataBarIntervals[tmp_graphLength], '', 'avg', '(', ') $', 3)], ''));
+            break;
+
         }
 
         // Specific DataBars
