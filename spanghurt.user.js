@@ -199,7 +199,22 @@ for (var i = 0; i < preferredStorageOrder_setValue.length; i++) {
 
 function userPreference(arg_preferenceName, arg_defaultValue, arg_options) {
   this.preferenceName = arg_preferenceName.toString();
-  this.defaultValue = arg_defaultValue || '';
+  if(false === arg_defaultValue) {
+    this.defaultValue = false;
+  }
+  else if (0 === arg_defaultValue) {
+    this.defaultValue = arg_defaultValue;
+  }
+  else if ('null' === typeof arg_defaultValue) {
+    this.defaultValue = '{{{null}}}';
+  }
+  else if ('undefined' === typeof arg_defaultValue) {
+    this.defaultValue = '{{{undefined}}}';
+  }
+  else {
+    this.defaultValue = arg_defaultValue || '';
+  }
+  
   this.options = arg_options || {};
 
   return this;
@@ -228,7 +243,7 @@ userPreference.prototype.getValue = function (arg_overridingDefaultValue, arg_ov
   returnType = (!returnType) ? 'string' : returnType;
 
 
-  if (null === getValue(this.preferenceName) || undefined === getValue(this.preferenceName)) {
+  if ('null' === typeof getValue(this.preferenceName) || 'undefined' === typeof getValue(this.preferenceName)) {
     //Assume that the value cannot be retrieved
     this.setValue(defaultValue, {
       'prefType': returnType
@@ -383,6 +398,7 @@ pr['serverTimeOffset'] = new userPreference('serverTimeOffset', 0, { prefType: '
 pr['setupComplete'] = new userPreference('setupComplete', false, { prefType: 'boolean' });
 pr['shortFormatTimer'] = new userPreference('shortFormatTimer', {}, { prefType: 'JSON' });
 pr['showColumn'] = new userPreference('showColumn', {}, { prefType: 'JSON' });
+pr['showRefClicks'] = new userPreference('showRefClicks', false, { prefType: 'boolean' });
 pr['shrinkColumnContents'] = new userPreference('shrinkColumnContents', {}, { prefType: 'JSON' });
 pr['statsSidebarPosition'] = new userPreference('statsSidebarPosition', 'right', { prefType: 'string' });
 pr['timePeriods'] = new userPreference('timePeriods', {}, { prefType: 'JSON' });
@@ -3483,7 +3499,7 @@ var insertProfitGraph = function()
     tmp_index = 9 - i;
 
     income[tmp_index] = ( 0 +
-        graphData[dates_array[i]]['ownClicks_localTime'] * userAccount.clickValues['Fixed'].value +
+        graphData[dates_array[i]]['ownClicks_localTime']   * userAccount.clickValues['Fixed'].value +
         graphData[dates_array[i]]['referralClicks_direct'] * userAccount.clickValues['Fixed'].commission.direct +
         graphData[dates_array[i]]['referralClicks_rented'] * userAccount.clickValues['Fixed'].commission.rented
         ).toFixed(3) * 1;
@@ -5039,6 +5055,14 @@ var referralListings_columns = new function () {
 //      throw "Error! replaceColumnContents() - invalid column index. \nArguments:"
     }
 
+    if(
+        tmp_existingCol.children.length > 0 &&
+        (tmp_existingCol.children[0].tagName.toLowerCase() === 'a' || tmp_existingCol.children[0].nodeName.toLowerCase() === 'a')
+        )
+    {
+      tmp_existingCol = tmp_existingCol.children[0];
+    }
+
     //Replace the column's innerHTML
     tmp_existingCol.innerHTML = '<span style="' + tmp_customCSS + '">' + arg_columnText + '</span>';
     return tmp_existingCol;
@@ -5129,6 +5153,7 @@ var referralListings_columns = new function () {
   }
 
   this.mainLoop = function () {
+    var loopCounter = 0;
     var tmp_currentID, tmp_income, tmp_value;
     var tmp_dhmOwned;
 
@@ -5162,6 +5187,10 @@ var referralListings_columns = new function () {
       refSince_DHM:       new COLUMN('append', '', '', ' <small>[D/H/M]</small>', [], [], tmp_dhmCSS),
       lastClick_D:        new COLUMN('append', '', '', ' <small>[D]</small>', [], [], tmp_dhmCSS)
     };
+
+    if(true === pr['showRefClicks'].getValue()) {
+      columns['refClicks'] = new COLUMN('new', '', '', ' <small>Clicks</small>', [], [], 'font-size: 90%; letter-spacing: 0;');
+    }
 
     if (currentPage.pageCode.match(/referralListings_Rented/i)) {
       columns.textifyFlag = new COLUMN('new', '', '', '<small>Flag Colour', [], [], tmp_defaultCSS);
@@ -5261,7 +5290,6 @@ var referralListings_columns = new function () {
               break;
             case 'netIncome':
               tmp_value = (incomeExpenses[tmp_currentID].totalIncome - incomeExpenses[tmp_currentID].totalExpenses).toFixed(3);
-                console.info('userAccount.feesCosts.recycle = ',userAccount.feesCosts.recycle);
               if(tmp_value < 0) {
                   tmp_value = '<span style="color: red;">'+tmp_value+'</span>';
                 }
@@ -5293,6 +5321,54 @@ var referralListings_columns = new function () {
               break;
             case 'textifyFlag':
               tmp_value = tmp_referralsData[tmp_currentID].referralListingsData[dates_array[0]].flagColour.split('')[0] || "Unknown".split('')[0] || 'E';
+              break;
+            case 'refClicks':
+              var curRef;
+              var curRef_ListingsData;
+              var data_totalClicks = [];
+              var data_dailyClicks = [];
+              var lastValidDateIndex = 0;
+              var clicksSinceLastValidDateIndex;
+
+              curRef = tmp_referralsData[tmp_currentID];
+              curRef_ListingsData = curRef.referralListingsData;
+
+//              console.info('curRef\n',curRef);
+
+              data_totalClicks = [];
+              data_dailyClicks = [];
+
+
+//                console.info('loopCounter = ',loopCounter);
+                
+//                loopCounter++;
+//                if(loopCounter > 3) { throw ""; }
+
+              for(var dateCounter = 9; dateCounter >= 0; dateCounter--) {
+                if(curRef_ListingsData[dates_array[dateCounter]]) {
+//                  console.info('dateCounter = ',dateCounter);
+
+                  data_totalClicks.push(curRef_ListingsData[dates_array[dateCounter]].totalClicks);
+
+//                  console.info('curRef_ListingsData[dates_array[dateCounter]].totalClicks = ',curRef_ListingsData[dates_array[dateCounter]].totalClicks);
+
+                  clicksSinceLastValidDateIndex = (lastValidDateIndex === 0 ) ? curRef_ListingsData[dates_array[dateCounter]].totalClicks : curRef_ListingsData[dates_array[dateCounter]].totalClicks - curRef_ListingsData[dates_array[lastValidDateIndex]].totalClicks;
+                  data_dailyClicks.push(clicksSinceLastValidDateIndex);
+
+//                  console.info('clicksSinceLastValidDateIndex = ',clicksSinceLastValidDateIndex);
+
+                  lastValidDateIndex = dateCounter;
+                }
+                else {
+                  data_totalClicks.push('#');
+                  data_dailyClicks.push('#');
+                }
+              }
+
+//              console.info(data_totalClicks);
+//              console.info(data_dailyClicks);
+
+              tmp_value = data_dailyClicks.join(' | ') || 'Error';
               break;
           }
 
@@ -5684,6 +5760,97 @@ function insertSidebar() {
 
 
 
+function addSortingArrows(arg_headerRow)
+{
+  /**
+   * Adds sort ascending and descending arrows to all columns
+   *
+   * TODO: Check which column contains the gold arrow before removing them
+   * Currently uses the URL to determine which ordering method is in use
+   */
+
+  /**
+   * Name           &ss1=2 &ss2= (1Asc/2Desc)??
+   * Ref Since      &ss1=1 &ss2= (1Asc/2Desc) // Opposite to actual arrow directions
+   * Next Payment   &ss1=5 &ss2= (2Asc/1Desc)
+   * Last Click     &ss1=4 &ss2= (2Asc/1Desc) // Opposite to actual arrow directions
+   * Clicks         &ss1=3 &ss2= (2Asc/1Desc)
+   * Average        &ss1=7 &ss2= (2Asc/1Desc)
+   *
+   * &ss1 = column to be sorted by
+   * &ss2 = asc / desc
+   * &ss3 = direct / rented refs
+   *
+   */
+
+  var vars = new Array();
+  //  vars[n] = [ss1, ss2, ss3]
+  //  vars[n] = [colIndex, up, down]
+  vars[1] = [2,2,1,'Sort by Referral ID#'];
+  vars[2] = [1,1,2,'Sort by the total time that the referral has been Owned']; // Does not match existing arrow directions
+  vars[3] = [5,2,1,'Sort by time until Next Payment is Due'];
+  vars[4] = [4,1,2,"Sort by time since the referral's Last Click"];
+  vars[5] = [3,2,1,'Sort by Total Number of Clicks'];
+  vars[6] = [7,2,1,'Sort by Average number of clicks'];
+
+
+  var blah = new Array();
+
+  for(var i = 1; 7 > i; i++)
+  {
+    blah [i] = {
+      colUrlIndex: vars[i][0],
+      up: vars[i][1],
+      down: vars[i][2],
+      upTitle: vars[i][3] + ', Ascending',
+      downTitle: vars[i][3] + ', Descending'
+    }
+  }
+
+  //  Removes existing arrows
+  arg_headerRow.innerHTML = arg_headerRow.innerHTML.replace('<img src="http://neobux.cachefly.net/forum/images/up_gold.gif" height="6" width="10">', '');
+  arg_headerRow.innerHTML = arg_headerRow.innerHTML.replace('<img src="http://neobux.cachefly.net/forum/images/down_gold.gif" height="6" width="10">', '');
+
+  //  Loop through column headers and add custom arrows & links
+  for (var x in blah)
+  {
+    var currentColumn = arg_headerRow.childNodes[x];
+    var href = 'http://www.neobux.com/?u=c&s=r&sp=1';
+    var imgSrc = '/forum/images/';
+
+
+
+    //  If the current sorting method is acting upon the current column AND the current sort direction is up,
+    //  this status should be indicated by the gold arrow in this column header
+    //  Else, the script should default to the gray arrow
+    if (document.location.href.match('&ss1=' + blah[x]['colUrlIndex']) && document.location.href.match('&ss2=' + blah[x]['up'])) {
+      href += "&ss1=" + blah[x]['colUrlIndex'] + "&ss2=" + blah[x]['up'] + "&ss3=2";
+      imgSrc += 'up_gold.gif';
+    }
+    else {
+      href += "&ss1=" + blah[x]['colUrlIndex'] + "&ss2=" + blah[x]['up'] + "&ss3=2";
+      imgSrc += 'up.gif';
+    }
+
+    currentColumn.innerHTML += " <a href='" + href + "'><img width='10' height='6' style='border:none; margin-left:2px;' title=\""+blah[x]['upTitle']+"\" src='" + imgSrc + "'></a>";
+
+    /*Reset variables for down arrow*/
+    href = 'http://www.neobux.com/?u=c&s=r&sp=1';
+    imgSrc = '/forum/images/';
+
+    if (document.location.href.match('&ss1=' + blah[x]['colUrlIndex']) && document.location.href.match('&ss2=' + blah[x]['down'])) {
+      href += "&ss1=" + blah[x]['colUrlIndex'] + "&ss2=" + blah[x]['down'] + "&ss3=2";
+      imgSrc += 'down_gold.gif';
+    }
+    else {
+      href += "&ss1=" + blah[x]['colUrlIndex'] + "&ss2=" + blah[x]['down'] + "&ss3=2";
+      imgSrc += 'down.gif';
+    }
+
+    currentColumn.innerHTML += " <a href='" + href + "'><img width='10' height='6' style='border:none; margin-left:-2px;' title=\""+blah[x]['downTitle']+"\" src='" + imgSrc + "'></a>";
+
+  }
+}
 
 ///
 // Start Code that actually tries to run stuff
@@ -5737,14 +5904,36 @@ if (currentPage.pageCode.match(/referralListings/i)) {
       refSince: 4
     };
   }
+
+
+
+
+
+  //Remove the existing gold colour arrows
+  var upArrows = document.querySelectorAll('td.bgt img[src="http://c.nbx.bz/forum/images/up_gold.gif"]');
+  var downArrows = document.querySelectorAll('td.bgt img[src="http://c.nbx.bz/forum/images/down_gold.gif"]');
+
+  for(var i=0; i<upArrows.length; i++) {
+    upArrows[i].parentNode.removeChild(upArrows[i]);
+  }
+  for(var i=0; i<downArrows.length; i++) {
+    downArrows[i].parentNode.removeChild(downArrows[i]);
+  }
+
+  //Add grey arrows to the column headers that can be clicked to sort the tables,
+  //   with a golden one to indicate the current sorting direction
+  addSortingArrows(headerRow);
+
+
+
   var tmp_referralsData = pr['referrals'].getValue();
 
   //referralListings_columns.init();
   //  referralListings_columns.readReferralData();
   referralListings_columns.mainLoop();
 
-  //  referralListingsNewColumnsTest();
 //  addClickStatsToGoldenGraph();
+
 
 }
 
