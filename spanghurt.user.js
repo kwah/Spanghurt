@@ -379,6 +379,7 @@ pr['AdResetTime_hours'] = new userPreference('AdResetTime_hours', 0, { prefType:
 pr['AutoDetectTimeOffset'] = new userPreference('AutoDetectTimeOffset', true, { prefType: 'boolean' });
 pr['autopayOn'] = new userPreference('autopayOn', false, { prefType: 'boolean' });
 pr['columnPrefixes'] = new userPreference('columnPrefixes', {}, { prefType: 'JSON' });
+pr['enableAutomaticUpdateChecks'] = new userPreference('enableAutomaticUpdateChecks', true, { prefType: 'boolean' });
 pr['flag_textify'] = new userPreference('flag_textify', true, { prefType: 'boolean' });
 pr['goldenCost'] = new userPreference('goldenCost', 0, { prefType: 'float' });
 pr['goldenPackCost'] = new userPreference('goldenPackCost', 0, { prefType: 'float' });
@@ -401,8 +402,10 @@ pr['showColumn'] = new userPreference('showColumn', {}, { prefType: 'JSON' });
 pr['showRefClicks'] = new userPreference('showRefClicks', false, { prefType: 'boolean' });
 pr['shrinkColumnContents'] = new userPreference('shrinkColumnContents', {}, { prefType: 'JSON' });
 pr['statsSidebarPosition'] = new userPreference('statsSidebarPosition', 'right', { prefType: 'string' });
+pr['timeOfLastUpdateCheck'] = new userPreference('timeOfLastUpdateCheck', (new Date()).toString(), { prefType: 'string' });
 pr['timePeriods'] = new userPreference('timePeriods', {}, { prefType: 'JSON' });
 pr['translationStringsNeeded'] = new userPreference('translationStringsNeeded', '', { prefType: 'JSON' });
+pr['updateFrequency'] = new userPreference('updateFrequency', 6, { prefType: 'float' });
 pr['username'] = new userPreference('username', 'unknownUsername', { prefType: 'string' });
 
 
