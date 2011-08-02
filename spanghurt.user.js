@@ -1315,9 +1315,10 @@ var currentPage = new function () {
         'f-es': 'ES', // Spanish
         'f-gr': 'GR', // Greece
         'f-fi': 'FI', // Finnish
-        'f-se': 'SE', // Serbian
-        'f-de': 'DE', // Denmark
-        'f-fr': 'FR'  // French
+        'f-se': 'SE', // Swedish
+        'f-de': 'DE', // German
+        'f-fr': 'FR', // French
+        'f-id': 'ID'  // Indonesian
       };
 
       for (var tmp_langCode in tmp_langCodes) {
